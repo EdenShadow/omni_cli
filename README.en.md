@@ -38,6 +38,31 @@ Use it on a headless Linux server or a Windows/macOS computer where you do not n
 
 Task flow: **a member submits a request → Omni checks permissions and dispatches it → the CLI runs the local AI → replies and outputs return to the project**. Keep the CLI running and connected to receive new tasks.
 
+## From Linux hosts to robots, vehicle computers and Raspberry Pi
+
+**Connect different kinds of devices to one Omni project for shared collaboration and task dispatch.** Beyond everyday computers and servers, Omni CLI can serve as a connection layer for robot computers, open Linux vehicle computers, Raspberry Pi boards and other edge devices. Each device must allow software installation, run Node.js 24+ and at least one compatible AI terminal, and connect to the Omni service.
+
+| Device scenario | Example uses after connecting | Adaptation requirements |
+| --- | --- | --- |
+| Linux servers / industrial PCs | Inspect logs, run maintenance scripts, process files and report task results | Compatible OS, dependencies and local tools, with the required directory permissions |
+| Raspberry Pi / ARM edge devices | Run collection scripts, organize sensor data and participate in team tasks | Verify the specific OS and CPU architecture, including support for Node.js and the selected AI runtime |
+| Robot computers | Query device status, analyze logs and execute device tasks through existing interfaces | Integrate the device SDK, ROS or vendor API separately, with drivers where needed |
+| Open Linux vehicle computers | Manage application logs, run diagnostic tools and synchronize project resources | The system must permit CLI installation and execution; device interfaces and permissions require separate integration |
+
+These are connection scenarios and extension directions, **not a claim that every device model has been tested**. There are currently no dedicated Raspberry Pi, robot or vehicle installers or model-by-model validation lists. Closed systems, restricted firmware and devices that cannot run the selected AI runtime require additional adaptation.
+
+### Multi-device collaboration and batch tasks
+
+Set up and bind each device separately, giving it a recognizable name such as `Lab-Pi-01` or `Robot-Test-02`. Add the devices to a shared project so authorized members can select their shared sessions and assign tasks. Each device returns replies and results to the project, while team skills synchronize to its bound AI terminals.
+
+For example, assign each device a task to collect operational logs and produce a status summary, then bring the results together in project chat or a canvas. This connection and session-dispatch mechanism provides a foundation for fleet management.
+
+**Available today:** device connections, shared-session requests, project collaboration and team skill synchronization. One-click broadcasts to device groups, batch progress dashboards, concurrency limits and failed-task retries require further development; the CLI currently has no standalone batch-control command. Existing reconnection and result-delivery retries do not automatically re-execute failed tasks.
+
+### Software tasks and hardware control
+
+The CLI lets the local AI use authorized scripts, tools and skills. Controlling motors, sensors or vehicle functions requires device-specific interfaces and skill integrations. Installing the CLI does not grant hardware control or additional system permissions. For motion-related tasks, permission checks, safety interlocks and emergency stops remain the responsibility of the local control system; Omni coordinates tasks rather than acting as a real-time motion controller.
+
 ## Quick start
 
 ### 1. Prepare your machine
