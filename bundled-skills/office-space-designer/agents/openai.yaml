@@ -1,0 +1,6 @@
+interface:
+  icon_small: "./assets/skill-icon.svg"
+  icon_large: "./assets/skill-icon.svg"
+  display_name: "项目场景设计师"
+  short_description: "用提示词搭建像素格子项目，支持正面实时看板、成员分身与可扩展互动道具"
+  default_prompt: "使用 $office-space-designer 根据我的提示词创建或编辑像素格子项目，保留真实设备、成员和正对屏幕的公告、画布、Skills 看板。"

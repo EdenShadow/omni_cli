@@ -1,0 +1,7 @@
+interface:
+  display_name: "万物画布"
+  short_description: "按画布 ID 读取或修改，创建可保存数据的网页应用、内容封面与团队协作画布"
+  icon_small: "./assets/skill-icon.svg"
+  icon_large: "./assets/skill-icon.svg"
+  brand_color: "#426B56"
+  default_prompt: "使用 $wanwu-canvas 按我指定的画布 ID 读取信息或修改画布；需要新建时接入数据保存并设计合适的封面。"

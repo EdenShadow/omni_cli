@@ -1,0 +1,1428 @@
+{
+  "schemaVersion": 1,
+  "id": "orange-sister",
+  "name": "橘子妹妹",
+  "description": "穿奶油色小裙子、戴豆沙色蝴蝶结的橘子妹妹，把小点子画在便签上。",
+  "art": "character.svg",
+  "states": [
+    "idle",
+    "walk-left",
+    "walk-right",
+    "working",
+    "tired",
+    "done"
+  ],
+  "idleVariants": [
+    "idle-bounce",
+    "idle-leaf",
+    "idle-think"
+  ],
+  "clips": {
+    "idle": {
+      "duration": 2800,
+      "loop": true,
+      "tracks": [
+        {
+          "part": "body",
+          "frames": [
+            {
+              "transform": "translateY(0px)"
+            },
+            {
+              "transform": "translateY(-1px)"
+            },
+            {
+              "transform": "translateY(0px)"
+            }
+          ],
+          "duration": 2800
+        },
+        {
+          "part": "stem",
+          "frames": [
+            {
+              "transform": "rotate(0deg)"
+            },
+            {
+              "transform": "rotate(-6deg)"
+            },
+            {
+              "transform": "rotate(0deg)"
+            }
+          ],
+          "duration": 3200
+        },
+        {
+          "part": "eyes",
+          "frames": [
+            {
+              "transform": "scaleY(1)",
+              "offset": 0
+            },
+            {
+              "transform": "scaleY(1)",
+              "offset": 0.85
+            },
+            {
+              "transform": "scaleY(.1)",
+              "offset": 0.9
+            },
+            {
+              "transform": "scaleY(1)",
+              "offset": 0.95
+            },
+            {
+              "transform": "scaleY(1)",
+              "offset": 1
+            }
+          ],
+          "duration": 4200
+        }
+      ]
+    },
+    "idle-bounce": {
+      "duration": 1600,
+      "loop": false,
+      "tracks": [
+        {
+          "part": "direction",
+          "frames": [
+            {
+              "transform": "translateY(0px)"
+            },
+            {
+              "transform": "translateY(-5px)"
+            },
+            {
+              "transform": "translateY(0px)"
+            },
+            {
+              "transform": "translateY(-3px)"
+            },
+            {
+              "transform": "translateY(0px)"
+            }
+          ]
+        },
+        {
+          "part": "stem",
+          "frames": [
+            {
+              "transform": "rotate(0deg)"
+            },
+            {
+              "transform": "rotate(7deg)"
+            },
+            {
+              "transform": "rotate(-4deg)"
+            },
+            {
+              "transform": "rotate(0deg)"
+            }
+          ]
+        }
+      ]
+    },
+    "idle-think": {
+      "duration": 2500,
+      "loop": false,
+      "tracks": [
+        {
+          "part": "arm-r",
+          "frames": [
+            {
+              "transform": "rotate(0deg)"
+            },
+            {
+              "transform": "translate(-9px,-6px) rotate(60deg)"
+            },
+            {
+              "transform": "translate(-9px,-6px) rotate(60deg)"
+            },
+            {
+              "transform": "rotate(0deg)"
+            }
+          ]
+        },
+        {
+          "part": "face",
+          "frames": [
+            {
+              "transform": "rotate(0deg)"
+            },
+            {
+              "transform": "translate(2px,-1px) rotate(-4deg)"
+            },
+            {
+              "transform": "translate(2px,-1px) rotate(-4deg)"
+            },
+            {
+              "transform": "rotate(0deg)"
+            }
+          ]
+        },
+        {
+          "part": "eyes",
+          "frames": [
+            {
+              "transform": "translateX(0px)"
+            },
+            {
+              "transform": "translateX(2px)"
+            },
+            {
+              "transform": "translateX(2px)"
+            },
+            {
+              "transform": "translateX(0px)"
+            }
+          ]
+        }
+      ]
+    },
+    "working": {
+      "duration": 1600,
+      "loop": true,
+      "tracks": [
+        {
+          "part": "arm-l",
+          "frames": [
+            {
+              "transform": "translate(18px,0px) rotate(-4deg)"
+            },
+            {
+              "transform": "translate(18px,-1px) rotate(-4deg)"
+            },
+            {
+              "transform": "translate(18px,0px) rotate(-4deg)"
+            }
+          ],
+          "duration": 2200
+        },
+        {
+          "part": "arm-r",
+          "frames": [
+            {
+              "transform": "translate(-26px,-7px) rotate(0deg)"
+            },
+            {
+              "transform": "translate(-23px,-6px) rotate(2deg)"
+            },
+            {
+              "transform": "translate(-26px,-7px) rotate(0deg)"
+            },
+            {
+              "transform": "translate(-26px,-7px) rotate(0deg)"
+            }
+          ],
+          "duration": 1000
+        },
+        {
+          "part": "stem",
+          "frames": [
+            {
+              "transform": "rotate(0deg)"
+            },
+            {
+              "transform": "rotate(3deg)"
+            },
+            {
+              "transform": "rotate(0deg)"
+            }
+          ],
+          "duration": 2800
+        },
+        {
+          "part": "eyes",
+          "frames": [
+            {
+              "transform": "scaleY(1)",
+              "offset": 0
+            },
+            {
+              "transform": "scaleY(1)",
+              "offset": 0.85
+            },
+            {
+              "transform": "scaleY(.1)",
+              "offset": 0.9
+            },
+            {
+              "transform": "scaleY(1)",
+              "offset": 0.95
+            },
+            {
+              "transform": "scaleY(1)",
+              "offset": 1
+            }
+          ],
+          "duration": 4200
+        }
+      ]
+    },
+    "tired": {
+      "duration": 4500,
+      "loop": true,
+      "tracks": [
+        {
+          "part": "body",
+          "frames": [
+            {
+              "transform": "translateY(0px) rotate(0deg)"
+            },
+            {
+              "transform": "translateY(3px) rotate(3deg)"
+            },
+            {
+              "transform": "translateY(3px) rotate(3deg)"
+            },
+            {
+              "transform": "translateY(0px) rotate(0deg)"
+            }
+          ]
+        },
+        {
+          "part": "stem",
+          "frames": [
+            {
+              "transform": "rotate(0deg)"
+            },
+            {
+              "transform": "rotate(18deg)"
+            },
+            {
+              "transform": "rotate(18deg)"
+            },
+            {
+              "transform": "rotate(0deg)"
+            }
+          ]
+        },
+        {
+          "part": "sleep",
+          "frames": [
+            {
+              "opacity": 0,
+              "transform": "translateY(10px)"
+            },
+            {
+              "opacity": 0.85,
+              "transform": "translateY(0px)"
+            },
+            {
+              "opacity": 0,
+              "transform": "translateY(-15px)"
+            },
+            {
+              "opacity": 0,
+              "transform": "translateY(10px)"
+            }
+          ]
+        }
+      ]
+    },
+    "walk-right": {
+      "duration": 900,
+      "loop": true,
+      "tracks": [
+        {
+          "part": "foot-l",
+          "frames": [
+            {
+              "transform": "translate(6px,0px) rotate(0deg)",
+              "offset": 0.0
+            },
+            {
+              "transform": "translate(3px,0px) rotate(0deg)",
+              "offset": 0.125
+            },
+            {
+              "transform": "translate(0px,0px) rotate(0deg)",
+              "offset": 0.25
+            },
+            {
+              "transform": "translate(-3px,0px) rotate(0deg)",
+              "offset": 0.375
+            },
+            {
+              "transform": "translate(-6px,0px) rotate(0deg)",
+              "offset": 0.5
+            },
+            {
+              "transform": "translate(-4px,-3px) rotate(-5deg)",
+              "offset": 0.625
+            },
+            {
+              "transform": "translate(0px,-4.5px) rotate(0deg)",
+              "offset": 0.75
+            },
+            {
+              "transform": "translate(4px,-3px) rotate(5deg)",
+              "offset": 0.875
+            },
+            {
+              "transform": "translate(6px,0px) rotate(0deg)",
+              "offset": 1.0
+            }
+          ],
+          "easing": "linear"
+        },
+        {
+          "part": "foot-r",
+          "frames": [
+            {
+              "transform": "translate(-6px,0px) rotate(0deg)",
+              "offset": 0.0
+            },
+            {
+              "transform": "translate(-4px,-3px) rotate(-5deg)",
+              "offset": 0.125
+            },
+            {
+              "transform": "translate(0px,-4.5px) rotate(0deg)",
+              "offset": 0.25
+            },
+            {
+              "transform": "translate(4px,-3px) rotate(5deg)",
+              "offset": 0.375
+            },
+            {
+              "transform": "translate(6px,0px) rotate(0deg)",
+              "offset": 0.5
+            },
+            {
+              "transform": "translate(3px,0px) rotate(0deg)",
+              "offset": 0.625
+            },
+            {
+              "transform": "translate(0px,0px) rotate(0deg)",
+              "offset": 0.75
+            },
+            {
+              "transform": "translate(-3px,0px) rotate(0deg)",
+              "offset": 0.875
+            },
+            {
+              "transform": "translate(-6px,0px) rotate(0deg)",
+              "offset": 1.0
+            }
+          ],
+          "easing": "linear"
+        },
+        {
+          "part": "arm-l",
+          "frames": [
+            {
+              "transform": "rotate(-18deg)"
+            },
+            {
+              "transform": "rotate(18deg)"
+            },
+            {
+              "transform": "rotate(-18deg)"
+            }
+          ]
+        },
+        {
+          "part": "arm-r",
+          "frames": [
+            {
+              "transform": "rotate(18deg)"
+            },
+            {
+              "transform": "rotate(-18deg)"
+            },
+            {
+              "transform": "rotate(18deg)"
+            }
+          ]
+        },
+        {
+          "part": "body",
+          "frames": [
+            {
+              "transform": "translateY(0px) rotate(0deg)"
+            },
+            {
+              "transform": "translateY(-1.5px) rotate(-1deg)"
+            },
+            {
+              "transform": "translateY(0px) rotate(0deg)"
+            },
+            {
+              "transform": "translateY(-1.5px) rotate(1deg)"
+            },
+            {
+              "transform": "translateY(0px) rotate(0deg)"
+            }
+          ]
+        },
+        {
+          "part": "stem",
+          "frames": [
+            {
+              "transform": "rotate(-3deg)"
+            },
+            {
+              "transform": "rotate(6deg)"
+            },
+            {
+              "transform": "rotate(-3deg)"
+            }
+          ]
+        },
+        {
+          "part": "eyes",
+          "frames": [
+            {
+              "transform": "scaleY(1)",
+              "offset": 0
+            },
+            {
+              "transform": "scaleY(1)",
+              "offset": 0.85
+            },
+            {
+              "transform": "scaleY(.1)",
+              "offset": 0.9
+            },
+            {
+              "transform": "scaleY(1)",
+              "offset": 0.95
+            },
+            {
+              "transform": "scaleY(1)",
+              "offset": 1
+            }
+          ],
+          "duration": 4200
+        },
+        {
+          "part": "skirt",
+          "frames": [
+            {
+              "transform": "rotate(0deg)"
+            },
+            {
+              "transform": "rotate(2deg)"
+            },
+            {
+              "transform": "rotate(0deg)"
+            },
+            {
+              "transform": "rotate(-2deg)"
+            },
+            {
+              "transform": "rotate(0deg)"
+            }
+          ]
+        }
+      ]
+    },
+    "walk-left": {
+      "duration": 900,
+      "loop": true,
+      "tracks": [
+        {
+          "part": "foot-l",
+          "frames": [
+            {
+              "transform": "translate(-6px,0px) rotate(0deg)",
+              "offset": 0.0
+            },
+            {
+              "transform": "translate(-3px,0px) rotate(0deg)",
+              "offset": 0.125
+            },
+            {
+              "transform": "translate(0px,0px) rotate(0deg)",
+              "offset": 0.25
+            },
+            {
+              "transform": "translate(3px,0px) rotate(0deg)",
+              "offset": 0.375
+            },
+            {
+              "transform": "translate(6px,0px) rotate(0deg)",
+              "offset": 0.5
+            },
+            {
+              "transform": "translate(4px,-3px) rotate(5deg)",
+              "offset": 0.625
+            },
+            {
+              "transform": "translate(0px,-4.5px) rotate(0deg)",
+              "offset": 0.75
+            },
+            {
+              "transform": "translate(-4px,-3px) rotate(-5deg)",
+              "offset": 0.875
+            },
+            {
+              "transform": "translate(-6px,0px) rotate(0deg)",
+              "offset": 1.0
+            }
+          ],
+          "easing": "linear"
+        },
+        {
+          "part": "foot-r",
+          "frames": [
+            {
+              "transform": "translate(6px,0px) rotate(0deg)",
+              "offset": 0.0
+            },
+            {
+              "transform": "translate(4px,-3px) rotate(5deg)",
+              "offset": 0.125
+            },
+            {
+              "transform": "translate(0px,-4.5px) rotate(0deg)",
+              "offset": 0.25
+            },
+            {
+              "transform": "translate(-4px,-3px) rotate(-5deg)",
+              "offset": 0.375
+            },
+            {
+              "transform": "translate(-6px,0px) rotate(0deg)",
+              "offset": 0.5
+            },
+            {
+              "transform": "translate(-3px,0px) rotate(0deg)",
+              "offset": 0.625
+            },
+            {
+              "transform": "translate(0px,0px) rotate(0deg)",
+              "offset": 0.75
+            },
+            {
+              "transform": "translate(3px,0px) rotate(0deg)",
+              "offset": 0.875
+            },
+            {
+              "transform": "translate(6px,0px) rotate(0deg)",
+              "offset": 1.0
+            }
+          ],
+          "easing": "linear"
+        },
+        {
+          "part": "arm-l",
+          "frames": [
+            {
+              "transform": "rotate(18deg)"
+            },
+            {
+              "transform": "rotate(-18deg)"
+            },
+            {
+              "transform": "rotate(18deg)"
+            }
+          ]
+        },
+        {
+          "part": "arm-r",
+          "frames": [
+            {
+              "transform": "rotate(-18deg)"
+            },
+            {
+              "transform": "rotate(18deg)"
+            },
+            {
+              "transform": "rotate(-18deg)"
+            }
+          ]
+        },
+        {
+          "part": "body",
+          "frames": [
+            {
+              "transform": "translateY(0px) rotate(0deg)"
+            },
+            {
+              "transform": "translateY(-1.5px) rotate(-1deg)"
+            },
+            {
+              "transform": "translateY(0px) rotate(0deg)"
+            },
+            {
+              "transform": "translateY(-1.5px) rotate(1deg)"
+            },
+            {
+              "transform": "translateY(0px) rotate(0deg)"
+            }
+          ]
+        },
+        {
+          "part": "stem",
+          "frames": [
+            {
+              "transform": "rotate(-3deg)"
+            },
+            {
+              "transform": "rotate(6deg)"
+            },
+            {
+              "transform": "rotate(-3deg)"
+            }
+          ]
+        },
+        {
+          "part": "eyes",
+          "frames": [
+            {
+              "transform": "scaleY(1)",
+              "offset": 0
+            },
+            {
+              "transform": "scaleY(1)",
+              "offset": 0.85
+            },
+            {
+              "transform": "scaleY(.1)",
+              "offset": 0.9
+            },
+            {
+              "transform": "scaleY(1)",
+              "offset": 0.95
+            },
+            {
+              "transform": "scaleY(1)",
+              "offset": 1
+            }
+          ],
+          "duration": 4200
+        },
+        {
+          "part": "skirt",
+          "frames": [
+            {
+              "transform": "rotate(0deg)"
+            },
+            {
+              "transform": "rotate(-2deg)"
+            },
+            {
+              "transform": "rotate(0deg)"
+            },
+            {
+              "transform": "rotate(2deg)"
+            },
+            {
+              "transform": "rotate(0deg)"
+            }
+          ]
+        }
+      ]
+    },
+    "idle-leaf": {
+      "duration": 2100,
+      "loop": false,
+      "tracks": [
+        {
+          "part": "stem",
+          "frames": [
+            {
+              "transform": "rotate(0deg)"
+            },
+            {
+              "transform": "rotate(-10deg)"
+            },
+            {
+              "transform": "rotate(8deg)"
+            },
+            {
+              "transform": "rotate(-5deg)"
+            },
+            {
+              "transform": "rotate(0deg)"
+            }
+          ]
+        },
+        {
+          "part": "eyes",
+          "frames": [
+            {
+              "transform": "translateY(0px)"
+            },
+            {
+              "transform": "translateY(-3px)"
+            },
+            {
+              "transform": "translateY(-3px)"
+            },
+            {
+              "transform": "translateY(0px)"
+            }
+          ]
+        },
+        {
+          "part": "body",
+          "frames": [
+            {
+              "transform": "rotate(0deg)"
+            },
+            {
+              "transform": "rotate(-1deg)"
+            },
+            {
+              "transform": "rotate(1deg)"
+            },
+            {
+              "transform": "rotate(0deg)"
+            }
+          ]
+        }
+      ]
+    },
+    "work-sketch": {
+      "duration": 2100,
+      "loop": true,
+      "tracks": [
+        {
+          "part": "arm-l",
+          "frames": [
+            {
+              "transform": "translate(18px,0px) rotate(-4deg)"
+            },
+            {
+              "transform": "translate(18px,-1px) rotate(-4deg)"
+            },
+            {
+              "transform": "translate(18px,0px) rotate(-4deg)"
+            }
+          ],
+          "duration": 2200
+        },
+        {
+          "part": "arm-r",
+          "frames": [
+            {
+              "transform": "translate(-26px,-7px) rotate(0deg)"
+            },
+            {
+              "transform": "translate(-19px,-10px) rotate(8deg)"
+            },
+            {
+              "transform": "translate(-28px,-5px) rotate(-4deg)"
+            },
+            {
+              "transform": "translate(-26px,-7px) rotate(0deg)"
+            }
+          ],
+          "duration": 650
+        },
+        {
+          "part": "stem",
+          "frames": [
+            {
+              "transform": "rotate(-9deg)"
+            },
+            {
+              "transform": "rotate(9deg)"
+            },
+            {
+              "transform": "rotate(-9deg)"
+            }
+          ],
+          "duration": 850
+        },
+        {
+          "part": "eyes",
+          "frames": [
+            {
+              "transform": "scaleY(1)",
+              "offset": 0
+            },
+            {
+              "transform": "scaleY(1)",
+              "offset": 0.85
+            },
+            {
+              "transform": "scaleY(.1)",
+              "offset": 0.9
+            },
+            {
+              "transform": "scaleY(1)",
+              "offset": 0.95
+            },
+            {
+              "transform": "scaleY(1)",
+              "offset": 1
+            }
+          ],
+          "duration": 4200
+        },
+        {
+          "part": "body",
+          "frames": [
+            {
+              "transform": "rotate(-2deg)"
+            },
+            {
+              "transform": "rotate(2deg)"
+            },
+            {
+              "transform": "rotate(-2deg)"
+            }
+          ],
+          "duration": 1400
+        },
+        {
+          "part": "skirt",
+          "frames": [
+            {
+              "transform": "rotate(-2deg)"
+            },
+            {
+              "transform": "rotate(2deg)"
+            },
+            {
+              "transform": "rotate(-2deg)"
+            }
+          ],
+          "duration": 1400
+        }
+      ]
+    },
+    "work-inspect": {
+      "duration": 2900,
+      "loop": true,
+      "tracks": [
+        {
+          "part": "arm-l",
+          "frames": [
+            {
+              "transform": "translate(18px,0px) rotate(-4deg)"
+            },
+            {
+              "transform": "translate(18px,-1px) rotate(-4deg)"
+            },
+            {
+              "transform": "translate(18px,0px) rotate(-4deg)"
+            }
+          ],
+          "duration": 2200
+        },
+        {
+          "part": "arm-r",
+          "frames": [
+            {
+              "transform": "translate(-26px,-7px)"
+            },
+            {
+              "transform": "translate(-26px,-7px)"
+            },
+            {
+              "transform": "translate(-26px,-7px)"
+            }
+          ]
+        },
+        {
+          "part": "stem",
+          "frames": [
+            {
+              "transform": "rotate(0deg)"
+            },
+            {
+              "transform": "rotate(10deg)"
+            },
+            {
+              "transform": "rotate(-8deg)"
+            },
+            {
+              "transform": "rotate(0deg)"
+            }
+          ]
+        },
+        {
+          "part": "eyes",
+          "frames": [
+            {
+              "transform": "scaleY(1)",
+              "offset": 0
+            },
+            {
+              "transform": "scaleY(1)",
+              "offset": 0.85
+            },
+            {
+              "transform": "scaleY(.1)",
+              "offset": 0.9
+            },
+            {
+              "transform": "scaleY(1)",
+              "offset": 0.95
+            },
+            {
+              "transform": "scaleY(1)",
+              "offset": 1
+            }
+          ],
+          "duration": 4200
+        },
+        {
+          "part": "body",
+          "frames": [
+            {
+              "transform": "rotate(0deg)"
+            },
+            {
+              "transform": "rotate(-6deg)"
+            },
+            {
+              "transform": "rotate(5deg)"
+            },
+            {
+              "transform": "rotate(0deg)"
+            }
+          ]
+        },
+        {
+          "part": "face",
+          "frames": [
+            {
+              "transform": "translateY(0px)"
+            },
+            {
+              "transform": "translate(2px,3px)"
+            },
+            {
+              "transform": "translate(-2px,3px)"
+            },
+            {
+              "transform": "translateY(0px)"
+            }
+          ]
+        }
+      ]
+    },
+    "work-frantic": {
+      "duration": 2100,
+      "loop": true,
+      "tracks": [
+        {
+          "part": "arm-l",
+          "frames": [
+            {
+              "transform": "translate(12px,3px) rotate(-12deg)"
+            },
+            {
+              "transform": "translate(12px,3px) rotate(-12deg)"
+            }
+          ]
+        },
+        {
+          "part": "arm-r",
+          "frames": [
+            {
+              "transform": "translate(-26px,-7px) rotate(-5deg)"
+            },
+            {
+              "transform": "translate(-26px,-7px) rotate(9deg)"
+            },
+            {
+              "transform": "translate(-26px,-7px) rotate(-5deg)"
+            }
+          ],
+          "duration": 300
+        },
+        {
+          "part": "body",
+          "frames": [
+            {
+              "transform": "rotate(-3deg)"
+            },
+            {
+              "transform": "rotate(3deg)"
+            },
+            {
+              "transform": "rotate(-3deg)"
+            }
+          ],
+          "duration": 1050
+        },
+        {
+          "part": "stem",
+          "frames": [
+            {
+              "transform": "rotate(-16deg)"
+            },
+            {
+              "transform": "rotate(14deg)"
+            },
+            {
+              "transform": "rotate(-16deg)"
+            }
+          ],
+          "duration": 700
+        },
+        {
+          "part": "skirt",
+          "frames": [
+            {
+              "transform": "rotate(3deg)"
+            },
+            {
+              "transform": "rotate(-3deg)"
+            },
+            {
+              "transform": "rotate(3deg)"
+            }
+          ],
+          "duration": 1050
+        }
+      ]
+    },
+    "work-frustrated": {
+      "duration": 2800,
+      "loop": true,
+      "tracks": [
+        {
+          "part": "arm-l",
+          "frames": [
+            {
+              "transform": "translate(12px,3px) rotate(-12deg)"
+            },
+            {
+              "transform": "translate(12px,3px) rotate(-12deg)"
+            }
+          ]
+        },
+        {
+          "part": "body",
+          "frames": [
+            {
+              "transform": "rotate(0deg)"
+            },
+            {
+              "transform": "rotate(-5deg)"
+            },
+            {
+              "transform": "rotate(4deg)"
+            },
+            {
+              "transform": "rotate(0deg)"
+            }
+          ]
+        },
+        {
+          "part": "arm-r",
+          "frames": [
+            {
+              "transform": "translate(-26px,-7px) rotate(0deg)"
+            },
+            {
+              "transform": "translate(-26px,-7px) rotate(-52deg)"
+            },
+            {
+              "transform": "translate(-26px,-7px) rotate(-46deg)"
+            },
+            {
+              "transform": "translate(-26px,-7px) rotate(0deg)"
+            }
+          ]
+        },
+        {
+          "part": "stem",
+          "frames": [
+            {
+              "transform": "rotate(0deg)"
+            },
+            {
+              "transform": "rotate(-22deg)"
+            },
+            {
+              "transform": "rotate(15deg)"
+            },
+            {
+              "transform": "rotate(0deg)"
+            }
+          ]
+        },
+        {
+          "part": "face",
+          "frames": [
+            {
+              "transform": "translateY(0px)"
+            },
+            {
+              "transform": "translate(-2px,-1px)"
+            },
+            {
+              "transform": "translate(2px,-1px)"
+            },
+            {
+              "transform": "translateY(0px)"
+            }
+          ]
+        },
+        {
+          "part": "skirt",
+          "frames": [
+            {
+              "transform": "rotate(0deg)"
+            },
+            {
+              "transform": "rotate(4deg)"
+            },
+            {
+              "transform": "rotate(-3deg)"
+            },
+            {
+              "transform": "rotate(0deg)"
+            }
+          ]
+        }
+      ]
+    },
+    "work-emo": {
+      "duration": 3800,
+      "loop": true,
+      "tracks": [
+        {
+          "part": "arm-l",
+          "frames": [
+            {
+              "transform": "translate(12px,3px) rotate(-12deg)"
+            },
+            {
+              "transform": "translate(12px,3px) rotate(-12deg)"
+            }
+          ]
+        },
+        {
+          "part": "body",
+          "frames": [
+            {
+              "transform": "rotate(4deg)"
+            },
+            {
+              "transform": "rotate(6deg)"
+            },
+            {
+              "transform": "rotate(4deg)"
+            }
+          ]
+        },
+        {
+          "part": "arm-r",
+          "frames": [
+            {
+              "transform": "translate(-26px,-7px) rotate(0deg)"
+            },
+            {
+              "transform": "translate(-26px,-7px) rotate(0deg)"
+            },
+            {
+              "transform": "translate(-26px,-7px) rotate(4deg)"
+            },
+            {
+              "transform": "translate(-26px,-7px) rotate(0deg)"
+            }
+          ]
+        },
+        {
+          "part": "stem",
+          "frames": [
+            {
+              "transform": "rotate(22deg)"
+            },
+            {
+              "transform": "rotate(28deg)"
+            },
+            {
+              "transform": "rotate(22deg)"
+            }
+          ]
+        },
+        {
+          "part": "face",
+          "frames": [
+            {
+              "transform": "translateY(1px)"
+            },
+            {
+              "transform": "translateY(3px)"
+            },
+            {
+              "transform": "translateY(1px)"
+            }
+          ]
+        },
+        {
+          "part": "skirt",
+          "frames": [
+            {
+              "transform": "rotate(-2deg)"
+            },
+            {
+              "transform": "rotate(-3deg)"
+            },
+            {
+              "transform": "rotate(-2deg)"
+            }
+          ]
+        }
+      ]
+    },
+    "done": {
+      "duration": 2000,
+      "loop": false,
+      "tracks": [
+        {
+          "part": "direction",
+          "frames": [
+            {
+              "transform": "translateY(0px)"
+            },
+            {
+              "transform": "translateY(-8px)"
+            },
+            {
+              "transform": "translateY(0px)"
+            }
+          ]
+        },
+        {
+          "part": "prop",
+          "frames": [
+            {
+              "transform": "translateY(0px)"
+            },
+            {
+              "transform": "translateY(-7px)"
+            },
+            {
+              "transform": "translateY(-5px)"
+            }
+          ]
+        },
+        {
+          "part": "arm-l",
+          "frames": [
+            {
+              "transform": "translate(12px,3px) rotate(-12deg)"
+            },
+            {
+              "transform": "translate(12px,-4px) rotate(-12deg)"
+            },
+            {
+              "transform": "translate(12px,-2px) rotate(-12deg)"
+            }
+          ]
+        },
+        {
+          "part": "arm-r",
+          "frames": [
+            {
+              "transform": "translate(-26px,-7px)"
+            },
+            {
+              "transform": "translate(-26px,-14px)"
+            },
+            {
+              "transform": "translate(-26px,-12px)"
+            }
+          ]
+        },
+        {
+          "part": "stem",
+          "frames": [
+            {
+              "transform": "rotate(0deg)"
+            },
+            {
+              "transform": "rotate(-15deg)"
+            },
+            {
+              "transform": "rotate(8deg)"
+            }
+          ]
+        },
+        {
+          "part": "skirt",
+          "frames": [
+            {
+              "transform": "rotate(0deg)"
+            },
+            {
+              "transform": "rotate(4deg)"
+            },
+            {
+              "transform": "rotate(-2deg)"
+            }
+          ]
+        },
+        {
+          "part": "work-accent",
+          "frames": [
+            {
+              "opacity": 0
+            },
+            {
+              "opacity": 1
+            },
+            {
+              "opacity": 0.65
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "design": {
+    "concept": "穿小裙子、戴蝴蝶结的橘子妹妹 / 点子收集员",
+    "palette": [
+      "#ECA047",
+      "#879D61",
+      "#F5E8CC",
+      "#3E3C31",
+      "#B97832",
+      "#C77764",
+      "#BCAA8D"
+    ],
+    "anchor": [
+      110,
+      202
+    ],
+    "viewBox": [
+      0,
+      0,
+      220,
+      240
+    ],
+    "artwork": "Original artwork created for this workspace.",
+    "style": "平涂橘黄、深色轮廓、小眼睛与橘皮雀斑；奶油色小裙子、豆沙色蝴蝶结，保留斜叶与小鞋",
+    "bodyPlan": "扁圆橘子、轻微分瓣与顶部凹口、短腿奶油小鞋；比芽团更圆、更轻巧",
+    "outfit": {
+      "dress": "奶油色背带小裙子，豆沙色腰带和细裙边",
+      "bow": "叶子根部的豆沙色蝴蝶结",
+      "attachment": "裙子随 body，裙摆围绕腰部轻摆；蝴蝶结随 stem",
+      "replaces": "原小绿领巾"
+    },
+    "workEmotions": "职业动作、疯狂赶工、抓狂返工、emo 工作。表情和肢体联动；不包含完成庆祝。",
+    "completion": "done 是显式触发的独立完成状态，庆祝一次后停留在完成姿态。"
+  },
+  "idleLabels": {
+    "idle-bounce": "踮踮小脚",
+    "idle-leaf": "晃晃橘叶",
+    "idle-think": "想个点子"
+  },
+  "workVariants": [
+    "work-sketch",
+    "work-inspect",
+    "work-frantic",
+    "work-frustrated",
+    "work-emo"
+  ],
+  "workLabels": {
+    "work-sketch": "刷刷画草图",
+    "work-inspect": "歪头看画",
+    "work-frantic": "疯狂画到飞起",
+    "work-frustrated": "抓狂改草图",
+    "work-emo": "emo 还在画"
+  }
+}

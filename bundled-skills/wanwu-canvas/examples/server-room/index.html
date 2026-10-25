@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>服务端规则实验室</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#101817;color:#edf5ee;font:16px/1.6 system-ui,sans-serif}main{max-width:940px;margin:auto;padding:clamp(20px,4vw,48px)}.eyebrow{font-size:12px;letter-spacing:.15em;color:#b3cb9a}h1{font-size:clamp(28px,5vw,44px);line-height:1.2;margin:14px 0}p{color:#aebeb5}.status{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border:1px solid #405248;border-radius:30px;font-size:13px}.status:before{content:'';width:7px;height:7px;border-radius:50%;background:#b3cb9a}.stage{margin:30px 0 20px;padding:24px;border:1px solid #3a5044;border-radius:20px;background:#1a2922}.lane{position:relative;height:50px;border-bottom:1px dashed #526451;margin:8px 0}.car{position:absolute;width:22px;height:30px;top:10px;border-radius:5px;background:#c9e49a;transition:left .1s linear}.bar{height:12px;border-radius:8px;background:#3a5044;overflow:hidden;margin:16px 0}.fill{height:100%;background:#c9e49a}.controls{display:flex;flex-wrap:wrap;gap:10px}button{min-height:46px;min-width:60px;padding:10px 18px;border:1px solid #526451;border-radius:12px;background:#233b2c;color:#edf5ee;font:inherit;cursor:pointer;touch-action:none}button:active{background:#526451}button:disabled{opacity:.4;cursor:default}.facts{display:flex;gap:24px;flex-wrap:wrap;color:#b3cb9a;font-size:13px}pre{white-space:pre-wrap;word-break:break-word;font-size:12px;color:#aebeb5}details{margin-top:24px}#error{color:#f0b6a8}.subtle{font-size:13px}
+</style></head><body><main>
+<div class="eyebrow">WANWU · SERVER ROOMS</div><h1>规则在服务端运行。</h1><p>打开两个窗口，观察同一个房间。关闭其中一个，另一个仍能继续。</p>
+<span class="status" id="status">正在连接</span><section class="stage"><div class="facts"><span id="kind">—</span><span id="clock">—</span><span id="members">—</span></div><div id="world"></div></section>
+<div class="controls" id="controls"></div><p class="subtle" id="hint"></p><p id="error" role="alert"></p>
+<details><summary>查看服务端快照</summary><pre id="snapshot"></pre></details>
+<p class="subtle">这是通用机制示例。切换发布配置的 entry，可替换为竞速、RPG 或塔防规则。</p>
+</main><script>
+let self,kind,sequence=0,connected=false,state,drive={throttle:0,steer:0},towerX=20;
+const $=id=>document.getElementById(id),fail=e=>{$('error').textContent=e.message;};
+function input(data){if(!connected)return;return Wanwu.rooms.input({...data,seq:++sequence}).catch(fail);}
+function button(label,fn){const b=document.createElement('button');b.textContent=label;b.disabled=!connected;b.onclick=fn;$('controls').append(b);return b;}
+function controls(){
+ $('controls').replaceChildren();
+ if(kind==='race'){
+  const b=button('按住加速',()=>{});b.onpointerdown=e=>{b.setPointerCapture(e.pointerId);drive.throttle=1;void input({type:'drive',...drive});};b.onpointerup=b.onpointercancel=()=>{drive.throttle=0;void input({type:'drive',...drive});};
+  button('靠左',()=>{drive.steer=-1;void input({type:'drive',...drive});});button('回正',()=>{drive.steer=0;void input({type:'drive',...drive});});button('靠右',()=>{drive.steer=1;void input({type:'drive',...drive});});$('hint').textContent='服务器计算加速、阻力、碰撞和圈数；每秒重复发送控制状态。';
+ }else if(kind==='rpg'){button('攻击',()=>input({type:'attack'}));button('治疗 · 5 金币',()=>input({type:'heal'}));$('hint').textContent='伤害、攻击冷却、怪物反击和奖励均由服务器决定。';}
+ else{button('建造防御塔 · 25',()=>{void input({type:'build',x:towerX});towerX=towerX>=80?20:towerX+20;});$('hint').textContent='服务器负责波次、敌人移动、攻击范围判定和资源扣除。';}
+}
+function render(s){
+ state=s;if(kind!==s.kind){kind=s.kind;controls();}
+ $('kind').textContent=({race:'竞速规则',rpg:'RPG 规则','tower-defense':'塔防规则'})[kind]||kind;$('clock').textContent='服务端时间 '+s.time.toFixed(1)+'s';$('snapshot').textContent=JSON.stringify(s,null,2);
+ const world=$('world');world.replaceChildren();
+ if(kind==='race')for(const [id,c]of Object.entries(s.players)){const row=document.createElement('div');row.className='lane';row.textContent=(id===self?'你':'玩家')+' · '+c.lap+'/'+s.laps+' 圈';const car=document.createElement('i');car.className='car';car.style.left=(c.distance%s.trackLength/s.trackLength*90)+'%';if(id!==self)car.style.background='#99beca';row.append(car);world.append(row);}
+ else if(kind==='rpg'){const text=document.createElement('p');text.textContent='怪物生命 '+s.enemy.hp+' / '+s.enemy.maxHp+' · 你的金币 '+(s.players[self]?.gold||0);world.append(text);const bar=document.createElement('div');bar.className='bar';const fill=document.createElement('div');fill.className='fill';fill.style.width=s.enemy.hp+'%';bar.append(fill);world.append(bar);}
+ else{const text=document.createElement('p');text.textContent='第 '+s.wave+' 波 · '+s.gold+' 金币 · '+s.lives+' 生命';world.append(text);const row=document.createElement('div');row.className='lane';for(const e of s.enemies){const dot=document.createElement('i');dot.className='car';dot.style.left=e.x+'%';dot.style.background='#e2a78c';row.append(dot);}for(const t of s.towers){const dot=document.createElement('b');dot.textContent='♜';dot.style.cssText='position:absolute;top:-10px;left:'+t.x+'%';row.append(dot);}world.append(row);}
+}
+Wanwu.rooms.subscribe(m=>{$('members').textContent=m.players.length+' 人在线';render(m.state);});
+Wanwu.rooms.onStatus(m=>{connected=m.status==='connected';$('status').textContent=({connecting:'正在连接',connected:'服务端在线',reconnecting:'正在重连',disconnected:'已离开',error:'连接异常'})[m.status]||m.status;if(m.message)$('error').textContent=m.message;if(m.player)self=m.player.id;if(kind)controls();});
+Wanwu.rooms.join('demo').then(m=>{self=m.player.id;render(m.state);}).catch(fail);
+setInterval(()=>{if(kind==='race'&&connected)void input({type:'drive',...drive});},150);
+window.addEventListener('blur',()=>{drive={throttle:0,steer:0};if(kind==='race')void input({type:'drive',...drive});});
+Wanwu.live.provide(()=>({kind,connected,state}));
+</script></body></html>

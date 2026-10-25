@@ -1,0 +1,7 @@
+interface:
+  display_name: "万物同步助手"
+  short_description: "同步消息、技能与待办，更新自己的角色和场景，读取成员形象与办公室供合照参考"
+  icon_small: "./assets/skill-icon.svg"
+  icon_large: "./assets/skill-icon.svg"
+  brand_color: "#578B7A"
+  default_prompt: "使用 $wanwu-skills-sync，按需取得项目与权限，完成我指定的万物操作。"

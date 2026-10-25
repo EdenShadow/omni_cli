@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>小小同事 · 角色工坊</title>
+<style>
+:root{font-family:"Avenir Next","PingFang SC",system-ui,sans-serif;color:#334f47;background:#eef3ef;font-synthesis:none}*{box-sizing:border-box}body{margin:0}button{font:inherit;cursor:pointer}button:focus-visible,input:focus-visible{outline:3px solid #478376;outline-offset:4px}header{max-width:1160px;margin:auto;padding:32px 34px 20px;display:flex;align-items:center;justify-content:space-between}.brand{font-weight:750;letter-spacing:.08em;font-size:19px}.brand span{font-weight:400;font-size:13px;color:#6b8078;margin-left:16px}.pill{font-size:12px;background:#e0e9df;padding:8px 12px;border-radius:20px}main{max-width:1160px;margin:auto;padding:16px 34px 40px}.hero{display:grid;grid-template-columns:1.35fr 1fr;background:#fafcf9;border:1px solid #d9e3db;border-radius:28px;overflow:hidden;min-height:540px}.stage{position:relative;display:flex;align-items:center;justify-content:center;background:#e4ede3;min-height:480px;transition:background .3s}.stage::before{content:"";position:absolute;width:330px;height:330px;border-radius:50%;background:#f5f8ef}.stage.dark::before{background:#37544c}.stage.dark{background:#243e38}.ground{position:absolute;width:75%;height:1px;background:#698e7926;top:76%}#hero{width:340px;height:340px;z-index:1}.stage-note{position:absolute;bottom:25px;font-size:12px;color:#658374}.stamp{position:absolute;left:28px;top:26px;display:flex;gap:8px;align-items:center;font-size:12px;color:#658374}.dot{width:6px;height:6px;background:#759f73;border-radius:50%}.swatches{position:absolute;right:24px;bottom:24px;display:flex;gap:8px}.swatches button{width:22px;height:22px;border:2px solid #fff;border-radius:50%;box-shadow:0 0 0 1px #98ad9c}.info{padding:44px 36px;display:flex;flex-direction:column;justify-content:center}.job{font-size:13px;color:#748b7e}h1{font-size:52px;letter-spacing:.08em;line-height:1.15;margin:12px 0 18px}p{font-size:15px;line-height:1.9;color:#73867c;margin:0 0 22px;max-width:30em}.actions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.actions button,.minor button{border:1px solid #dce6dd;background:#fff;border-radius:12px;padding:12px 5px;color:#60776b;font-size:13px}.actions button[aria-pressed=true]{background:#446d5c;color:#fff;border-color:#446d5c}.subline{margin:18px 0 12px;font-size:12px;color:#7e8e83}.minor{display:flex;gap:8px;flex-wrap:wrap}.minor button{padding:8px 12px;font-size:12px}.transport{margin-top:24px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid #e3e9e0;padding-top:18px;gap:10px}#status{font-size:12px;color:#698570}#pause{border:0;background:none;color:#446d5c;font-size:13px;padding:6px}.lineup{margin-top:30px;display:flex;justify-content:space-between;align-items:center;gap:22px}.lineup-copy h2{font-size:20px;margin:0 0 10px}.lineup-copy p{font-size:13px;margin:0}.sizes{display:flex;gap:22px;align-items:end}.size{text-align:center;font-size:11px;color:#799082}.size office-character{display:block;margin:auto}.footer{display:flex;justify-content:space-between;gap:20px;border-top:1px solid #d9e3db;margin-top:24px;padding-top:20px;font-size:12px;color:#85948a}.footer a{color:#587d68;text-decoration:none} @media(max-width:750px){header{padding:22px}.brand span{display:none}main{padding:6px 16px 24px}.hero{grid-template-columns:1fr}.stage{min-height:320px}#hero{width:280px;height:280px}.stage::before{width:260px;height:260px}.info{padding:25px}h1{font-size:40px}.lineup{flex-direction:column;align-items:start}.sizes{width:100%;justify-content:space-around}.footer{flex-direction:column}.pill{font-size:11px}}
+.stage{background:#F7F4EA}.stage::before{display:none}.stage.dark{background:#4B5046}.stage.dark .stamp,.stage.dark .stage-note{color:#EAE5D6}
+</style></head>
+<body>
+<header><div class="brand">小小同事<span>AI 办公室角色工坊</span></div><div class="pill">第一位同事，来报到</div></header>
+<main>
+<section class="hero">
+<div class="stage" id="stage"><div class="stamp"><span class="dot"></span>原创角色 / 芽团</div><div class="ground"></div>
+<office-character id="hero" src="./example/character.json" seed="42" state="idle"></office-character>
+<div class="stage-note">小小一只，也有自己的小习惯。</div><div class="swatches"><button aria-label="浅色背景" style="background:#e4ede3" data-bg="light"></button><button aria-label="深色背景" style="background:#243e38" data-bg="dark"></button></div></div>
+<div class="info"><div class="job">灵感整理员</div><h1>你好，<br>我是芽团。</h1><p>把散落的灵感，悄悄种成小森林。<br>看看来信，再抖抖头顶的小嫩芽。</p>
+<div class="actions" aria-label="角色动作">
+<button data-state="idle" aria-pressed="true">自在待机</button><button data-state="walk-right" aria-pressed="false">向右走</button><button data-state="walk-left" aria-pressed="false">向左走</button><button data-state="working" aria-pressed="false">认真工作</button><button data-state="tired" aria-pressed="false">有点困了</button><button data-state="done" aria-pressed="false">搞定了</button><button data-state="sitting" aria-pressed="false">坐下玩一会儿</button></div>
+<div class="subline">待机时随机出现的小习惯：</div><div class="minor"></div>
+<div class="work-preview" hidden><div class="subline">工作也有小情绪，随机出现，也可以点选：</div><div class="minor work-actions" aria-label="角色专属工作动作"></div></div>
+<div class="done-preview" hidden><div class="subline">搞定了，持续随机庆祝：</div><div class="minor done-actions" aria-label="角色专属庆祝动作"></div></div>
+<div class="sit-preview" hidden><div class="subline">坐下玩耍，随机小动作：</div><div class="minor sit-actions"></div></div><div class="transport"><span id="status" role="status">正在迎接新同事…</span><div><button id="reduce" aria-pressed="false" style="border:0;background:none;color:#698570;font-size:12px">减少动态</button><button id="pause">暂停动作</button></div></div></div></section>
+<div class="footer"><span>芽团是风格样例。下一位同事，可以有完全不同的模样。</span><a href="./example/character.svg" target="_blank" rel="noopener">查看矢量母版</a></div>
+</main>
+<script type="module">
+import './office-character.js';
+const hero=document.querySelector('#hero');
+const names={'idle':'自在待机 · 随机小动作','walk-left':'迈着小步向左走','walk-right':'迈着小步向右走','working':'正在整理今天的灵感','tired':'电量不足，打个小盹','done':'搞定了！这一份，交给你啦。','idle-peek':'看看有什么新鲜事','idle-letter':'看看来信','idle-sprout':'抖抖嫩芽'};
+hero.addEventListener('characterready',({detail})=>{
+ document.querySelector('.sit-actions').replaceChildren(...(detail.sitVariants||[]).map(({id,label})=>{names[id]=label;const b=document.createElement('button');b.textContent=label;b.onclick=()=>hero.playSit(id);return b;}));
+ document.querySelector('.done-actions').replaceChildren(...(detail.doneVariants||[]).map(({id,label})=>{names[id]=label;const b=document.createElement('button');b.textContent=label;b.onclick=()=>hero.playDone(id);return b;}));
+ document.querySelector('.work-actions').replaceChildren(...(detail.workVariants||[]).map(({id,label})=>{names[id]=label;const b=document.createElement('button');b.textContent=label;b.onclick=()=>hero.playWork(id);return b;}));
+ document.querySelector('.minor').replaceChildren(...detail.idleVariants.map(({id,label})=>{
+  names[id]=label;const b=document.createElement('button');b.textContent=label;b.dataset.idle=id;b.onclick=()=>hero.playIdle(id);return b;
+ }));
+});
+hero.addEventListener('characterstatechange',({detail})=>{
+  document.querySelector('.work-preview').hidden=detail.state!=='working';
+  document.querySelector('.sit-preview').hidden=detail.state!=='sitting';
+  document.querySelector('.done-preview').hidden=detail.state!=='done';
+  document.querySelector('#status').textContent=names[detail.clip]||names[detail.state];
+  document.querySelectorAll('[data-state]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.state===detail.state)));
+});
+hero.addEventListener('charactererror',e=>{document.querySelector('#status').textContent=e.detail.message;});
+document.querySelectorAll('[data-state]').forEach(b=>b.onclick=()=>hero.setState(b.dataset.state));
+
+document.querySelectorAll('[data-bg]').forEach(b=>b.onclick=()=>document.querySelector('#stage').classList.toggle('dark',b.dataset.bg==='dark'));
+document.querySelector('#reduce').onclick=()=>{
+  const reduced=!hero.hasAttribute('reduced-motion');
+  document.querySelectorAll('office-character').forEach(el=>el.toggleAttribute('reduced-motion',reduced));
+  document.querySelector('#reduce').setAttribute('aria-pressed',String(reduced));
+};
+document.querySelector('#pause').onclick=()=>{
+  const paused=!hero.hasAttribute('paused');
+  document.querySelectorAll('office-character').forEach(el=>el.toggleAttribute('paused',paused));
+  document.querySelector('#pause').textContent=paused?'继续动作':'暂停动作';
+};
+</script></body></html>

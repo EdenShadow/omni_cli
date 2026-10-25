@@ -1,0 +1,1 @@
+export function createCollaborationClient(options:{ticket:(body:{document:string;clientId:string})=>Promise<{path?:string;url?:string}>;emit?:(event:string,data:any)=>void;clientId?:string}):{join:(document?:string)=>Promise<any>;transient:(kind:string,key?:string,data?:unknown)=>boolean;commit:(batch:unknown)=>Promise<any>;leave:()=>{ok:boolean};close:()=>void};

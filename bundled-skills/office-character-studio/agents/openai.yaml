@@ -1,0 +1,6 @@
+interface:
+  icon_small: "./assets/skill-icon.svg"
+  icon_large: "./assets/skill-icon.svg"
+  display_name: "AI 项目角色工坊"
+  short_description: "结合当前场景创建或编辑原创角色，支持独特剪影、换装、情绪工作、持续庆祝和随机坐姿"
+  default_prompt: "使用 $office-character-studio 先读取当前项目场景和已有角色，再创建或编辑风格协调、剪影独特的 Q 萌成员；交付七状态、专属随机待机、大幅挥臂、倾身且节奏鲜明的疯狂/抓狂/emo 工作、持续随机庆祝和坐下玩耍，检查地图实际尺寸与全部动作后接入应用。"

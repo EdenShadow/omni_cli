@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AI 协作画布</title>
+<style>
+:root{color-scheme:light dark;--bg:#f4f3f0;--card:#fff;--ink:#29282c;--line:#dfdce5;--muted:#797581;--accent:#715ac2}*{box-sizing:border-box}body{margin:0;font:14px/1.5 system-ui;color:var(--ink);background:var(--bg);overflow:hidden}button,input,textarea{font:inherit}button{cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:9px 13px;min-height:40px}button:disabled{opacity:.5;cursor:default}button.primary{background:var(--accent);color:white;border-color:var(--accent)}header.top{position:fixed;z-index:20;inset:0 0 auto;padding:15px 22px;display:flex;align-items:center;gap:10px;background:var(--card);border-bottom:1px solid var(--line)}h1{font-size:17px;margin:0 auto 0 0}#viewport{position:absolute;inset:72px 0 0;overflow:hidden;touch-action:none;background-image:radial-gradient(var(--line) 1px,transparent 1px);background-size:24px 24px}#space{position:absolute;transform-origin:0 0}.node{position:absolute;width:320px;background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 6px 22px #00000008;overflow:hidden}.node>header{padding:13px 16px;border-bottom:1px solid var(--line);cursor:grab;user-select:none;font-weight:650;display:flex;justify-content:space-between;gap:12px}.node .body{padding:16px}.node p{margin:0 0 10px;overflow-wrap:anywhere}.node small{color:var(--muted)}textarea{display:block;resize:vertical;width:100%;min-height:90px;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px;color:var(--ink);margin:12px 0}pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:270px;overflow:auto;font:13px/1.65 system-ui;margin:12px 0 0}label{display:flex;align-items:center;gap:8px;margin:10px 0}#notice{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:25;max-width:90%;background:var(--ink);color:var(--card);padding:10px 18px;border-radius:12px}#notice:empty{display:none}.help{position:fixed;bottom:18px;right:18px;z-index:15;color:var(--muted);font-size:12px;pointer-events:none}.row{display:flex;gap:8px;align-items:center}.status{font-size:12px;color:var(--muted)}#viewport.drag-over{outline:3px dashed var(--accent);outline-offset:-8px}.node img{max-width:100%;max-height:160px;object-fit:contain;border-radius:8px}@media(prefers-color-scheme:dark){:root{--bg:#19191d;--card:#25252b;--ink:#eeedf2;--line:#414048;--muted:#b3adbc;--accent:#9176dc}}@media(max-width:600px){header.top{padding:10px;flex-wrap:wrap}h1{font-size:15px}.help{display:none}#viewport{top:106px}.node{width:280px}}
+</style></head><body>
+<header class="top"><h1>AI 协作画布</h1><button id="upload">添加附件</button><button id="new" class="primary">＋ AI 任务</button><button id="reset">归位</button><input id="files" type="file" multiple hidden></header>
+<main id="viewport" aria-label="可拖动的协作画布"><div id="space"></div></main><div id="notice" role="status"></div><div class="help">拖入附件 · 勾选素材后创建任务 · 拖空白移动 · 滚轮缩放</div>
+<script>
+(async()=>{
+ const context=await Wanwu.ready;
+ const $=id=>document.getElementById(id),notice=text=>$('notice').textContent=text;
+ if(!context.taskBridge||!context.uploadManager){notice('请升级万物客户端和服务端后使用 AI 协作画布');return;}
+ const nodes=Wanwu.data.collection('ai_nodes'),records=new Map(),selected=new Set(),watchers=new Map(),writes=new Map(),submissions=new Set(),drafts=new Map();
+ let camera={x:80,y:60,scale:1},reloadTimer,drag;
+ const terminal=s=>['done','failed','cancelled'].includes(s);
+ const label=s=>({submitting:'正在提交',queued:'排队中',running:'执行中',done:'已完成',failed:'执行失败',cancelled:'已取消',unavailable:'连接中断，点击恢复'})[s]||s;
+ const center=()=>({x:(innerWidth/2-camera.x)/camera.scale-160,y:(innerHeight/2-camera.y-72)/camera.scale-100});
+ function transform(){$('space').style.transform=`translate(${camera.x}px,${camera.y}px) scale(${camera.scale})`;}
+ function change(id,patch){const pending=(writes.get(id)||Promise.resolve()).catch(()=>{}).then(async()=>{const saved=await nodes.update(id,patch);records.set(id,saved);render(saved);return saved;});writes.set(id,pending);return pending;}
+ function run(fn){return Promise.resolve().then(fn).catch(e=>notice(e.message));}
+ async function reload(){
+  const list=await nodes.list();for(const row of list){if((records.get(row.id)?.revision||0)>row.revision)continue;records.set(row.id,row);render(row);}
+  for(const id of records.keys())if(!list.some(r=>r.id===id)){records.delete(id);document.getElementById('node-'+id)?.remove();watchers.get(id)?.();watchers.delete(id);}
+ }
+ async function attachFiles(files,point=center()){
+  for(const [index,file] of [...files].entries()){
+   notice('正在上传 '+file.name);
+   const attached=await Wanwu.files.upload(file,{onProgress:p=>notice(`正在上传 ${file.name} · ${p.total?Math.floor(p.received/p.total*100):100}%`)});
+   const row=await nodes.create({type:'file',fileId:attached.id,name:attached.path,mime:attached.mime,size:attached.size,storage:attached.storage,x:point.x+index*35,y:point.y+index*35},{id:'file_'+attached.id});
+   records.set(row.id,row);selected.add(attached.id);render(row);
+   notice(attached.storage==='cos'?'已上传云存储':'已保存到项目服务器');
+  }
+ }
+ function watch(row){
+  const data=row.data;if(!data.taskId||data.ownerId!==context.viewer.id||terminal(data.status)||watchers.has(row.id))return;
+  let output=data.output||'',sequence=Promise.resolve(),lastStatus=data.status;
+  const off=Wanwu.sessions.watch(data.taskId,task=>{
+   sequence=sequence.then(async()=>{
+    if(task.status==='unavailable'){notice(task.error);watchers.delete(row.id);return;}
+    // A snapshot message replaces its previous value; deltas append to that message.
+    const messages={...(records.get(row.id)?.data.messages||{})};
+    for(const e of task.events||[]){
+     const p=e.payload,key=p.id||p.messageId||String(e.seq);
+     if(p.role==='assistant'&&p.kind==='message')messages[key]=p.text||'';
+     if(p.role==='assistant'&&p.kind==='delta')messages[key]=(messages[key]||'')+(p.text||'');
+    }
+    let budget=48000;for(const key of Object.keys(messages).reverse()){const value=messages[key].slice(-budget);budget-=value.length;if(value)messages[key]=value;else delete messages[key];}output=Object.values(messages).join('\n\n').slice(-48000);
+    if(task.cursor!==(records.get(row.id)?.data.cursor||0)||task.status!==lastStatus){
+     lastStatus=task.status;await change(row.id,{status:task.status,cursor:task.cursor,messages,output,error:task.error||''});
+    }
+    if(terminal(task.status)){watchers.delete(row.id);notice(task.status==='done'?'AI 任务已完成':'任务已结束：'+label(task.status));}
+   }).catch(e=>notice(e.message));
+  },{after:data.cursor||0});watchers.set(row.id,off);
+ }
+ function render(row){
+  let el=document.getElementById('node-'+row.id);
+  if(el?.contains(document.activeElement)&&document.activeElement.tagName==='TEXTAREA'&&!row.data.taskId)return;
+  if(!el){el=document.createElement('article');el.className='node';el.id='node-'+row.id;$('space').append(el);}
+  const d=row.data;el.style.left=d.x+'px';el.style.top=d.y+'px';el.replaceChildren();
+  const header=document.createElement('header');header.textContent=d.type==='file'?'附件':'AI 任务';
+  header.onpointerdown=e=>{if(e.button)return;e.stopPropagation();header.setPointerCapture(e.pointerId);drag={id:row.id,x:e.clientX,y:e.clientY,ox:d.x,oy:d.y};};
+  header.onpointermove=e=>{if(drag?.id!==row.id)return;el.style.left=drag.ox+(e.clientX-drag.x)/camera.scale+'px';el.style.top=drag.oy+(e.clientY-drag.y)/camera.scale+'px';};
+  header.onpointerup=()=>{if(drag?.id!==row.id)return;drag=null;run(()=>change(row.id,{x:parseFloat(el.style.left),y:parseFloat(el.style.top)}));};
+  header.onpointercancel=()=>{drag=null;render(row);};el.append(header);
+  const body=document.createElement('div');body.className='body';el.append(body);
+  const text=(tag,value)=>{const node=document.createElement(tag);node.textContent=value;body.append(node);return node;};
+  const button=(title,fn)=>{const b=document.createElement('button');b.textContent=title;b.onclick=()=>run(fn);body.append(b);return b;};
+  if(d.type==='file'){
+   text('p',d.name);text('small',`${Math.ceil(d.size/1024)} KB · ${d.storage==='cos'?'云存储':'项目服务器'}`);
+   const l=document.createElement('label'),check=document.createElement('input');check.type='checkbox';check.checked=selected.has(d.fileId);check.onchange=()=>check.checked?selected.add(d.fileId):selected.delete(d.fileId);l.append(check,document.createTextNode('用于下一个 AI 任务'));body.append(l);
+   button('下载',()=>Wanwu.files.download(d.fileId));return;
+  }
+  const pick=button(d.session?'@ '+(d.session.mentionAlias||d.session.title):'@ 选择一个会话',async()=>{const session=await Wanwu.sessions.pick();if(session)await change(row.id,{session});});pick.disabled=!!d.taskId;
+  const prompt=document.createElement('textarea');prompt.placeholder='希望 AI 用这些素材做什么？';prompt.value=drafts.get(row.id)??d.prompt??'';prompt.disabled=!!d.taskId;prompt.setAttribute('aria-label','任务内容');body.append(prompt);
+  prompt.oninput=()=>{drafts.set(row.id,prompt.value);records.set(row.id,{...records.get(row.id),data:{...records.get(row.id).data,prompt:prompt.value}});};
+  prompt.onblur=()=>{if(!d.taskId)run(()=>change(row.id,{prompt:prompt.value}));};
+  prompt.onkeydown=e=>{if(e.key==='@'&&!d.session){e.preventDefault();pick.click();}};
+  text('small',`${(d.fileIds||[]).length} 个附件 · ${d.session?.deviceName||'选择设备上的会话'}`);
+  const status=text('p',label(d.status||'尚未运行'));status.className='status';
+  if(!d.taskId)button('运行任务',async()=>{
+   const current={...records.get(row.id).data,prompt:drafts.get(row.id)??records.get(row.id).data.prompt};
+   if(!current.session||!current.prompt?.trim())throw Error('请选择会话并填写任务');
+   if(current.taskId||submissions.has(row.id))throw Error('此任务已经提交，请恢复状态');
+   submissions.add(row.id);
+   const taskId=Wanwu.uuid();
+   const taskPrompt=current.prompt+'\n\n当前万物画布 ID：'+context.canvas.id+'。如任务需要交付文件，请使用 wanwu-canvas Skill 的 attach 将结果上传回这张画布，并说明结果。';
+   try{const saved=await change(row.id,{taskId,taskPrompt,prompt:current.prompt,ownerId:context.viewer.id,status:'submitting'});
+   await Wanwu.sessions.run(current.session.id,taskPrompt,{requestId:taskId,fileIds:current.fileIds||[]});watch(saved);}
+   catch(error){notice(error.message);await change(row.id,{error:error.message,status:'unavailable'});}finally{submissions.delete(row.id);}
+  }).className='primary';
+  else if(d.ownerId===context.viewer.id){
+   if(!terminal(d.status))button('恢复状态',async()=>{
+    watchers.get(row.id)?.();watchers.delete(row.id);
+    try{await Wanwu.sessions.status(d.taskId);}
+    catch(error){if(error.status!==404)throw error;await Wanwu.sessions.run(d.session.id,d.taskPrompt||d.prompt,{requestId:d.taskId,fileIds:d.fileIds||[]});}
+    watch(records.get(row.id));
+   });
+   if(!terminal(d.status))button('取消任务',()=>Wanwu.sessions.cancel(d.taskId));
+  }
+  if(d.error)text('p',d.error);
+  if(d.output)text('pre',d.output);
+  watch(row);
+ }
+ $('new').onclick=()=>run(async()=>{const material=[...records.values()].find(r=>r.data.type==='file'&&selected.has(r.data.fileId));const point=material?{x:material.data.x+350,y:material.data.y}:center();const row=await nodes.create({type:'task',...point,prompt:'',fileIds:[...selected],status:'尚未运行'});records.set(row.id,row);render(row);});
+ $('upload').onclick=()=>$('files').click();$('files').onchange=()=>{const files=[...$('files').files];$('files').value='';run(()=>attachFiles(files));};
+ $('viewport').ondragover=e=>{e.preventDefault();$('viewport').classList.add('drag-over');};$('viewport').ondragleave=()=>$('viewport').classList.remove('drag-over');
+ $('viewport').ondrop=e=>{e.preventDefault();$('viewport').classList.remove('drag-over');const rect=$('viewport').getBoundingClientRect();run(()=>attachFiles(e.dataTransfer.files,{x:(e.clientX-rect.x-camera.x)/camera.scale,y:(e.clientY-rect.y-camera.y)/camera.scale}));};
+ $('viewport').onpointerdown=e=>{if(e.target!==$('viewport'))return;$('viewport').setPointerCapture(e.pointerId);drag={x:e.clientX,y:e.clientY,ox:camera.x,oy:camera.y};};
+ $('viewport').onpointermove=e=>{if(!drag||drag.id)return;camera.x=drag.ox+e.clientX-drag.x;camera.y=drag.oy+e.clientY-drag.y;transform();};
+ $('viewport').onpointerup=()=>{drag=null;};$('viewport').onpointercancel=()=>{drag=null;};
+ $('viewport').addEventListener('wheel',e=>{if(e.target.closest('.node'))return;e.preventDefault();const rect=$('viewport').getBoundingClientRect(),x=e.clientX-rect.x,y=e.clientY-rect.y,next=Math.max(.3,Math.min(2,camera.scale*Math.exp(-e.deltaY*.001)));camera.x=x-(x-camera.x)*next/camera.scale;camera.y=y-(y-camera.y)*next/camera.scale;camera.scale=next;transform();},{passive:false});
+ $('reset').onclick=()=>{camera={x:80,y:60,scale:1};transform();};
+ nodes.subscribe(()=>{clearTimeout(reloadTimer);reloadTimer=setTimeout(()=>run(reload),180);});
+ Wanwu.on('files.changed',()=>notice('画布资源有更新，可在画布详情中查看或下载 AI 返回的文件'));
+ Wanwu.on('reconnect',()=>run(reload));Wanwu.live.provide(()=>({camera,nodes:[...records.values()].map(r=>({id:r.id,...r.data,messages:undefined})),selectedFileIds:[...selected]}));
+ transform();await reload();notice(records.size?'':'拖入文件，或点击“AI 任务”开始');
+})().catch(error=>document.getElementById('notice').textContent=error.message);
+</script></body></html>

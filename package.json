@@ -1,0 +1,13 @@
+{
+  "name": "@edenshadow/omni-cli",
+  "version": "0.1.0",
+  "description": "Headless Wanwu device bridge for Codex, Claude Code and DeepSeek Harness",
+  "type": "module",
+  "license": "MIT",
+  "repository": {"type":"git","url":"https://github.com/EdenShadow/omni_cli.git"},
+  "bin": {"omni":"bin/omni.mjs", "omnicli":"bin/omni.mjs"},
+  "engines": {"node":">=24.0.0"},
+  "files": ["bin", "src", "lib", "bundled-skills", "CORE_SOURCE.json", "README.md", "LICENSE"],
+  "scripts": {"test":"node --test tests/*.test.mjs", "check":"node scripts/check.mjs", "start":"node bin/omni.mjs start"},
+  "dependencies": {"@anthropic-ai/claude-agent-sdk":"^0.3.292","music-metadata":"12.2.0","ws":"^8.22.0","yaml":"^2.9.1","yauzl":"^3.2.0","yazl":"^3.3.1","zod":"^4.3.6"}
+}

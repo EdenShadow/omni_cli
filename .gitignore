@@ -147,3 +147,10 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# Local credentials and test/build outputs
+.omni-cli/
+.local/
+*.tgz
+state.json
+agent.lock

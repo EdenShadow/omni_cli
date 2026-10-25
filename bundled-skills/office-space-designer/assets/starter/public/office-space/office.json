@@ -1,0 +1,278 @@
+{
+  "schemaVersion": 1,
+  "id": "little-colleagues",
+  "name": "芽芽办公室",
+  "brief": "整洁的创意办公室：一侧专注协作，一侧共享沙发、茶几、书架与小街机。道具收在库里，想玩时再取出来。",
+  "scene": "scene.svg",
+  "viewBox": [
+    0,
+    0,
+    1310,
+    880
+  ],
+  "palette": {
+    "wall": "#DCE7D9",
+    "floor": "#F3EAD7",
+    "accent": "#617D68"
+  },
+  "zones": [
+    {
+      "id": "work",
+      "label": "灵感工位",
+      "kind": "work",
+      "x": 415,
+      "y": 302,
+      "description": "3 台电脑，区域人数不限。忙碌同事可以派出分身，继续一起开工。",
+      "spots": [
+        [
+          160,
+          512
+        ],
+        [
+          217,
+          552
+        ],
+        [
+          400,
+          512
+        ],
+        [
+          457,
+          552
+        ],
+        [
+          640,
+          512
+        ],
+        [
+          697,
+          552
+        ]
+      ],
+      "state": "working"
+    },
+    {
+      "id": "lounge",
+      "label": "休闲会客区",
+      "kind": "lounge",
+      "x": 1035,
+      "y": 302,
+      "description": "沙发、茶几、书架和一台小街机，在同一个角落休息或玩一会儿。",
+      "spots": [
+        [
+          905,
+          805
+        ],
+        [
+          1025,
+          790
+        ],
+        [
+          1150,
+          805
+        ]
+      ],
+      "state": "idle"
+    },
+    {
+      "id": "announcements",
+      "label": "公告看板",
+      "kind": "board",
+      "x": 235.79999999999998,
+      "y": 160,
+      "artShift": [
+        29.799999999999983,
+        0
+      ]
+    },
+    {
+      "id": "canvas",
+      "label": "画布看板",
+      "kind": "board",
+      "x": 641.9,
+      "y": 160,
+      "artShift": [
+        91.89999999999998,
+        0
+      ]
+    },
+    {
+      "id": "skills",
+      "label": "Skills 看板",
+      "kind": "board",
+      "x": 1048,
+      "y": 160,
+      "artShift": [
+        126,
+        0
+      ]
+    }
+  ],
+  "members": [
+    {
+      "id": "yatuan",
+      "name": "芽团",
+      "job": "灵感整理员",
+      "src": "../office-characters/yatuan/character.json",
+      "width": 130,
+      "ratio": 1,
+      "anchor": 0.84,
+      "home": [
+        198,
+        492
+      ],
+      "seed": 12
+    },
+    {
+      "id": "banana-uncle",
+      "name": "香蕉叔叔",
+      "job": "点子顾问",
+      "src": "../office-characters/banana-uncle/character.json",
+      "width": 100,
+      "ratio": 0.6875,
+      "anchor": 0.895,
+      "home": [
+        405,
+        492
+      ],
+      "seed": 47
+    },
+    {
+      "id": "orange-sister",
+      "name": "橘子妹妹",
+      "job": "点子收集员",
+      "src": "../office-characters/orange-sister/character.json",
+      "width": 126,
+      "ratio": 0.9167,
+      "anchor": 0.85,
+      "home": [
+        609,
+        492
+      ],
+      "seed": 89
+    }
+  ],
+  "announcements": [
+    {
+      "id": "welcome",
+      "title": "小小同事，今天也请多关照",
+      "body": "这里可以贴团队消息、灵感征集和休息提醒。每个大小不一的点子，都值得有一个工位。",
+      "tag": "欢迎",
+      "date": "示例公告"
+    },
+    {
+      "id": "afternoon",
+      "title": "下午茶，带一个奇怪的点子来",
+      "body": "去休闲区坐坐吧。香蕉叔叔负责听，橘子妹妹负责画，芽团负责把点子收好。",
+      "tag": "小约定",
+      "date": "示例公告"
+    }
+  ],
+  "notes": [
+    {
+      "id": "seed",
+      "text": "把一个小点子\n种成大作品",
+      "x": 9,
+      "y": 12,
+      "color": "green"
+    },
+    {
+      "id": "sketch",
+      "text": "先画一版！\n丑一点也没关系",
+      "x": 49,
+      "y": 34,
+      "color": "yellow"
+    },
+    {
+      "id": "review",
+      "text": "一起复核\n让点子更完整",
+      "x": 15,
+      "y": 65,
+      "color": "pink"
+    }
+  ],
+  "skills": [
+    {
+      "id": "character",
+      "name": "角色工坊",
+      "command": "office-character-studio",
+      "description": "创造新同事，改服装、动作与随机庆祝。",
+      "prompt": "使用 office-character-studio，为我们的办公室创造一位新同事。保持平涂手绘风格，设计独特体型、随机工作情绪和独立庆祝。"
+    },
+    {
+      "id": "office",
+      "name": "办公室设计师",
+      "command": "office-space-designer",
+      "description": "按角色和提示词设计、布置、编辑办公室。",
+      "prompt": "使用 office-space-designer，根据当前角色和办公室设定，编辑场景、工位和活动区域，保留公告、画布与 Skills 看板中的内容。"
+    }
+  ],
+  "devices": [
+    {
+      "id": "computer-1",
+      "name": "灵感整理台"
+    },
+    {
+      "id": "computer-2",
+      "name": "点子记录台"
+    },
+    {
+      "id": "computer-3",
+      "name": "草图工作台"
+    }
+  ],
+  "presentationVersion": 2,
+  "props": [],
+  "propStorage": [
+    {
+      "id": "demo-tree",
+      "kind": "tree",
+      "name": "点子树",
+      "x": 740,
+      "y": 820,
+      "w": 78,
+      "h": 145
+    },
+    {
+      "id": "demo-soft",
+      "kind": "spring-soft",
+      "name": "软糖弹簧",
+      "x": 870,
+      "y": 730,
+      "w": 92,
+      "h": 78
+    },
+    {
+      "id": "demo-carpet",
+      "kind": "carpet",
+      "name": "云朵飞毯",
+      "x": 1000,
+      "y": 810,
+      "w": 130,
+      "h": 55,
+      "endX": 1110,
+      "endY": 980
+    },
+    {
+      "id": "demo-slide",
+      "kind": "slide",
+      "name": "灵感滑滑梯",
+      "x": 570,
+      "y": 925,
+      "w": 160,
+      "h": 150,
+      "endX": 700,
+      "endY": 995
+    },
+    {
+      "id": "demo-firework",
+      "kind": "firework",
+      "name": "好点子烟花",
+      "x": 895,
+      "y": 955,
+      "w": 65,
+      "h": 90
+    }
+  ],
+  "cleanLayoutVersion": 1
+}

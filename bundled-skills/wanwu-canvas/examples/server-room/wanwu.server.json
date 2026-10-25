@@ -1,0 +1,1 @@
+{"version":1,"mode":"script","entry":"rules/race.js","tickRate":30,"broadcastRate":10,"maxPlayers":8,"emptyTimeoutMs":30000,"config":{"laps":3,"trackLength":120}}

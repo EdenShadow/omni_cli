@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 240" fill="none" stroke-linecap="round" stroke-linejoin="round">
+<title>橘子妹妹，穿奶油色小裙子、戴蝴蝶结的点子收集员</title>
+<style>
+[data-part]{transform-box:view-box;transform-origin:110px 198px}
+[data-part="skirt"]{transform-origin:110px 165px}
+[data-part="stem"]{transform-origin:110px 87px}
+[data-part="arm-l"]{transform-origin:53px 139px}
+[data-part="arm-r"]{transform-origin:168px 139px}
+[data-part="eyes"]{transform-origin:110px 122px}
+[data-part="foot-l"]{transform-origin:86px 179px}
+[data-part="foot-r"]{transform-origin:135px 179px}
+[data-part="face"]{transform-origin:110px 127px}
+[data-part="body"]{transform-origin:110px 181px}
+[data-part="prop"],[data-part="sleep"],.sleep-eyes,.yawn,.work-tool{opacity:0}
+[data-facing="left"] [data-part="face"]{transform:translateX(-4px)}
+[data-facing="right"] [data-part="face"]{transform:translateX(4px)}
+[data-state="working"] [data-part="prop"],[data-state="working"] .work-tool,
+[data-state="tired"] [data-part="sleep"],[data-state="tired"] .sleep-eyes,[data-state="tired"] .yawn{opacity:1}
+[data-state="tired"] [data-part="eyes"],[data-state="tired"] .smile{opacity:0}
+[data-part="work-accent"]{opacity:0}
+
+[data-expression]{display:none}
+[data-clip="work-frantic"] [data-expression="frantic"],
+[data-clip="work-frustrated"] [data-expression="frustrated"],
+[data-clip="work-emo"] [data-expression="emo"],
+[data-state="done"] [data-expression="done"]{display:inline}
+:is([data-clip="work-frantic"],[data-clip="work-frustrated"],[data-clip="work-emo"],[data-state="done"]) :is([data-part="eyes"],.smile,.neutral-brows){visibility:hidden}
+[data-state="done"] [data-part="prop"],[data-state="done"] [data-part="pen"],[data-state="done"] .work-tool{opacity:1}
+
+.celebration [data-part]{opacity:0;transform-origin:0px 0px}
+svg:not([data-state="done"]) .celebration{visibility:hidden}
+
+/* Sitting is a bent-leg pose, independently animated from standing/walking. */
+.sit-legs,.sit-prop,.sit-face{display:none}
+[data-state="sitting"] .sit-legs{display:inline}
+[data-state="sitting"] :is([data-part="foot-l"],[data-part="foot-r"]){visibility:hidden}
+[data-clip="sit-game"] .sit-prop,[data-clip="sit-goofy"] .sit-face{display:inline}
+[data-clip="sit-goofy"] :is([data-part="eyes"],.smile){visibility:hidden}
+[data-part="sit-foot-l"]{transform-origin:86px 177px}
+[data-part="sit-foot-r"]{transform-origin:135px 177px}
+[data-part="sit-controller"]{transform-origin:110px 165px}
+[data-part="sit-tongue"]{transform-origin:110px 137px}
+[data-clip="sit-game"] :is([data-part="arm-l"],[data-part="arm-r"]){visibility:hidden}
+</style>
+<!-- Finite celebration particles: no independent CSS clocks or outside assets. -->
+<g class="celebration" aria-hidden="true"><g data-part="confetti-0"><path d="M-5-7Q5-4 0 1T4 9" stroke="#D77459" stroke-width="3"/></g><g data-part="confetti-1"><path d="M-3-5L4-3L2 5L-4 3Z" fill="#8B9F6B"/></g><g data-part="confetti-2"><ellipse rx="3" ry="4.5" fill="#E7BF4F"/></g><g data-part="confetti-3"><path d="M-5-7Q5-4 0 1T4 9" stroke="#83ABA7" stroke-width="3"/></g><g data-part="confetti-4"><path d="M-3-5L4-3L2 5L-4 3Z" fill="#C77786"/></g><g data-part="confetti-5"><ellipse rx="3" ry="4.5" fill="#D77459"/></g><g data-part="confetti-6"><path d="M-5-7Q5-4 0 1T4 9" stroke="#8B9F6B" stroke-width="3"/></g><g data-part="confetti-7"><path d="M-3-5L4-3L2 5L-4 3Z" fill="#E7BF4F"/></g><g data-part="confetti-8"><ellipse rx="3" ry="4.5" fill="#83ABA7"/></g><g data-part="confetti-9"><path d="M-5-7Q5-4 0 1T4 9" stroke="#C77786" stroke-width="3"/></g><g data-part="confetti-10"><path d="M-3-5L4-3L2 5L-4 3Z" fill="#D77459"/></g><g data-part="confetti-11"><ellipse rx="3" ry="4.5" fill="#8B9F6B"/></g><g data-part="confetti-12"><path d="M-5-7Q5-4 0 1T4 9" stroke="#E7BF4F" stroke-width="3"/></g><g data-part="confetti-13"><path d="M-3-5L4-3L2 5L-4 3Z" fill="#83ABA7"/></g><g data-part="confetti-14"><ellipse rx="3" ry="4.5" fill="#C77786"/></g><g data-part="confetti-15"><path d="M-5-7Q5-4 0 1T4 9" stroke="#D77459" stroke-width="3"/></g><g data-part="confetti-16"><path d="M-3-5L4-3L2 5L-4 3Z" fill="#8B9F6B"/></g><g data-part="confetti-17"><ellipse rx="3" ry="4.5" fill="#E7BF4F"/></g><g data-part="flower-0"><path d="M0-2C-7-11-12-1-4 2C-10 10 2 14 3 5C12 9 15-3 6-3C10-13-1-14 0-2Z" fill="#8B9F6B"/><circle cx="2" cy="0" r="2.3" fill="#F5E8CC"/></g><g data-part="flower-1"><path d="M0-2C-7-11-12-1-4 2C-10 10 2 14 3 5C12 9 15-3 6-3C10-13-1-14 0-2Z" fill="#E7BF4F"/><circle cx="2" cy="0" r="2.3" fill="#F5E8CC"/></g><g data-part="flower-2"><path d="M0-2C-7-11-12-1-4 2C-10 10 2 14 3 5C12 9 15-3 6-3C10-13-1-14 0-2Z" fill="#83ABA7"/><circle cx="2" cy="0" r="2.3" fill="#F5E8CC"/></g><g data-part="flower-3"><path d="M0-2C-7-11-12-1-4 2C-10 10 2 14 3 5C12 9 15-3 6-3C10-13-1-14 0-2Z" fill="#C77786"/><circle cx="2" cy="0" r="2.3" fill="#F5E8CC"/></g><g data-part="flower-4"><path d="M0-2C-7-11-12-1-4 2C-10 10 2 14 3 5C12 9 15-3 6-3C10-13-1-14 0-2Z" fill="#D77459"/><circle cx="2" cy="0" r="2.3" fill="#F5E8CC"/></g><g data-part="flower-5"><path d="M0-2C-7-11-12-1-4 2C-10 10 2 14 3 5C12 9 15-3 6-3C10-13-1-14 0-2Z" fill="#8B9F6B"/><circle cx="2" cy="0" r="2.3" fill="#F5E8CC"/></g><g data-part="flower-6"><path d="M0-2C-7-11-12-1-4 2C-10 10 2 14 3 5C12 9 15-3 6-3C10-13-1-14 0-2Z" fill="#E7BF4F"/><circle cx="2" cy="0" r="2.3" fill="#F5E8CC"/></g><g data-part="flower-7"><path d="M0-2C-7-11-12-1-4 2C-10 10 2 14 3 5C12 9 15-3 6-3C10-13-1-14 0-2Z" fill="#83ABA7"/><circle cx="2" cy="0" r="2.3" fill="#F5E8CC"/></g><g data-part="flower-8"><path d="M0-2C-7-11-12-1-4 2C-10 10 2 14 3 5C12 9 15-3 6-3C10-13-1-14 0-2Z" fill="#C77786"/><circle cx="2" cy="0" r="2.3" fill="#F5E8CC"/></g><g data-part="flower-9"><path d="M0-2C-7-11-12-1-4 2C-10 10 2 14 3 5C12 9 15-3 6-3C10-13-1-14 0-2Z" fill="#D77459"/><circle cx="2" cy="0" r="2.3" fill="#F5E8CC"/></g><g data-part="popper-0"><path d="M-9 12L-6-7L8 3Z" fill="#D77459" stroke="#3E3C31" stroke-width="1.7"/><path d="M-6-7L8 3M-6 1l8 6" stroke="#F5E8CC" stroke-width="2"/></g><g data-part="popper-1"><path d="M-9 12L-6-7L8 3Z" fill="#8B9F6B" stroke="#3E3C31" stroke-width="1.7"/><path d="M-6-7L8 3M-6 1l8 6" stroke="#F5E8CC" stroke-width="2"/></g></g>
+
+<path d="M71 204Q111 206 151 203" stroke="#3E3C31" stroke-width="1.8" opacity=".17"/>
+<g data-part="direction">
+<g data-part="foot-l"><path d="M84 176L84 194" stroke="#3E3C31" stroke-width="5"/><path d="M86 190Q75 188 73 197L73 201L92 201L92 193Z" fill="#F5E8CC" stroke="#3E3C31" stroke-width="2.5"/><path d="M75 198h14" stroke="#3E3C31" stroke-width="1.3"/></g>
+<g data-part="foot-r"><path d="M136 176L137 194" stroke="#3E3C31" stroke-width="5"/><path d="M133 192Q143 189 148 197L148 201L130 201L130 194Z" fill="#F5E8CC" stroke="#3E3C31" stroke-width="2.5"/><path d="M133 198h12" stroke="#3E3C31" stroke-width="1.3"/></g>
+<g class="sit-legs" stroke="#3E3C31" stroke-width="2.6"><g data-part="sit-foot-l"><path d="M86 177q-13 -3 -14 7l-2 9" stroke-width="6"/><path d="M70 192q-8 -2 -10 6q12 6 20 0v-6Z" fill="#F5E8CC"/></g><g data-part="sit-foot-r"><path d="M135 177q13 -3 14 7l2 9" stroke-width="6"/><path d="M151 192q8 -2 10 6q-12 6 -20 0v-6Z" fill="#F5E8CC"/></g></g><g data-part="body">
+<!-- The tiny dip, broad shoulders and soft lobes belong to a mandarin, not a perfect circle. -->
+<path d="M108 87C94 81 79 84 67 94C53 104 48 119 49 135C48 157 64 176 88 182C101 186 111 182 119 184C145 184 167 170 172 147C178 125 171 103 152 92C138 83 121 81 108 87Z" fill="#ECA047" stroke="#3E3C31" stroke-width="2.8"/>
+<path d="M102 91q6 4 13 0" stroke="#B97832" stroke-width="1.8"/>
+<g data-part="stem">
+<path d="M109 88Q108 77 104 73" stroke="#3E3C31" stroke-width="3.2"/>
+<path d="M108 80C111 61 132 56 151 61C143 77 130 88 108 80Z" fill="#879D61" stroke="#3E3C31" stroke-width="2.6"/>
+<path d="M111 79Q126 72 139 67" stroke="#3E3C31" stroke-width="1.5"/>
+<g data-accessory="bow">
+<path d="M103 84C97 76 85 73 85 79L87 92Q95 95 103 88C109 96 121 97 122 91L122 80Q115 75 104 83Z" fill="#C77764" stroke="#3E3C31" stroke-width="2.1"/>
+<path d="M101 88l-7 11 8-2 3 4 2-12M108 89l7 11 1-5 5 1-10-10" fill="#C77764" stroke="#3E3C31" stroke-width="1.7"/>
+<path d="M94 82l7 4M110 86l7-2" stroke="#3E3C31" stroke-width="1.3"/>
+<path d="M102 81q5-2 7 2l-1 7q-4 2-7-1Z" fill="#F5E8CC" stroke="#3E3C31" stroke-width="1.8"/>
+</g>
+</g>
+<g data-part="face">
+<!-- Expressions belong to this face; clip selectors never replace the character. -->
+<g data-expression="frantic" stroke="#3E3C31" stroke-width="1.6"><g transform="translate(91 121)"><circle r="6" fill="#F5E8CC"/><path d="M-3-1C-2-5 4-4 4 0C4 4-2 5-3 2C-4-1 1-3 2 0q0 2-2 1"/></g><g transform="translate(129 121)"><circle r="6" fill="#F5E8CC"/><path d="M-3-1C-2-5 4-4 4 0C4 4-2 5-3 2C-4-1 1-3 2 0q0 2-2 1"/></g><path d="M104.0 135q6-4 12 0l-1 6q-5 3-10 0Z" fill="#3E3C31"/><path d="M106.0 136h8" stroke="#F5E8CC" stroke-width="2.6"/><path d="M142 109q-6 7-3 10q6 3 7-2q0-3-4-8Z" fill="#87ABA7" stroke-width="1.3"/></g>
+<g data-expression="frustrated" stroke="#3E3C31" stroke-width="1.6"><path d="M87 117l7 4-7 4M133 117l-7 4 7 4" stroke-width="2.5"/><path d="M103.0 134l4-2 4 2 5-1 1 7-5-1-4 1-5-1Z" fill="#F5E8CC"/><path d="M107.0 134v4M112.0 135v3" stroke-width="1"/><path d="M138 103v4h4m-4 8v-4h4m-8-4h-4v-4m0 12v-4h4" stroke="#B65D4F" stroke-width="1.8"/></g>
+<g data-expression="emo" stroke="#3E3C31" stroke-width="1.6"><path d="M86 120h10M124 120h10"/><path d="M91 121v3M129 121v3" stroke-width="3"/><path d="M106.0 137q4-3 9 0M85 107v5m4-6v6m4-5v4" stroke-width="1.5"/><path d="M132 125q-3 8-1 10q5 2 5-2q0-3-4-8Z" fill="#87ABA7" stroke="none"/></g>
+<g data-expression="done" stroke="#3E3C31" stroke-width="1.6"><path d="M86 122q5-8 10 0M124 122q5-8 10 0" stroke-width="2.3"/><path d="M105.0 135q5 2 10 0q-1 8-5 8t-5-8Z" fill="#3E3C31"/></g>
+
+<g class="sit-face" stroke="#3E3C31" stroke-width="2.3"><path d="M87 117l8 8m0-8l-8 8M125 121q4-7 8 0M105 135q5 7 10 0"/><g data-part="sit-tongue"><path d="M107 138v6q4 6 7-1v-5" fill="#D47D7E"/></g></g><g data-part="eyes" fill="#3E3C31"><ellipse cx="91" cy="121" rx="3" ry="4.5"/><ellipse cx="129" cy="121" rx="3" ry="4.5"/></g>
+<g class="sleep-eyes" stroke="#3E3C31" stroke-width="2.1"><path d="M87 123q4 3 8 0M125 123q4 3 8 0"/></g>
+<path class="smile" d="M105 136q5 4 11-1" stroke="#3E3C31" stroke-width="1.8"/>
+<ellipse class="yawn" cx="110" cy="137" rx="2.8" ry="3.8" fill="#3E3C31"/>
+</g>
+<!-- A few peel speckles, no blush or glossy shading. -->
+<g fill="#B97832"><circle cx="67" cy="130" r="1.3"/><circle cx="72" cy="135" r="1.1"/><circle cx="64" cy="137" r="1"/><circle cx="151" cy="132" r="1.2"/><circle cx="155" cy="138" r="1"/></g>
+<!-- Clothes stay with the body; the hem has its own small follow-through. -->
+<g data-accessory="dress">
+<path d="M82 148L89 146L97 162L127 162L134 146L141 149L133 168L88 168Z" fill="#F5E8CC" stroke="#3E3C31" stroke-width="2"/>
+<g data-part="skirt">
+<path d="M83 163Q111 169 141 162Q143 175 154 187Q135 195 111 190Q88 195 68 185Q78 176 83 163Z" fill="#F5E8CC" stroke="#3E3C31" stroke-width="2.2"/>
+<path d="M84 164Q110 170 140 164L141 170Q110 175 82 170Z" fill="#C77764" stroke="#3E3C31" stroke-width="1.5"/>
+<path d="M89 175l-4 9M108 177v8M130 175l5 10" stroke="#BCAA8D" stroke-width="1.5"/>
+<path d="M74 184Q90 190 110 186Q135 191 148 186" stroke="#C77764" stroke-width="1.6"/>
+</g>
+</g>
+<g data-part="prop">
+<path d="M82 154L139 151L151 162L153 193L85 196Z" fill="#F5E8CC" stroke="#3E3C31" stroke-width="2.2"/>
+<path d="M139 151l1 12 11-1" stroke="#3E3C31" stroke-width="1.6"/>
+<circle cx="106" cy="172" r="7" fill="#ECA047" stroke="#3E3C31" stroke-width="1.5"/>
+<path d="M106 165q2-7 7-5M96 186l29-1M126 172l12-1M127 177l8-1" stroke="#3E3C31" stroke-width="1.5"/>
+</g>
+<g data-part="arm-l"><path d="M53 140Q47 154 60 166" stroke="#3E3C31" stroke-width="7"/><path d="M53 140Q47 154 60 166" stroke="#ECA047" stroke-width="3"/><path d="M61 161q6-2 8 3q3 6-3 8q-7 1-8-5q-1-3 3-6Z" fill="#ECA047" stroke="#3E3C31" stroke-width="2.1"/></g>
+<g data-part="arm-r"><path d="M168 140Q180 152 170 165" stroke="#3E3C31" stroke-width="7"/><path d="M168 140Q180 152 170 165" stroke="#ECA047" stroke-width="3"/>
+<g class="work-tool"><path d="M166 151l7 19-3 6-5-4-6-18Z" fill="#879D61" stroke="#3E3C31" stroke-width="1.6"/><path d="M169 170l4 0-3 6Z" fill="#3E3C31"/></g>
+<path d="M167 161q6-3 8 3q2 5-4 8q-6 1-7-5q-1-3 3-6Z" fill="#ECA047" stroke="#3E3C31" stroke-width="2.1"/></g>
+</g></g>
+<g data-part="sleep" stroke="#3E3C31" stroke-width="2"><path d="M164 95h7l-7 8h7M177 77h10l-10 11h10"/></g>
+<g data-part="work-accent" stroke="#B97832" stroke-width="2.5"><path d="M57 94l-7-7M48 107h-9M170 88l7-9M178 101h10"/></g>
+
+<g class="sit-prop"><g data-part="sit-controller" stroke="#3E3C31" stroke-width="2"><path d="M92 157q18-6 36 0l5 16q-5 7-12-1h-22q-9 8-12 1Z" fill="#849C8D"/><path d="M97 161v8m-4-4h8"/><circle cx="121" cy="163" r="2" fill="#E7BF4F"/><circle cx="126" cy="168" r="2" fill="#D77459"/></g></g><g class="sit-prop" stroke="#3E3C31" stroke-linecap="round"><path d="M53 140Q48 176 89 168" stroke-width="7"/><path d="M53 140Q48 176 89 168" stroke="#ECA047" stroke-width="3.5"/><circle cx="89" cy="168" r="4.8" fill="#ECA047" stroke-width="1.8"/><path d="M168 140Q173 176 131 168" stroke-width="7"/><path d="M168 140Q173 176 131 168" stroke="#ECA047" stroke-width="3.5"/><circle cx="131" cy="168" r="4.8" fill="#ECA047" stroke-width="1.8"/></g></svg>

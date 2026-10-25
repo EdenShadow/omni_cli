@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>芽芽办公室 · 小小同事</title><link rel="stylesheet" href="office.css"></head>
+<body>
+<header class="office-header"><div><div class="eyebrow"><span class="seed-mark">✳</span> 小小同事的共同空间</div><h1 id="office-name">芽芽办公室</h1></div><div class="header-actions"><button id="add-device" class="quiet">+ 添加电脑</button><button id="invite-member" class="quiet">+ 邀请同事</button><button id="diy-button" class="quiet">道具库</button><button id="settings-button" class="quiet">布置办公室</button><button id="export-button" class="quiet">导出办公室</button></div></header>
+<main>
+ <div class="workspace-toolbar"><p id="office-brief">正在打开办公室…</p><span class="local-label">内容保存在本机</span></div>
+ <div class="office-layout">
+  <section class="room-shell" aria-label="办公室场景">
+   <div class="room-toolbar"><span class="open-sign"><i></i> 今天也一起做好小事</span><div><button id="pause-all" aria-pressed="false">暂停动态</button><button id="reduce-all" aria-pressed="false">减少动态</button></div></div>
+   <div class="map-controls"><span id="map-stats">模块化办公室</span><div><button id="zoom-out" aria-label="缩小地图">−</button><span id="zoom-label">85%</span><button id="zoom-in" aria-label="放大地图">+</button><button id="fit-map">适应全图</button></div></div><div class="scene-scroll" tabindex="0" aria-label="可横向和纵向滚动的办公室地图"><div id="scene" class="scene"><div id="scene-art"></div><div id="furniture"></div><div id="zone-hotspots"></div><div id="props"></div><div id="actors"></div></div></div>
+   <div class="room-bottom"><span id="scene-summary" role="status">小同事们，都有自己的节奏。</span><span>点地面移动 · 点电脑派分身 · 道具可以玩</span></div>
+   <div class="team-actions" aria-label="全员行动"><button data-team="work"><span>↗</span> 大家开工</button><button data-team="lounge"><span>☕</span> 去休闲区</button><button data-team="done" class="celebrate"><span>✦</span> 一起庆祝</button></div>
+  </section>
+  <aside class="inspector" aria-label="办公室工具"><nav class="panel-tabs" aria-label="办公室看板"><button data-panel="overview" aria-selected="true">同事</button><button data-panel="announcements" aria-selected="false">公告</button><button data-panel="canvas" aria-selected="false">画布</button><button data-panel="skills" aria-selected="false">Skills</button></nav><div id="panel-content"></div></aside>
+ </div>
+ <div class="office-footer"><span>认真做事，也认真发呆。</span><span id="save-status" role="status" aria-live="polite">你的办公室，慢慢长成喜欢的样子。</span></div>
+</main>
+<dialog id="settings-dialog"><form id="settings-form"><div class="dialog-heading"><h2>布置这间办公室</h2><button type="button" id="close-settings" aria-label="关闭办公室设置">×</button></div><label>办公室名字<input name="name" maxlength="32" required></label><label>办公室设定<textarea name="brief" rows="4" maxlength="600" required></textarea></label><p class="form-help">写下角色、主题和想加入的元素。配色会立即应用；新增家具或改变布局，可导出设定交给办公室设计师技能。</p><div class="palette-inputs"><label>墙面<input name="wall" type="color"></label><label>地板<input name="floor" type="color"></label><label>强调色<input name="accent" type="color"></label></div><button type="submit" class="primary">保存布置</button></form></dialog>
+<dialog id="device-dialog"><form id="device-form"><div class="dialog-heading"><h2>添加一台新电脑</h2><button type="button" data-close="device-dialog" aria-label="关闭添加电脑">×</button></div><label>设备名称<input name="name" maxlength="40" required placeholder="例如：新点子工作台"></label><p class="form-help">每台电脑不限人数。正在工作的同事可以派出分身，本体继续做事。</p><p class="form-help">添加后会自动扩展地图、重排工位与墙上的三个看板。看板内容会保留。</p><button class="primary" type="submit">添加并重新布置</button></form></dialog>
+<dialog id="member-dialog"><form id="member-form"><div class="dialog-heading"><h2>邀请一位小同事</h2><button type="button" data-close="member-dialog" aria-label="关闭邀请同事">×</button></div><label>选择角色<select name="role" id="member-role"></select></label><label>办公室昵称<input name="name" maxlength="24" required placeholder="给这位同事起个名字"></label><p class="form-help">可以邀请同一种角色的多个同事。他们有独立的走动、动作和工位。</p><button class="primary" type="submit">加入办公室</button></form></dialog>
+<script type="module" src="office.js"></script>
+</body></html>

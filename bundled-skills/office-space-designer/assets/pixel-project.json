@@ -1,0 +1,143 @@
+{
+  "schemaVersion": 2,
+  "renderMode": "pixel-grid",
+  "name": "灵感花园",
+  "background": "background.svg",
+  "columns": 40,
+  "rows": 26,
+  "width": 1600,
+  "height": 1040,
+  "palette": {
+    "wall": "#dbe8dc",
+    "floor": "#f2ecdd",
+    "tile": "#e5dcc7",
+    "accent": "#8573b2",
+    "wood": "#bb8e64",
+    "leaf": "#719b74"
+  },
+  "walkable": {
+    "x": 4,
+    "y": 34,
+    "width": 92,
+    "height": 60
+  },
+  "boards": {
+    "announcement": {
+      "x": 4,
+      "y": 5.5,
+      "width": 27,
+      "height": 24.5
+    },
+    "canvas": {
+      "x": 35,
+      "y": 5.5,
+      "width": 30,
+      "height": 24.5
+    },
+    "skills": {
+      "x": 69,
+      "y": 5.5,
+      "width": 27,
+      "height": 24.5
+    }
+  },
+  "deviceZones": [
+    {
+      "x": 39,
+      "y": 53
+    },
+    {
+      "x": 60,
+      "y": 53
+    },
+    {
+      "x": 78,
+      "y": 53
+    },
+    {
+      "x": 39,
+      "y": 78
+    },
+    {
+      "x": 60,
+      "y": 78
+    },
+    {
+      "x": 81,
+      "y": 78
+    }
+  ],
+  "seats": [
+    {
+      "x": 16,
+      "y": 81
+    }
+  ],
+  "props": [],
+  "modules": [
+    {
+      "id": "lounge-rug",
+      "kind": "rug",
+      "x": 2,
+      "y": 17,
+      "width": 10,
+      "height": 7
+    },
+    {
+      "id": "sofa",
+      "kind": "sofa",
+      "x": 3,
+      "y": 18,
+      "width": 7,
+      "height": 3
+    },
+    {
+      "id": "tea-table",
+      "kind": "table",
+      "x": 5,
+      "y": 22,
+      "width": 4,
+      "height": 2
+    },
+    {
+      "id": "garden",
+      "kind": "plant",
+      "x": 3,
+      "y": 12,
+      "width": 2,
+      "height": 3
+    },
+    {
+      "id": "books",
+      "kind": "bookshelf",
+      "x": 32,
+      "y": 22,
+      "width": 5,
+      "height": 3
+    },
+    {
+      "id": "arcade",
+      "kind": "arcade",
+      "x": 36,
+      "y": 12,
+      "width": 2,
+      "height": 3
+    },
+    {
+      "id": "fern",
+      "kind": "plant",
+      "x": 33,
+      "y": 12,
+      "width": 2,
+      "height": 3
+    },
+    {
+      "id": "small-plant",
+      "kind": "plant",
+      "x": 10,
+      "y": 21,
+      "width": 2,
+      "height": 3
+    }
+  ]
+}
