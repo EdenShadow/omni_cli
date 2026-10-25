@@ -95,6 +95,10 @@ async function chooseProject(state){
 async function run(state,once=false){
   bound(state.store);bootstrap(state.store.device.runtimes);
   const bridge=client(state,notifier());
+  if(once){
+    // A maintenance command must not claim queued AI work while syncing skills.
+    bridge.pump=async()=>{};bridge.workbench.pump=async()=>{};bridge.scheduler.tick=async()=>{};
+  }
   const keepAlive=setInterval(()=>{},60000);
   const stopped=new Promise(resolve=>{
     const stop=()=>resolve();process.once('SIGINT',stop);process.once('SIGTERM',stop);
