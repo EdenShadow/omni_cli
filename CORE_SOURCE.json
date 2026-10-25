@@ -1,6 +1,6 @@
 {
   "repository": "EdenShadow/wanwu_ai",
-  "commit": "c22479c02e3d5d0580d1ae11733972cd77328a9e",
+  "commit": "d7cdac820db08bdb4bdb2a4a7783a6df0c83afb8",
   "modules": [
     "desktop/announcements.mjs",
     "desktop/approval-relay.mjs",
@@ -26,6 +26,7 @@
     "desktop/local-outputs.mjs",
     "desktop/runtime-launch.mjs",
     "desktop/runtime-question-flow.mjs",
+    "desktop/runtime-stream-outbox.mjs",
     "desktop/runtimes.mjs",
     "desktop/skills/chat-share.mjs",
     "desktop/skills/exchange.mjs",
