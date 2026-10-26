@@ -17,9 +17,10 @@ function stateFor(t){
   const state=loadState(dir);Object.assign(state.store,{endpoint:'https://test.invalid',userId:randomUUID(),token:'test-only'});state.save();return state;
 }
 async function fixture(t){
-  const state=stateFor(t),project=randomUUID(),messages=[],bodies=[],clients=new Map(),events=[];let key=await createRoomKey(),loseReply=false,rotation=false;
+  const state=stateFor(t),project=randomUUID(),messages=[],bodies=[],clients=new Map(),events=[],targets=[];let key=await createRoomKey(),loseReply=false,rotation=false;
   const request=async(p,method='GET',body)=>{
     const u=new URL(p,'https://test.invalid');
+    if(u.pathname.endsWith('/session-mentions'))return {items:targets};
     if(u.pathname.endsWith('/chat-keys/clients')){clients.set(body.id,body);return {};}
     if(u.pathname.endsWith('/chat-keys'))return {active:key.id,epoch:'1',clients:[...clients.values()],missing:[],envelopes:[{keyId:key.id,wrapped:await wrapRoomKey(key,clients.get(u.searchParams.get('clientId')))}]};
     if(method==='POST'){
@@ -37,7 +38,7 @@ async function fixture(t){
     return {messages:after!==null?rows.slice(0,limit):rows.slice(-limit),hasMore:rows.length>limit,retentionDays:7};
   };
   const storage=chatStore(state,request),chat=createChat({request,storage,userId:state.store.userId,emit:e=>events.push(e),sleep:async()=>{throw Error('Unexpected sleep');}});
-  return {state,project,messages,bodies,events,request,storage,chat,get key(){return key;},loseReply(){loseReply=true;},rotate(){rotation=true;}};
+  return {state,project,messages,bodies,events,targets,request,storage,chat,get key(){return key;},loseReply(){loseReply=true;},rotate(){rotation=true;}};
 }
 
 test('encrypted @Bot send, stable retry, key rotation and private on-disk state',async t=>{
@@ -158,4 +159,42 @@ test('missing keys never downgrade to plaintext or publish an incomplete message
   const ring={encrypt:async()=>{throw Object.assign(Error('Waiting for team keys'),{code:'CHAT_KEY_PENDING'});}};
   const chat=createChat({userId:randomUUID(),request:async()=>{posts++;},storage:{exclusive:fn=>fn({read:()=>undefined,ring})}});
   await assert.rejects(chat.send(randomUUID(),{text:'@Bot private'}),{code:'CHAT_KEY_PENDING'});assert.equal(posts,0);
+});
+
+test('targeted dispatch signs session identity, refreshes renamed aliases and retains retry envelopes',async t=>{
+  const f=await fixture(t),target={id:randomUUID(),deviceId:randomUUID(),kind:'session',name:'旧助手',token:'@旧助手'};
+  f.targets.push(target);const id=randomUUID();
+  f.loseReply();await assert.rejects(f.chat.send(f.project,{id,text:'整理画布',sessionId:target.id}),/Lost acknowledgement/);
+  const first=f.bodies.at(-1),decoded=await open(f.key,[f.project,f.state.store.userId,id],first.secureExecution);
+  assert.equal(decoded.text,'@旧助手 整理画布');assert.deepEqual(decoded.sessionTarget,first.sessionTarget);assert.equal(decoded.mentions[0].id,target.id);
+  Object.assign(target,{name:'新助手',token:'@新助手'});
+  const retry=await f.chat.send(f.project,{id,text:'整理画布',sessionId:target.id});assert.equal(retry.botRequested,true);assert.deepEqual(f.bodies.at(-1),first);
+  const next=await f.chat.send(f.project,{text:'继续',sessionId:target.id});assert.equal(next.sessionTarget.alias,'新助手');
+  const natural=await f.chat.send(f.project,{text:'@新助手 处理账单',requireBot:true});assert.equal(natural.sessionTarget.sessionId,target.id);
+  await assert.rejects(f.chat.send(f.project,{text:'@Bot @新助手 do work'}),/一个 AI/);
+  await assert.rejects(f.chat.send(f.project,{text:'@不存在 任务',requireBot:true}),/accessible/);
+  f.targets.push({...target,id:randomUUID()});
+  await assert.rejects(f.chat.send(f.project,{text:'@新助手 处理账单'}),/同名/);
+  await f.chat.send(f.project,{text:'处理账单',sessionId:target.id});
+  await assert.rejects(f.chat.send(f.project,{text:'@Bot 处理账单',sessionId:target.id}),/not both/);
+  f.targets.splice(0);await assert.rejects(f.chat.send(f.project,{text:'继续',sessionId:target.id}),/not an accessible/);
+});
+
+test('catalog CLI reads fresh metadata alongside daemon lock and updates only named fields',async t=>{
+  const state=stateFor(t),project=randomUUID(),id=randomUUID(),deviceId=randomUUID();
+  let session={id,projectId:project,deviceId,title:'old',note:'@助手',mentionAlias:'助手',noteDetails:'手机的最新备注',noteRevision:3};
+  const server=http.createServer(async(req,res)=>{
+    res.setHeader('Content-Type','application/json');
+    if(req.url.endsWith('/snapshot'))return res.end(JSON.stringify({devices:[{id:deviceId,name:'fixture',online:true}],sessions:[session]}));
+    if(req.url.endsWith('/open'))return res.end(JSON.stringify(session));
+    if(req.url.endsWith('/work-notes')){let text='';for await(const c of req)text+=c;const b=JSON.parse(text);assert.equal(b.expectedRevision,3);assert.equal(b.details,session.noteDetails);session={...session,note:b.summary,mentionAlias:b.mentionAlias,noteRevision:4};return res.end(JSON.stringify(session));}
+    res.statusCode=404;res.end('{}');
+  });
+  await new Promise(r=>server.listen(0,'127.0.0.1',r));t.after(()=>new Promise(r=>server.close(r)));
+  state.store.endpoint=`http://127.0.0.1:${server.address().port}`;state.save();const release=lock(state.directory);t.after(release);
+  const before=fs.readFileSync(path.join(state.directory,'state.json'),'utf8'),env={...process.env,OMNI_HOME:state.directory};
+  let result=await exec(process.execPath,['bin/omni.mjs','agents','list',project],{env});assert.equal(JSON.parse(result.stdout).items[0].notes,session.noteDetails);
+  result=await exec(process.execPath,['bin/omni.mjs','sessions','update',project,id,'--name','@小智'],{env});assert.equal(JSON.parse(result.stdout).token,'@小智');
+  result=await exec(process.execPath,['bin/omni.mjs','agents','list',project],{env});assert.equal(JSON.parse(result.stdout).items[0].token,'@小智');
+  assert.equal(fs.readFileSync(path.join(state.directory,'state.json'),'utf8'),before);
 });

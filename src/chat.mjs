@@ -3,6 +3,7 @@ import {setTimeout as delay} from 'node:timers/promises';
 import {seal} from '../lib/shared/chat-crypto.mjs';
 import {hasBotMention,BOT_ID} from '../lib/shared/chat-mentions.mjs';
 import {encryptedFileSize} from '../lib/shared/chat-file-crypto.mjs';
+import {resolveSessionMentions,sessionTargetFromMentions} from '../lib/shared/session-mentions.mjs';
 import {fingerprint} from './chat-store.mjs';
 
 export function uuid(value,label='ID'){
@@ -56,18 +57,33 @@ export function createChat({request,storage,userId,signal,emit=()=>{},sleep=()=>
     const messages=await decode(project,page.messages);
     return {messages,hasMore:!!page.hasMore,cursor:messages.at(-1)?.seq??after??0,before:messages[0]?.seq??before??null,retentionDays:page.retentionDays};
   }
-  async function send(project,{text,id=randomUUID(),replyTo,bot=false,botMode='continue',locale='zh'}){
+  async function send(project,{text,id=randomUUID(),replyTo,bot=false,sessionId,requireBot=false,botMode='continue',locale='zh'}){
     base(project);uuid(id,'Request ID');if(replyTo)uuid(replyTo,'Reply ID');
     if(!['continue','new'].includes(botMode)||!['zh','en'].includes(locale))throw Error('Invalid bot mode or locale');
     if(typeof text!=='string'||!text.trim())throw Error('Message text is required');
+    if(sessionId)uuid(sessionId,'Session ID');
+    if(sessionId&&(bot||hasBotMention(text)))throw Error('Choose --session or @Bot, not both');
     if(bot&&!hasBotMention(text))text='@Bot '+text;
     if(text.length>4000)throw Error('Message exceeds 4000 characters');
-    const botRequest=bot||hasBotMention(text);
-    const payload={...(replyTo?{replyTo}:{}),botRequest,botMode,kind:'text',text,mentions:botRequest?[{kind:'bot',id:BOT_ID,name:'Bot',token:'@Bot'}]:[],files:[]};
-    const hash=fingerprint([project,payload,locale]),name=`request-${project}-${id}.json`;
+    let botRequest=bot||hasBotMention(text);
+    let payload={...(replyTo?{replyTo}:{}),botRequest,botMode,kind:'text',text,mentions:botRequest?[{kind:'bot',id:BOT_ID,name:'Bot',token:'@Bot'}]:[],files:[]};
+    const hash=fingerprint([project,payload,locale,...(sessionId?[sessionId]:[])]),name=`request-${project}-${id}.json`;
     return storage.exclusive(async({ring,read,write})=>{
       let saved=read(name);
       if(saved&&saved.hash!==hash)throw Error('Request ID already used with different content; use a new --id');
+      let sessionTarget;
+      if(!saved&&(sessionId||(botRequest?text.replace(/@bot/ig,''):text).includes('@'))){
+        const {items}=await request(`/api/projects/${project}/session-mentions`);
+        const target=sessionId?items.find(m=>m.id===sessionId):undefined;
+        if(sessionId&&!target)throw Error('Session is not an accessible @agent; refresh agents list');
+        if(target&&!resolveSessionMentions(text,[target]).length)text=target.token+' '+text;
+        const selected=resolveSessionMentions(text,items,target?[target]:[]);
+        if(target&&selected[0]?.id!==target.id)throw Error('Message mentions a different session');
+        sessionTarget=sessionTargetFromMentions(text,selected);
+        if(text.length>4000)throw Error('Message exceeds 4000 characters');
+        if(sessionTarget){botRequest=true;payload={...payload,text,botRequest:true,mentions:selected,sessionTarget};}
+      }
+      if(requireBot&&!(saved?.body.botRequest??botRequest))throw Error('--wait requires an accessible @session, --session, @Bot or --bot');
       // POST the same encrypted body again after an uncertain network outcome;
       // the server deduplicates by account + project + request ID.
       async function prepare(){
@@ -75,7 +91,7 @@ export function createChat({request,storage,userId,signal,emit=()=>{},sleep=()=>
         signal?.throwIfAborted();
         const key=await ring.key(project,secure.keyId);
         const secureExecution=botRequest?await seal(key,[project,userId,id],payload):undefined;
-        saved={hash,body:{id,...(replyTo?{replyTo}:{}),secure,...(secureExecution?{secureExecution}:{}),attachments:[],botRequest,botMode,locale}};
+        saved={hash,body:{id,...(replyTo?{replyTo}:{}),secure,...(secureExecution?{secureExecution}:{}),...(sessionTarget?{sessionTarget}:{}),attachments:[],botRequest,botMode,locale}};
         write(name,saved);
       }
       if(!saved)await prepare();
@@ -84,9 +100,11 @@ export function createChat({request,storage,userId,signal,emit=()=>{},sleep=()=>
         // A definite epoch rejection means the message was not committed. Rewrap
         // once under the new room key, retaining the same deduplication ID.
         if(e.status!==409||e.message!=='CHAT_KEY_EPOCH_CHANGED')throw e;
+        payload=await ring.decrypt(project,[userId,id],saved.body.secure);
+        botRequest=saved.body.botRequest;sessionTarget=saved.body.sessionTarget;
         await prepare();m=await request(base(project),'POST',saved.body);
       }
-      return {status:'sent',id:m.id,seq:m.seq,projectId:project,requestId:id,botRequested:botRequest,...(m.botTask?{botTask:m.botTask}:{})};
+      return {status:'sent',id:m.id,seq:m.seq,projectId:project,requestId:id,botRequested:saved.body.botRequest,...(saved.body.sessionTarget?{sessionTarget:saved.body.sessionTarget}:{}),...(m.botTask?{botTask:m.botTask}:{})};
     });
   }
   async function drain(project,cursor,accept=()=>true){

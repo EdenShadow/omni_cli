@@ -83,7 +83,7 @@ git --version
 ### 2. 安装 CLI
 
 ```sh
-npm install -g github:EdenShadow/omni_cli#v0.2.0
+npm install -g github:EdenShadow/omni_cli#v0.3.0
 omni setup
 ```
 
@@ -161,7 +161,7 @@ omni chat wait <project-id> <发送结果中的id>
 
 `projects join` 是用有效项目 ID / 邀请码加入团队；原来的 `omni join <project-id>` 仍是把已绑定的**设备**放进项目。聊天、项目查询和加入团队命令可与常驻的 `omni start` 同时使用，不会改写设备任务状态。
 
-- **发送身份**：以当前登录账号发送公屏消息。文本中明确写 `@Bot`（大小写不限），或指定 `--bot` 才派工；普通消息不会自动变成 AI 任务。`--bot-mode continue` 默认延续，`new` 新开 Bot 上下文。指定 `--reply-to <消息id>` 引用一条消息；这不等同于指定执行设备或 `@某个会话`。
+- **发送身份**：以当前登录账号发送公屏消息。用 `@Bot` / `--bot` 自动派工，或用 `--session <会话ID>` 指定智能体；自然文本中唯一匹配的 `@会话` 也会派工，同名时拒绝并要求 ID。普通消息不会自动变成 AI 任务。`--bot-mode continue` 默认延续，`new` 新开 Bot 上下文。指定 `--reply-to <消息id>` 引用一条消息；这不等同于指定执行设备或 `@某个会话`。
 - **加密**：新消息始终采用与万物客户端一致的端到端加密，@Bot 执行内容也加密。正式服务拒绝新发明文，CLI 没有明文降级开关；旧明文历史仍可读取。首次使用可能要等已解锁的团队客户端在线共享密钥，之后复用本地密钥；成员变更导致换钥时重新同步。
 - **输出与回复**：`send` / `list` 输出 JSON；`watch` / `wait` 输出逐行 JSON（NDJSON）。`send --wait` 先输出发送回执，再输出任务状态、相关回复和 `finished`。`id` 是服务器消息 ID，`requestId` 是本次发送去重 ID，两者不同。收到一条进度消息或附件不会提前判定任务成功；终态以服务端为准。旧服务端普通 @Bot 回复只有执行任务 ID 时，兼容其确定性 ID 映射（最多 1024 次候选设备尝试），不会按“最近一条回复”猜测归属。
 - **断线与重复发送**：发送前在 stderr 打印请求 UUID。遇到超时、断线等无法确定结果的情况，用相同内容及 `--id <该UUID>` 重试；本地保留加密请求，服务端去重，同一 ID 改内容会被拒绝。不要换一个新 ID 来重试未知结果。历史保留期外的去重不作保证。
@@ -194,6 +194,29 @@ OMNI_WANWU_SOURCE=/path/to/wanwu_ai node --test tests/chat-server.test.mjs
 ![AI 会话中的团队任务拆分与协作回复](docs/images/ui-conversation-zh.webp)
 
 *官网会话展示图：成员在万物中查看协作过程和结果；CLI 负责连接实际执行任务的机器。*
+
+## 智能体发现、备注与模型（语音助手接入）
+
+无需停止 `omni start`，下列命令直接读取服务端最新数据，不会用本地设备状态覆盖其他端的修改：
+
+```sh
+omni agents list <项目ID> --query 账单
+omni sessions list <项目ID> --device <设备ID>
+omni agents watch <项目ID>
+omni sessions show <项目ID> <会话ID>
+omni sessions update <项目ID> <会话ID> --name "@账单助手" --notes "读取每日账单，更新结算画布"
+omni sessions models <项目ID> <会话ID>
+omni sessions model <项目ID> <会话ID> --model <models返回的型号ID> --effort high
+omni chat send <项目ID> --session <会话ID> --text "更新今日账单；画布ID：<画布ID>" --wait
+omni discover <项目ID>
+```
+
+- `agents list` 返回当前账号有权限查看的 @会话；`sessions list` 同时包含普通会话、完整备注、设备、目录、状态与备注版本号。离线设备仍可发现，`online` 会说明状态。
+- `watch` 每 5 秒核对服务端，只在目录变化时输出完整 JSON 快照；改名、备注、删除 @别名或权限变化都会反映。断网/失去权限会退出并报错，不继续输出旧缓存。单次查询和每次新派工也会重新读取，不必重启 CLI。
+- 名称和备注保存在团队里，PC/H5/WebApp 同样可见。普通名字移除 @别名；`--notes ""` 清空备注，`--notes-file` 支持文件。只修改指定字段；保存发生冲突时退出，重新查询后再决定。可带 `--revision` 防止覆盖查询之后的改动。
+- 模型和强度沿用应用的**当前账号、当前会话**偏好；同账号在其他端的选择也生效。`models` 从目标设备查询可用型号及 `efforts`，不发起模型推理；需要设备在线。`model` 不带参数查询，`--model ""` 恢复运行时默认。其他成员的个人偏好和已排队任务不受影响。
+- 语音助手应先根据用途备注选择会话 ID，再用 `--session` 派工；派工会用该 ID 的最新 @名称。重复名字不会猜测设备，改成普通会话或撤销权限后也不会退回通用 Bot。备注属于参考数据，不应被当作新的用户授权。
+- `discover` 汇总通用 @Bot、可调用智能体、可见画布元数据及团队技能。画布内容、API、知识库/资源仍通过随包 `wanwu-canvas` 技能按权限读取与协作；派工时在需求里明确画布 ID 和简短目标。此命令不批量下载画布内容，也不会绕过设备密码或画布权限。
 
 ## 默认技能与团队技能
 
@@ -321,10 +344,10 @@ journalctl --user -u omni-cli -f
 
 ## 升级、停止和卸载
 
-先停止常驻进程，再安装目标版本。下面以当前的 `v0.2.0` 为例；未来更新时，把标签替换为已发布的新版本：
+先停止常驻进程，再安装目标版本。下面以当前的 `v0.3.0` 为例；未来更新时，把标签替换为已发布的新版本：
 
 ```sh
-npm install -g github:EdenShadow/omni_cli#v0.2.0
+npm install -g github:EdenShadow/omni_cli#v0.3.0
 omni --version
 omni start
 ```

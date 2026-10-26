@@ -3,11 +3,12 @@ import path from 'node:path';
 import {hostname} from 'node:os';
 import {loadState,lock} from './state.mjs';
 import {createRequest,DEFAULT_ENDPOINT,endpoint} from './api.mjs';
+import {catalogCommand} from './catalog-command.mjs';
 import {chatCommand} from './chat-command.mjs';
 import {ask,password} from './prompts.mjs';
 import {client,detectRuntimes,bootstrap,importAll} from './client.mjs';
 
-const help=`Omni CLI / 万物命令行设备 0.2.0
+const help=`Omni CLI / 万物命令行设备 0.3.0
 
 omni setup              登录、检测终端、绑定设备、选择项目并启动
 omni login              输入账号密码登录（密码不保存）
@@ -22,6 +23,9 @@ omni import <project-id> [provider]  导入该终端的全部已有会话
 omni skills sync        检查并同步团队技能
 omni access            设置文件访问范围及 AI 执行审批
 omni chat --help        公屏发送、@Bot 派工、消息历史、持续读取及等待回复
+omni agents --help      查询/监听可 @智能体及最新备注
+omni sessions --help    查询会话、编辑名称/备注、设置模型与强度
+omni discover <project-id>  发现智能体、画布与团队技能
 omni logout            清除本 CLI 登录与设备凭据（保留工作文件和技能）
 
 环境变量：OMNI_HOME（独立配置目录）、OMNI_SERVER_URL（HTTPS 服务端）、
@@ -126,12 +130,13 @@ async function run(state,once=false){
 export async function main(args){
   const command=args[0]||'help';
   if(['help','--help','-h'].includes(command)){console.log(help);return;}
-  if(['--version','version'].includes(command)){console.log('0.2.0');return;}
+  if(['--version','version'].includes(command)){console.log('0.3.0');return;}
   if(command==='runtimes'){print(detectRuntimes());return;}
-  const allowed=['setup','login','bind','start','status','projects','join','import','skills','access','logout','chat'];
+  const allowed=['setup','login','bind','start','status','projects','join','import','skills','access','logout','chat','agents','sessions','discover'];
   if(!allowed.includes(command))throw Error('Unknown command. Run omni --help');
   const state=loadState(),{store,save}=state;
   if(command==='status'){print({server:store.endpoint||DEFAULT_ENDPOINT,username:store.username||null,device:store.device?{id:store.device.id,name:store.device.name,runtimes:store.device.runtimes}:null,configured:!!store.deviceToken,folder:store.workspace,stateDirectory:state.directory});return;}
+  if(['agents','sessions','discover'].includes(command))return await catalogCommand(state,command,args.slice(1));
   if(command==='chat')return await chatCommand(state,args.slice(1));
   if(command==='projects'){
     logged(store);const request=createRequest(store);

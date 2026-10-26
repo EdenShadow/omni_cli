@@ -7,6 +7,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {randomUUID} from 'node:crypto';
+import {createCatalog} from '../src/catalog.mjs';
 import {createChat} from '../src/chat.mjs';
 import {chatStore} from '../src/chat-store.mjs';
 import {loadState} from '../src/state.mjs';
@@ -41,7 +42,34 @@ test('Wanwu server: encrypted send, fake AI dispatch, correlated reply, deduplic
     assert.equal((await chat.list(f.project.id)).messages[0].text,input.text);
     const raw=JSON.stringify(f.app.db.prepare('SELECT * FROM team_chat').all());assert.ok(!raw.includes('CLI_PRIVATE_PROMPT'));assert.ok(!raw.includes('CLI_FAKE_AI_REPLY'));
     await assert.rejects(request(`/api/projects/${f.project.id}/chat`,'POST',{id:randomUUID(),text:'no plaintext'}),{status:426});
+    // Discover/edit using the exact same server endpoints as desktop/H5.
+    const catalog=createCatalog({request,sleep:async()=>{for(const d of f.devices)await d.b.workbench.pump();}}),device=f.devices[0],sid=device.session.id;
+    device.b.adapter('codex').models=async()=>[{id:'fake-catalog-model',name:'Fake model',efforts:['low','high']}];
+    await catalog.update(f.project.id,sid,{name:'@账单助手',notes:'结算与画布协作'});
+    const agents=await catalog.list(f.project.id,{agents:true});
+    assert.equal(agents.find(s=>s.id===sid).notes,'结算与画布协作');
+    const before=await catalog.show(f.project.id,sid);
+    await request(`/api/projects/${f.project.id}/work-notes`,'POST',{kind:'session',targetId:sid,summary:'@新账单助手',mentionAlias:'新账单助手',details:'手机更新的用途',expectedRevision:before.noteRevision});
+    assert.equal((await catalog.list(f.project.id,{agents:true})).find(s=>s.id===sid).name,'@新账单助手');
+    await assert.rejects(catalog.update(f.project.id,sid,{notes:'stale',revision:before.noteRevision}),{status:409});
+    assert.deepEqual(await catalog.model(f.project.id,sid,{model:'fake-catalog-model',effort:'high'}),{model:'fake-catalog-model',effort:'high',serviceTier:'default'});
+    const targeted=await chat.send(f.project.id,{text:'CLI_TARGETED_REQUEST',sessionId:sid});
+    assert.equal(targeted.sessionTarget.alias,'新账单助手');
+    await until(async()=>{
+      await f.app.groupChatBot.tick();
+      for(const d of f.devices){await d.b.chatEncryption.sync();d.b.reportGroupChat();await d.b.workbench.pump();await d.b.pump();}
+      return f.app.db.prepare('SELECT status FROM group_chat_jobs WHERE id=?').get(targeted.id)?.status==='done';
+    });
+    assert.equal(await chat.wait(f.project.id,targeted.id),'done');
+    const job=f.app.db.prepare('SELECT command_id FROM group_chat_jobs WHERE id=?').get(targeted.id);
+    const options=JSON.parse(f.app.db.prepare('SELECT doc FROM command_options WHERE command_id=?').get(job.command_id).doc);
+    assert.equal(options.model,'fake-catalog-model');assert.equal(options.effort,'high');
+    assert.equal(options.groupChat.sessionTarget.sessionId,sid);
+    await catalog.update(f.project.id,sid,{name:'普通会话'});
+    assert.equal((await catalog.list(f.project.id,{agents:true})).some(s=>s.id===sid),false);
+    await assert.rejects(chat.send(f.project.id,{text:'no fallback',sessionId:sid}),/not an accessible/);
     f.app.db.prepare('DELETE FROM members WHERE project_id=? AND user_id=?').run(f.project.id,f.owner.user.id);
+    await assert.rejects(catalog.list(f.project.id),{status:403});
     await assert.rejects(chat.list(f.project.id),{status:403});
     await assert.rejects(chat.send(f.project.id,input),{status:403});
   }finally{await f.close();}
