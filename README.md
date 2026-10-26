@@ -83,7 +83,7 @@ git --version
 ### 2. 安装 CLI
 
 ```sh
-npm install -g github:EdenShadow/omni_cli#v0.1.0
+npm install -g github:EdenShadow/omni_cli#v0.2.0
 omni setup
 ```
 
@@ -141,6 +141,43 @@ omni start
 ```
 
 将 `<project-id>` 替换为 `omni projects` 列出的项目 UUID。`omni join` 是把**本设备**放进你已拥有成员权限的项目，不是绕过邀请加入别人的团队。也可以在万物网页或桌面客户端中把设备放进项目。
+
+### 从 CLI 加入团队、发送和读取公屏
+
+只使用聊天功能时，登录万物账号即可，不需要在当前机器安装 AI 或运行 `omni start`。执行 @Bot 的目标设备仍需在线且有权限。
+
+```sh
+omni login
+omni projects join <项目ID或邀请码>
+omni projects
+omni chat send <project-id> --text "大家好"
+omni chat send <project-id> --text "@Bot 帮我整理项目进展" --wait
+# 文本文件适合长需求，避免 shell 对引号、美元符号等内容作解释
+omni chat send <project-id> --text-file request.txt --bot --bot-mode new --wait
+omni chat list <project-id> --limit 50
+omni chat watch <project-id>
+omni chat wait <project-id> <发送结果中的id>
+```
+
+`projects join` 是用有效项目 ID / 邀请码加入团队；原来的 `omni join <project-id>` 仍是把已绑定的**设备**放进项目。聊天、项目查询和加入团队命令可与常驻的 `omni start` 同时使用，不会改写设备任务状态。
+
+- **发送身份**：以当前登录账号发送公屏消息。文本中明确写 `@Bot`（大小写不限），或指定 `--bot` 才派工；普通消息不会自动变成 AI 任务。`--bot-mode continue` 默认延续，`new` 新开 Bot 上下文。指定 `--reply-to <消息id>` 引用一条消息；这不等同于指定执行设备或 `@某个会话`。
+- **加密**：新消息始终采用与万物客户端一致的端到端加密，@Bot 执行内容也加密。正式服务拒绝新发明文，CLI 没有明文降级开关；旧明文历史仍可读取。首次使用可能要等已解锁的团队客户端在线共享密钥，之后复用本地密钥；成员变更导致换钥时重新同步。
+- **输出与回复**：`send` / `list` 输出 JSON；`watch` / `wait` 输出逐行 JSON（NDJSON）。`send --wait` 先输出发送回执，再输出任务状态、相关回复和 `finished`。`id` 是服务器消息 ID，`requestId` 是本次发送去重 ID，两者不同。收到一条进度消息或附件不会提前判定任务成功；终态以服务端为准。旧服务端普通 @Bot 回复只有执行任务 ID 时，兼容其确定性 ID 映射（最多 1024 次候选设备尝试），不会按“最近一条回复”猜测归属。
+- **断线与重复发送**：发送前在 stderr 打印请求 UUID。遇到超时、断线等无法确定结果的情况，用相同内容及 `--id <该UUID>` 重试；本地保留加密请求，服务端去重，同一 ID 改内容会被拒绝。不要换一个新 ID 来重试未知结果。历史保留期外的去重不作保证。
+- **持续读取**：`watch` 默认从最新位置开始，只输出新消息；`--after 0` 从可用历史开始，`--after <cursor>` 断点续读。事件类型包括 `message`、`task`、`recall` 和 `cursor`。连接错误会退出，保存最后一个 cursor 后重启；消费者按消息 ID 去重，并在 `recall` 时移除已有内容。任务状态快照受服务端最近 100 项限制，指定任务应使用 `wait`。
+- **历史与附件**：服务端当前保留 7 天消息，`list --before <before>` 向前翻页，`--after <cursor>` 向后翻页，每页最多 100 条。附件返回 ID、名称、类型和大小；本次命令支持文本发送与附件元数据读取，不上传或自动下载附件，也不输出文件解密密钥。
+- **等待与退出码**：等待默认 300 秒，可用 `--timeout` 调整；watch 默认持续运行。退出码 0 表示成功，1 表示命令错误或任务失败/撤回，2 表示等待超时，130 表示用户中断。超时或 Ctrl+C 只停止本地等待，不取消服务器任务；可用同一个服务器消息 ID 再次 `wait`。
+
+聊天身份、密钥和加密待发请求单独保存在 `OMNI_HOME/chat/`，按服务端与账号隔离，使用当前系统用户专属文件权限。它们不写入 Git，也不会写回设备的 `state.json`。退出登录保留历史密钥，便于同账号重新登录后解密；请保护整个 `OMNI_HOME`，不要共享此目录。
+
+离线测试：`npm test`。若本机有对应万物源码，可运行无付费模型调用的真实协议集成测试：
+
+```sh
+OMNI_WANWU_SOURCE=/path/to/wanwu_ai node --test tests/chat-server.test.mjs
+```
+
+该测试只启动临时本地服务器、测试账号和模拟 AI，不会向真实公屏发消息。
 
 ### 在公屏调用会话
 
@@ -200,6 +237,8 @@ omni start
 | `omni start` | 前台常驻，接收任务和更新 |
 | `omni status` | 显示本地账号、设备和目录配置，不输出令牌 |
 | `omni projects` | 列出已加入的项目及 ID |
+| `omni projects join <code>` | 用项目 ID / 邀请码加入团队 |
+| `omni chat send/list/watch/wait` | 发送公屏消息、读取历史、持续读取及等待 Bot 回复 |
 | `omni join <project-id>` | 将本设备放入已有权限的项目 |
 | `omni import <project-id> [provider]` | 导入指定终端的全部已有会话；省略终端则使用全部已绑定终端 |
 | `omni skills sync` | 一次性同步项目技能 |
@@ -282,10 +321,10 @@ journalctl --user -u omni-cli -f
 
 ## 升级、停止和卸载
 
-先停止常驻进程，再安装目标版本。下面以当前的 `v0.1.0` 为例；未来更新时，把标签替换为已发布的新版本：
+先停止常驻进程，再安装目标版本。下面以当前的 `v0.2.0` 为例；未来更新时，把标签替换为已发布的新版本：
 
 ```sh
-npm install -g github:EdenShadow/omni_cli#v0.1.0
+npm install -g github:EdenShadow/omni_cli#v0.2.0
 omni --version
 omni start
 ```

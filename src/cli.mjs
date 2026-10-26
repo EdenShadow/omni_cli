@@ -3,10 +3,11 @@ import path from 'node:path';
 import {hostname} from 'node:os';
 import {loadState,lock} from './state.mjs';
 import {createRequest,DEFAULT_ENDPOINT,endpoint} from './api.mjs';
+import {chatCommand} from './chat-command.mjs';
 import {ask,password} from './prompts.mjs';
 import {client,detectRuntimes,bootstrap,importAll} from './client.mjs';
 
-const help=`Omni CLI / 万物命令行设备 0.1.0
+const help=`Omni CLI / 万物命令行设备 0.2.0
 
 omni setup              登录、检测终端、绑定设备、选择项目并启动
 omni login              输入账号密码登录（密码不保存）
@@ -15,15 +16,17 @@ omni start              前台运行设备；Ctrl+C 停止
 omni status             显示当前账号和设备（不显示凭据）
 omni runtimes           检测 Codex / Claude Code / DeepSeek Harness
 omni projects          查看已加入的项目及项目 ID
+omni projects join <code>  用项目 ID / 邀请码加入团队（当前账号）
 omni join <project-id>  将本设备放入已加入的项目
 omni import <project-id> [provider]  导入该终端的全部已有会话
 omni skills sync        检查并同步团队技能
 omni access            设置文件访问范围及 AI 执行审批
+omni chat --help        公屏发送、@Bot 派工、消息历史、持续读取及等待回复
 omni logout            清除本 CLI 登录与设备凭据（保留工作文件和技能）
 
 环境变量：OMNI_HOME（独立配置目录）、OMNI_SERVER_URL（HTTPS 服务端）、
 WANWU_CODEX_PATH / WANWU_CLAUDE_PATH / WANWU_DSH_PATH（可执行文件）。
-首次运行需要 Node.js 24+，并先安装、登录至少一种 AI 终端。
+需要 Node.js 24+；绑定执行设备还需安装、登录至少一种 AI 终端。
 设备在线期间才能接收会话、公屏 @任务及团队技能更新。
 `;
 const print=value=>console.log(JSON.stringify(value,null,2));
@@ -123,12 +126,22 @@ async function run(state,once=false){
 export async function main(args){
   const command=args[0]||'help';
   if(['help','--help','-h'].includes(command)){console.log(help);return;}
-  if(['--version','version'].includes(command)){console.log('0.1.0');return;}
+  if(['--version','version'].includes(command)){console.log('0.2.0');return;}
   if(command==='runtimes'){print(detectRuntimes());return;}
-  const allowed=['setup','login','bind','start','status','projects','join','import','skills','access','logout'];
+  const allowed=['setup','login','bind','start','status','projects','join','import','skills','access','logout','chat'];
   if(!allowed.includes(command))throw Error('Unknown command. Run omni --help');
   const state=loadState(),{store,save}=state;
   if(command==='status'){print({server:store.endpoint||DEFAULT_ENDPOINT,username:store.username||null,device:store.device?{id:store.device.id,name:store.device.name,runtimes:store.device.runtimes}:null,configured:!!store.deviceToken,folder:store.workspace,stateDirectory:state.directory});return;}
+  if(command==='chat')return await chatCommand(state,args.slice(1));
+  if(command==='projects'){
+    logged(store);const request=createRequest(store);
+    if(args[1]==='join'&&args.length===3){
+      const code=args[2].trim();if(!code||code.length>200)throw Error('Invalid project ID / invite code');
+      const p=await request('/api/projects/join','POST',{code});print({id:p.id,name:p.name});return;
+    }
+    if(args.length!==1)throw Error('Use omni projects or omni projects join <code>');
+    const r=await request('/api/me');print(r.projects.map(({id,name})=>({id,name})));return;
+  }
   const unlock=lock(state.directory);
   try{
     if(command==='login')return await login(state);
@@ -141,7 +154,6 @@ export async function main(args){
       for(const key of Object.keys(store))delete store[key];Object.assign(store,keep);save();console.log('已清除本 CLI 登录 / Signed out');return;
     }
     logged(store);
-    if(command==='projects'){const r=await createRequest(store)('/api/me');print(r.projects.map(({id,name})=>({id,name})));return;}
     bound(store);
     if(command==='start')return await run(state);
     if(command==='skills'&&args[1]==='sync')return await run(state,true);

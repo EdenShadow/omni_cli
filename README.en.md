@@ -83,7 +83,7 @@ Run as the ordinary OS user who owns your AI terminal configuration and working 
 ### 2. Install the CLI
 
 ```sh
-npm install -g github:EdenShadow/omni_cli#v0.1.0
+npm install -g github:EdenShadow/omni_cli#v0.2.0
 omni setup
 ```
 
@@ -141,6 +141,43 @@ omni start
 ```
 
 Replace `<project-id>` with a project UUID returned by `omni projects`. `omni join` adds **this device** to a project you already belong to; it does not bypass team invitations. You can also add the device from the Omni web or desktop client.
+
+### Join a team, send messages and read public chat from the CLI
+
+Chat-only use requires an Omni account login, not a local AI installation or `omni start`. The device executing an @Bot request must still be online and authorized.
+
+```sh
+omni login
+omni projects join <project-id-or-invite-code>
+omni projects
+omni chat send <project-id> --text "Hello team"
+omni chat send <project-id> --text "@Bot Summarize project progress" --wait
+# A text file avoids shell interpretation of quotes and dollar signs
+omni chat send <project-id> --text-file request.txt --bot --bot-mode new --wait
+omni chat list <project-id> --limit 50
+omni chat watch <project-id>
+omni chat wait <project-id> <id-from-send-receipt>
+```
+
+`projects join` joins the team using a valid project ID or invitation code. The existing `omni join <project-id>` still adds your bound **device** to a project. Chat, project listing and team joining work alongside `omni start` without rewriting device task state.
+
+- **Identity and dispatch:** messages come from the logged-in account. Only explicit `@Bot` text (case-insensitive) or `--bot` requests AI work. `--bot-mode continue` is the default; `new` starts a new Bot context. `--reply-to <message-id>` quotes a message; it does not select a device or a named session.
+- **Encryption:** all new messages and Bot execution content use the same end-to-end encryption protocol as Omni clients. Production servers reject new plaintext messages; there is no plaintext fallback switch. Legacy plaintext history remains readable. On first use, an unlocked team client may need to share room keys. Keys are reused locally and synchronized after membership rotation.
+- **Output and correlation:** send/list produce JSON; watch/wait produce newline-delimited JSON. `send --wait` emits the receipt, task updates, related replies and a final `finished` event. The server message `id` differs from the deduplication `requestId`. A progress message or attachment is not task completion. For older servers whose regular @Bot replies contain only a command ID, the CLI supports their deterministic command mapping (up to 1024 candidate-device attempts), never a guess based on the latest reply.
+- **Uncertain delivery:** before sending, the request UUID is printed to stderr. After a lost acknowledgement or timeout, retry identical content with `--id <that-UUID>`. The encrypted request is kept locally and the server deduplicates it. Reusing an ID with changed content is rejected. Do not generate a new ID to retry an uncertain delivery. Deduplication beyond server retention is not guaranteed.
+- **Watching:** watch starts at the current tail by default. Use `--after 0` for available history or `--after <cursor>` to resume. Events include `message`, `task`, `recall` and `cursor`. Connection errors exit; restart using the last cursor, deduplicate message IDs and remove recalled content. Task snapshots cover the server's latest 100 tasks; use wait for a specific task.
+- **History and files:** the server currently retains seven days of messages. Page backwards with `list --before <before>` or forwards with `--after <cursor>`, up to 100 per page. Attachments expose only ID, name, MIME type and size. These commands send text and read attachment metadata; they do not upload/download files or output file decryption keys.
+- **Timeouts and exit codes:** wait defaults to 300 seconds; change it with `--timeout`. Watch runs until stopped by default. Exit code 0 means success, 1 an error or failed/recalled task, 2 a timeout, and 130 an interrupt. Timeout/Ctrl+C stops only local waiting, not the server task. Resume with wait and the same server message ID.
+
+Chat identities, keys and encrypted requests live under `OMNI_HOME/chat/`, scoped to server and account and protected with owner-only filesystem permissions. They never enter Git or overwrite the daemon's `state.json`. Logout retains historical keys for the same account's next login; protect the entire `OMNI_HOME` directory and do not share it.
+
+Run offline tests with `npm test`. With a compatible local Wanwu source checkout, run the optional real-protocol integration test:
+
+```sh
+OMNI_WANWU_SOURCE=/path/to/wanwu_ai node --test tests/chat-server.test.mjs
+```
+
+It creates a temporary local server, test accounts and fake AI adapters. No production messages or paid model calls are made.
 
 ### Call a shared session from team chat
 
@@ -200,6 +237,8 @@ Skills invoked through team chat use **the request initiator's project permissio
 | `omni start` | Run in the foreground to receive tasks and updates |
 | `omni status` | Show local account, device and folder settings without tokens |
 | `omni projects` | List projects you belong to and their IDs |
+| `omni projects join <code>` | Join a team using its project ID or invite code |
+| `omni chat send/list/watch/wait` | Send team messages, read history, watch updates and wait for Bot replies |
 | `omni join <project-id>` | Add this device to an authorized project |
 | `omni import <project-id> [provider]` | Import all sessions for a terminal; omit the provider to use all bound terminals |
 | `omni skills sync` | Synchronize project skills once |
@@ -282,10 +321,10 @@ The service must use the same user, HOME and configuration directory as the setu
 
 ## Updating, stopping and uninstalling
 
-Stop the running process before installing your target version. This example uses the current `v0.1.0` tag; replace it with a newly published tag when upgrading:
+Stop the running process before installing your target version. This example uses the current `v0.2.0` tag; replace it with a newly published tag when upgrading:
 
 ```sh
-npm install -g github:EdenShadow/omni_cli#v0.1.0
+npm install -g github:EdenShadow/omni_cli#v0.2.0
 omni --version
 omni start
 ```
