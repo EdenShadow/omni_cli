@@ -8,7 +8,8 @@ import {chatCommand} from './chat-command.mjs';
 import {ask,password} from './prompts.mjs';
 import {client,detectRuntimes,bootstrap,importAll} from './client.mjs';
 
-const help=`Omni CLI / 万物命令行设备 0.3.0
+const {version}=JSON.parse(fs.readFileSync(new URL('../package.json',import.meta.url),'utf8'));
+const help=`Omni CLI / 万物命令行设备 ${version}
 
 omni setup              登录、检测终端、绑定设备、选择项目并启动
 omni login              输入账号密码登录（密码不保存）
@@ -130,7 +131,7 @@ async function run(state,once=false){
 export async function main(args){
   const command=args[0]||'help';
   if(['help','--help','-h'].includes(command)){console.log(help);return;}
-  if(['--version','version'].includes(command)){console.log('0.3.0');return;}
+  if(['--version','version'].includes(command)){console.log(version);return;}
   if(command==='runtimes'){print(detectRuntimes());return;}
   const allowed=['setup','login','bind','start','status','projects','join','import','skills','access','logout','chat','agents','sessions','discover'];
   if(!allowed.includes(command))throw Error('Unknown command. Run omni --help');

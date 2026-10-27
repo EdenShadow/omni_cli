@@ -124,3 +124,16 @@ test('online device advertises collaboration capabilities without remote control
   const event=await received;assert.ok(event.capabilities.includes('session-mentions-v1'));assert.ok(event.capabilities.includes('skills-sync-v1'));assert.ok(event.capabilities.includes('group-chat-v1'));assert.ok(!event.capabilities.includes('remote-desktop-v1'));
   assert.equal(b.remoteDesktop,undefined);assert.equal(b.builtinRuntime,undefined);
 });
+
+
+test('installed CLI version and help use the package version without creating account state',async t=>{
+ const dir=temporary(t),env={...process.env,OMNI_HOME:path.join(dir,'unused-state')};
+ const {version}=JSON.parse(fs.readFileSync(new URL('../package.json',import.meta.url),'utf8'));
+ const bin=new URL('../bin/omni.mjs',import.meta.url);
+ const {fileURLToPath}=await import('node:url');
+ for(const flag of ['--version','--help']){
+  const {stdout}=await promisify(execFile)(process.execPath,[fileURLToPath(bin),flag],{env});
+  assert.ok(stdout.includes(version));
+ }
+ assert.equal(fs.existsSync(env.OMNI_HOME),false);
+});

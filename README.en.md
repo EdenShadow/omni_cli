@@ -63,6 +63,14 @@ For example, assign each device a task to collect operational logs and produce a
 
 The CLI lets the local AI use authorized scripts, tools and skills. Controlling motors, sensors or vehicle functions requires device-specific interfaces and skill integrations. Installing the CLI does not grant hardware control or additional system permissions. For motion-related tasks, permission checks, safety interlocks and emergency stops remain the responsibility of the local control system; Omni coordinates tasks rather than acting as a real-time motion controller.
 
+## In-session questions and schedules
+
+While a CLI device runs a task, another signed-in Omni desktop, H5 or WebApp client can show a question form **inside that session**. Formal question tools take priority. The CLI also uses Omni's shared detector for an explicit question followed by 2–6 choices during streaming; it does not wait for the task to finish. Plain rhetorical questions, code examples and task checklists are not converted into forms.
+
+Concurrent sessions keep independent questions. Only the task requester can answer, and the answer returns to the original session. Encrypted sessions retain encrypted questions and answers. Omni's server and viewing client handle notifications; the CLI opens no global dialog. This requires a compatible server/viewing client and a running `omni start` process.
+
+Schedules configured in Omni for a CLI session can execute encrypted prompts with the chosen model and effort. Selecting a deferred first run saves the schedule without running immediately. Offline recovery follows Omni's scheduler rules. The CLI does not bundle, install or update the desktop app's built-in AI Runtime.
+
 ## Quick start
 
 ### 1. Prepare your machine
@@ -83,7 +91,7 @@ Run as the ordinary OS user who owns your AI terminal configuration and working 
 ### 2. Install the CLI
 
 ```sh
-npm install -g github:EdenShadow/omni_cli#v0.3.0
+npm install -g github:EdenShadow/omni_cli#v0.3.1
 omni setup
 ```
 
@@ -345,10 +353,10 @@ The service must use the same user, HOME and configuration directory as the setu
 
 ## Updating, stopping and uninstalling
 
-Stop the running process before installing your target version. This example uses the current `v0.3.0` tag; replace it with a newly published tag when upgrading:
+Stop the running process before installing your target version. This example uses the current `v0.3.1` tag; replace it with a newly published tag when upgrading:
 
 ```sh
-npm install -g github:EdenShadow/omni_cli#v0.3.0
+npm install -g github:EdenShadow/omni_cli#v0.3.1
 omni --version
 omni start
 ```
