@@ -1,9 +1,9 @@
 ---
 name: wanwu-skills-sync
-description: 按需获取万物项目与权限，发送指定消息或文件到团队、同步技能、编辑公告和待办、读取成员形象、修改角色与场景，附带项目界面扩展，或进行备注和跨设备派工。普通问答不调用，不自动广播。
+description: 按需获取万物项目与权限，发送指定消息或文件到团队、同步技能、编辑公告和待办、读取成员形象、修改角色、场景及指定设备外观，附带项目界面扩展，或进行备注和跨设备派工。普通问答不调用，不自动广播。
 metadata:
   display_name: 万物同步助手
-  version: "1.15.0"
+  version: "1.16.0"
 ---
 
 # 万物同步助手
@@ -36,6 +36,7 @@ node /absolute/wanwu-skills-sync/scripts/sync.mjs context
 | 技能附带插件、增加项目按钮/表单、修改允许的界面元素 | [项目界面扩展](references/ui-extensions.md) |
 | 技能声明 API Key、账号或用户 ID 依赖；按发起人选择和权限取用钥匙串 | [钥匙库](references/credentials.md) |
 | 创建/保存角色、表情动作、道具、办公室，自动布局或绑定画布 | [场景流程](references/scene-workflow.md) |
+| 装修/修改某台电脑的外观、动态设备、跨设备设计外观 | [设备外观流程](references/device-workflow.md) |
 | 合照、成员形象或场景参考 | [图像参考](references/image-references.md) |
 | 设备/文件夹/会话备注、跨设备派工 | [备注与任务编排](references/work-dispatch.md) |
 

@@ -91,7 +91,7 @@ git --version
 ### 2. 安装 CLI
 
 ```sh
-npm install -g github:EdenShadow/omni_cli#v0.3.1
+npm install -g github:EdenShadow/omni_cli#v0.3.2
 omni setup
 ```
 
@@ -259,11 +259,27 @@ omni start
 
 ## 命令参考
 
+### 调整公屏 @Bot 的 AI Runtime 顺序
+
+默认顺序是 **Codex → Claude Code → DeepSeek Harness**。可在另一终端执行：
+
+```sh
+omni runtimes order                        # 查看优先级和已绑定终端的有效顺序
+omni runtimes order set claude codex dsh    # 优先 Claude Code
+omni runtimes order set dsh,codex,claude    # 也支持逗号分隔
+omni runtimes order reset                  # 恢复默认
+```
+
+修改前先 `omni login`；顺序按当前账号、服务器和这台 CLI 设备保存，重启后保留。三个终端都要填写且不能重复，未安装或未通过 `omni bind` 绑定的终端不会因此安装或启用。`boundOrder` 显示已绑定终端的选择顺序；用 `omni runtimes` 检查实际安装情况。
+
+**不用停止 `omni start`**，在线时下次状态上报（通常 5 秒内）生效；离线则重连后生效。只改变后续空闲设备接收 `@Bot` 时的运行时选择，正在执行的会话继续使用原运行时，直接 `@智能体` 仍使用指定会话的运行时和模型。
+
 | 命令 | 作用 |
 | --- | --- |
 | `omni setup` | 完成首次向导并启动设备 |
 | `omni login` | 登录已有万物账号 |
 | `omni runtimes` | 检测本机 AI 终端与可执行文件路径 |
+| `omni runtimes order [set <顺序> / reset]` | 查看、修改或恢复本设备 @Bot 运行时优先级，可在运行期间修改 |
 | `omni bind` | 绑定或调整终端，安装默认技能 |
 | `omni start` | 前台常驻，接收任务和更新 |
 | `omni status` | 显示本地账号、设备和目录配置，不输出令牌 |
@@ -352,10 +368,10 @@ journalctl --user -u omni-cli -f
 
 ## 升级、停止和卸载
 
-先停止常驻进程，再安装目标版本。下面以当前的 `v0.3.1` 为例；未来更新时，把标签替换为已发布的新版本：
+先停止常驻进程，再安装目标版本。下面以当前的 `v0.3.2` 为例；未来更新时，把标签替换为已发布的新版本：
 
 ```sh
-npm install -g github:EdenShadow/omni_cli#v0.3.1
+npm install -g github:EdenShadow/omni_cli#v0.3.2
 omni --version
 omni start
 ```
@@ -402,3 +418,9 @@ GitHub CI 在 Windows、macOS、Linux 的 Node.js 24 上运行检查。测试覆
 - [English documentation](README.en.md)
 - [问题反馈与功能建议](https://github.com/EdenShadow/omni_cli/issues)
 - [素材来源](docs/images/README.md) · [MIT License](LICENSE)
+
+### 在普通会话中修改设备外观
+
+0.3.2 起，CLI 承载的 Codex、Claude Code、DeepSeek Harness 会话与万物桌面端、H5/WebApp 共用设备外观技能链路。例如可以对执行任务的电脑说：“把项目里另一台电脑改成云上的终端，工作时命令行滚动”。技能先读取项目设备列表和已有外观，再生成、校验并应用到明确指定的目标设备；同名设备会要求进一步选择。
+
+需要万物服务端 1.2.403 或更新版本。修改权限按任务发起人判断：设备拥有者或项目创建者才可应用；更新后成员端同步显示。静态外观为默认，只有明确要求时生成空闲/工作动画，保留旧客户端静态显示。不修改设备名称、会话或办公室布局。已有 CLI 安装升级后需重启 `omni start` 常驻进程。

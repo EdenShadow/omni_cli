@@ -5,6 +5,7 @@ import {loadState,lock} from './state.mjs';
 import {createRequest,DEFAULT_ENDPOINT,endpoint} from './api.mjs';
 import {catalogCommand} from './catalog-command.mjs';
 import {chatCommand} from './chat-command.mjs';
+import {runtimeOrderCommand,runtimeOrderHelp} from './runtime-order.mjs';
 import {ask,password} from './prompts.mjs';
 import {client,detectRuntimes,bootstrap,importAll} from './client.mjs';
 
@@ -17,6 +18,7 @@ omni bind               选择 AI 终端，安装默认技能并绑定设备
 omni start              前台运行设备；Ctrl+C 停止
 omni status             显示当前账号和设备（不显示凭据）
 omni runtimes           检测 Codex / Claude Code / DeepSeek Harness
+omni runtimes order     查看 @Bot 优先级；order --help 查看修改命令
 omni projects          查看已加入的项目及项目 ID
 omni projects join <code>  用项目 ID / 邀请码加入团队（当前账号）
 omni join <project-id>  将本设备放入已加入的项目
@@ -132,7 +134,12 @@ export async function main(args){
   const command=args[0]||'help';
   if(['help','--help','-h'].includes(command)){console.log(help);return;}
   if(['--version','version'].includes(command)){console.log(version);return;}
-  if(command==='runtimes'){print(detectRuntimes());return;}
+  if(command==='runtimes'){
+    if(args.length===1){print(detectRuntimes());return;}
+    if(args[1]==='--help'||args[1]==='order'&&['--help','-h'].includes(args[2])){console.log(runtimeOrderHelp);return;}
+    if(args[1]!=='order')throw Error(runtimeOrderHelp);
+    print(runtimeOrderCommand(loadState(),args.slice(2)));return;
+  }
   const allowed=['setup','login','bind','start','status','projects','join','import','skills','access','logout','chat','agents','sessions','discover'];
   if(!allowed.includes(command))throw Error('Unknown command. Run omni --help');
   const state=loadState(),{store,save}=state;

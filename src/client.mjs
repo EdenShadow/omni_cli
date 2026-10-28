@@ -6,6 +6,7 @@ import {RuntimeBridge} from '../lib/desktop/bridge.mjs';
 import {detectRuntimes,installSkills} from '../lib/desktop/runtimes.mjs';
 import {createRequest} from './api.mjs';
 import {privateDirectory} from './state.mjs';
+import {installRuntimeOrderReporting} from './runtime-order.mjs';
 export {detectRuntimes};
 export const skillsRoot=fileURLToPath(new URL('../bundled-skills',import.meta.url));
 export function client(state,notify=()=>{}){
@@ -15,6 +16,7 @@ export function client(state,notify=()=>{}){
   const runtimeDirectory=privateDirectory(process.env.WANWU_RUNTIME_DIR||path.join(homedir(),'.wanwu','runtime'));
   const request=createRequest(store);
   const bridge=new RuntimeBridge({store,save,request,notify,skillsRoot,dataDir,publicDir:skillsRoot,documentsPath,runtimeDirectory});
+  installRuntimeOrderReporting(bridge,state);
   bridge.recoverBinding=async(force=false)=>{
     if(!force)return;
     const r=await request('/api/devices/bind','POST',{installation:store.installation,machineKey:store.machineKey,name:store.deviceName||store.device.name,platform:process.platform,runtimes:store.device.runtimes});

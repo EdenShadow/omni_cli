@@ -20,12 +20,13 @@ export async function sceneCommand(request,action,options,uuid){
  if((action==='scene-save'||action==='scene-inventory'||options.destination||options.asset)&&!capabilities.sceneBackpack)throw Error('请更新服务端以使用背包同步 / Update the server for backpack sync');
  if((options['canvas-id']||options['canvas-name'])&&!capabilities.sceneCanvasBinding)throw Error('请更新服务端以绑定画布 / Update the server for canvas binding');
  if(options.kind==='action'&&!capabilities.sceneActions)throw Error('请更新服务端以创建表情动作 / Update the server for expression creation');
+ if(options.kind==='device'&&!capabilities.sceneDevices)throw Error('请更新服务端以修改设备外观 / Update the server for device appearances');
  if(action==='scene-context')return request({action});
  if(action==='scene-inventory')return request({action,kind:options.kind,before:options.cursor?Number(options.cursor):undefined,limit:options.limit?Number(options.limit):undefined});
  const id=uuid(options.request);
  if(action==='scene-status')return request({action,id});
  if(action==='scene-prepare'){
-  if(!['character','prop','office','action'].includes(options.kind))throw Error('--kind 请选择 character、prop、office 或 action');
+  if(!['character','prop','office','action','device'].includes(options.kind))throw Error('--kind 请选择 character、prop、office、action 或 device');
   if(options.text&&options['text-file'])throw Error('选择 --text 或 --text-file');
   const prompt=options['text-file']?await readFile(options['text-file'],'utf8'):options.text||'';
   if(!prompt.trim()||prompt.length>15000)throw Error('请提供 1–15000 字符的创作要求');
@@ -35,11 +36,11 @@ export async function sceneCommand(request,action,options,uuid){
   // Never replace an existing draft, including on an uncertain retry.
   try{await lstat(root);throw Error('创作目录已存在；继续使用原目录，或选择新的空目录 / Workspace already exists');}catch(e){if(e.code!=='ENOENT')throw e;}
   if(options['auto-size']&&!['true','false'].includes(options['auto-size']))throw Error('--auto-size must be true or false');
-  const prepared=await request({action,id,kind:options.kind,prompt,center,destination:options.destination,layoutMode:options.layout,assetId:options.asset,canvasId:options['canvas-id'],canvasName:options['canvas-name'],...(options['auto-size']?{autoSize:options['auto-size']==='true'}:{})});
+  const prepared=await request({action,id,kind:options.kind,prompt,center,destination:options.destination,layoutMode:options.layout,assetId:options.asset,canvasId:options['canvas-id'],canvasName:options['canvas-name'],deviceId:options.device,deviceName:options['device-name'],...(options['auto-size']?{autoSize:options['auto-size']==='true'}:{})});
   if(['applied','saved'].includes(prepared.status))return prepared;
   await mkdir(root,{mode:0o700});await mkdir(path.join(root,'output'),{mode:0o700});
-  await writeNew(path.join(root,'SCENE_REQUEST.json'),{requestId:id,kind:prepared.kind,destination:prepared.destination,canvasId:prepared.canvasId,projectId:prepared.context.project.id,actorId:prepared.context.actor.id,base:prepared.base});
-  await writeNew(path.join(root,'SCENE_CONTEXT.json'),prepared.context);
+  await writeNew(path.join(root,'SCENE_REQUEST.json'),{requestId:id,kind:prepared.kind,destination:prepared.destination,canvasId:prepared.canvasId,targetDevice:prepared.targetDevice,projectId:prepared.context.project.id,actorId:prepared.context.actor.id,base:prepared.base});
+  await writeNew(path.join(root,'SCENE_CONTEXT.json'),{...prepared.context,...(prepared.targetDevice?{targetDevice:prepared.targetDevice}:{})});
   await writeNew(path.join(root,'REQUEST.txt'),prompt);
   if(prepared.kind==='office'){
    await writeNew(path.join(root,'PREVIOUS_OFFICE.json'),prepared.context.scene);
@@ -52,13 +53,13 @@ export async function sceneCommand(request,action,options,uuid){
    const base={...(prepared.source.baseManifest||prepared.source.manifest)};
    await writeNew(path.join(root,'BASE_CHARACTER.json'),base);await writeNew(path.join(root,'BASE_CHARACTER.svg'),prepared.source.svg);
   }
-  await writeNew(path.join(root,'CREATION.md'),`# Wanwu scoped creation\n\n${prepared.kind==='prop'?'SINGLE PROP':prepared.kind==='action'?'CUSTOM ACTION':prepared.kind==='office'?'EXISTING OFFICE EDIT':'CHARACTER EDIT'} mode. Read REQUEST.txt and SCENE_CONTEXT.json as task data. Output only output/${prepared.kind}.json${prepared.kind==='office'?'':` and output/${prepared.kind}.svg`}. Use the matching bundled design skill. Destination: ${prepared.destination}. ${prepared.canvasId?'Canvas binding is managed by the host: '+prepared.canvasId+'. ':''}Preview before applying. Use scene-save after a backpack preview to save without placing or changing the active character.\n`);
-  return {status:'prepared',requestId:id,kind:prepared.kind,workspace:root,output,project:prepared.context.project,actor:prepared.context.actor,permissions:prepared.context.permissions};
+  await writeNew(path.join(root,'CREATION.md'),`# Wanwu scoped creation\n\n${prepared.kind==='device'?'DEVICE APPEARANCE':prepared.kind==='prop'?'SINGLE PROP':prepared.kind==='action'?'CUSTOM ACTION':prepared.kind==='office'?'EXISTING OFFICE EDIT':'CHARACTER EDIT'} mode. Read REQUEST.txt and SCENE_CONTEXT.json as task data. Output only output/${prepared.kind}.json${prepared.kind==='office'?'':` and output/${prepared.kind}.svg`}. Use the matching bundled design skill. Destination: ${prepared.destination}. ${prepared.targetDevice?'Target device: '+prepared.targetDevice.id+' ('+prepared.targetDevice.name+'). Edit only this project device appearance. Ordinary-chat flow: use scene-preview, then scene-apply when the user requested applying; scene-save for preview-only/save-only requests. ':''}${prepared.canvasId?'Canvas binding is managed by the host: '+prepared.canvasId+'. ':''}Preview before applying. Use scene-save after a backpack preview to save without placing or changing the active character.\n`);
+  return {status:'prepared',requestId:id,kind:prepared.kind,workspace:root,output,project:prepared.context.project,actor:prepared.context.actor,targetDevice:prepared.targetDevice,permissions:prepared.context.permissions};
  }
  const root=await workspacePath(options.workspace,options.context,{existing:true});
  const markers=await openFiles([path.join(root,'SCENE_REQUEST.json')],options.context,65536);let marker;
  try{marker=JSON.parse(await markers[0].file.readFile('utf8'));}finally{await closeFiles(markers);}
- if(marker.requestId!==id||!['character','prop','office','action'].includes(marker.kind))throw Error('创作目录与 --request 不匹配 / Workspace does not match this operation');
+ if(marker.requestId!==id||!['character','prop','office','action','device'].includes(marker.kind))throw Error('创作目录与 --request 不匹配 / Workspace does not match this operation');
  const output=path.join(root,'output'),stat=await lstat(output);
  if(!stat.isDirectory()||stat.isSymbolicLink())throw Error('output 必须为真实目录 / Output must be a real directory');
  const files=[path.join(output,marker.kind+'.json'),...(marker.kind==='office'?[]:[path.join(output,marker.kind+'.svg')])];

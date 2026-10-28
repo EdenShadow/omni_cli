@@ -30,7 +30,9 @@ node <skill>/scripts/validate-office.mjs output/office.json
 
 ## 电脑设备外观再设计
 
-当 CREATION.md 指定 DEVICE APPEARANCE 模式时，读 [设备外观](references/device-appearance.md)，只输出 `output/device.json` 和 `output/device.svg`。设计完整的桌子、显示器、键盘与主机组合，按提示词保留硬件造型与主题细节。已有设备素材是可编辑母版；这是项目内视觉外观，不添加真实设备，不改变设备身份、名字、会话、位置或硬件配置。生成后由宿主预览，用户应用后实时共享，可恢复默认。
+普通会话里要求修改某台设备外观时，先用 wanwu-skills-sync 的 references/device-workflow.md 定位目标并准备创作，不要当作独立道具或整个办公室生成。执行设计的电脑与被修改外观的电脑可以不同。
+
+当 CREATION.md 指定 DEVICE APPEARANCE 模式时，读 [设备外观](references/device-appearance.md)，只输出 `output/device.json` 和 `output/device.svg`。设计完整的设备造型，不强制带桌子：浮空 UFO、筋斗云、弹跳皮球上的电脑、机械臂都可以。默认静止；用户要求动态时使用 schemaVersion:2 的 animations.idle / animations.working 受控关键帧，支持屏幕文字滚动、公仔跳跃、浮空摆动及办公状态切换。按提示词保留造型与主题细节。已有设备素材是可编辑母版；这是项目内视觉外观，不添加真实设备，不改变设备身份、名字、会话、位置或硬件配置。生成后由宿主预览，用户应用后实时共享，可恢复默认。
 
 ## 单件道具创作
 
