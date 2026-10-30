@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {builtinModules} from 'node:module';
-import {execFileSync} from 'node:child_process';
+import {runNpm} from './npm.mjs';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const out=path.resolve(process.argv[2]||path.join(root,'.local/mini-package'));
 const stage=path.join(out,'package');await fs.mkdir(out,{recursive:true});await fs.rm(stage,{recursive:true,force:true});await fs.mkdir(stage);
@@ -22,5 +22,5 @@ const original=JSON.parse(await fs.readFile(path.join(root,'package.json'),'utf8
 await fs.writeFile(path.join(stage,'package.json'),JSON.stringify({name:'@edenshadow/omni-mini',version:original.version,type:'module',license:original.license,engines:original.engines,bin:{'omni-mini':'bin/omni-mini.mjs'},description:'Zero-dependency Wanwu public-chat client; no local AI runtime'},null,2)+'\n');
 await fs.copyFile(path.join(root,'docs/mini.md'),path.join(stage,'README.md'));await fs.copyFile(path.join(root,'LICENSE'),path.join(stage,'LICENSE'));
 await fs.chmod(path.join(stage,'bin/omni-mini.mjs'),0o755);
-const result=JSON.parse(execFileSync('npm',['pack','--json','--pack-destination',out],{cwd:stage,encoding:'utf8'}));
+const result=JSON.parse(runNpm(['pack','--json','--pack-destination',out],{cwd:stage,encoding:'utf8'}));
 console.log(JSON.stringify(result.map(p=>({file:path.join(out,p.filename),size:p.size,unpackedSize:p.unpackedSize,files:p.files.length,dependencies:0})),null,2));
