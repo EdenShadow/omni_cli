@@ -36,8 +36,15 @@ Wanwu.on('presence', ({userId,x,y,state}) => {});
 
 需要持久记录的应用优先用 `Wanwu.data.collection(name)`，见 [数据服务](data.md)。它复用服务端共享状态，支持增删改查、条件查询和订阅；不需要自行部署后端或在网页放数据库凭据。
 
+## 万物浮窗
+`Wanwu.ui.setLauncherPosition(position)` / `Wanwu.ui.resetLauncherPosition()` 设置或恢复当前画布浮窗的位置。先检查 `(await Wanwu.ready).launcherPosition`，旧客户端不支持时保留默认位置。支持 PC/移动端分别设置、像素或百分比边距、页面切换时重新计算；用户仍可拖动。完整用法见 [浮窗位置](launcher.md)。
+
 ## 封面
 `Wanwu.cover.set(imageBlobOrCanvas, {requestId})` 更新当前画布封面；`Wanwu.cover.ready()` 告知截图器页面已渲染完成。见 [封面接口](covers.md)。
 # AI 用量 API
 
 `Wanwu.usage.summary(filters)` 读取当前项目用量，`Wanwu.usage.requests(filters)` 读取请求明细；仅项目内的自有画布可调用。日期、分页、权限和 Claude/GPT 的不同统计口径见 [用量与请求日志](usage.md)。
+
+
+## 公屏与提醒
+`Wanwu.chat.send(text, options)` 与 `Wanwu.notifications.send(text, options)` 支持业务关键事件的加密公屏消息和成员提醒。先检查 `context.messaging`；请求 ID、收件人、授权、限频和在线限制见 [公屏与提醒](messages.md)。

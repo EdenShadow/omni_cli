@@ -1,9 +1,9 @@
 ---
 name: wanwu-skills-sync
-description: 按需获取万物项目与权限，发送指定消息或文件到团队、同步技能、编辑公告和待办、读取成员形象、修改角色、场景及指定设备外观，附带项目界面扩展，或进行备注和跨设备派工。普通问答不调用，不自动广播。
+description: 按需获取万物项目与权限，发送指定消息或文件到团队、同步技能、编辑公告和待办、读取成员形象、修改角色、场景及指定设备外观，附带项目界面扩展，或进行备注和跨设备派工。普通问答不调用；公屏长任务可克制地同步关键进展。
 metadata:
   display_name: 万物同步助手
-  version: "1.16.0"
+  version: "1.17.0"
 ---
 
 # 万物同步助手
@@ -29,7 +29,7 @@ node /absolute/wanwu-skills-sync/scripts/sync.mjs context
 | 用户请求 | 按需阅读 |
 | --- | --- |
 | 需要用户选择或补充信息，运行时没有原生提问工具 | [会话内提问](references/questions.md) |
-| 发消息、文件、SVG 到公屏或团队群聊 | [消息与附件](references/chat.md) |
+| 公屏消息、文件、SVG、@成员提醒 | [消息与附件](references/chat.md) |
 | 语音、音乐、普通音频或明确要求自动播放 | [音频](references/audio.md) |
 | 公告、创建/修改/删除指定 TODO | [公告与待办](references/board-workflow.md)，字段见 [格式](references/board-format.md) |
 | 分享或同步指定技能 | [技能发布](references/skill-publish.md) |
@@ -40,7 +40,7 @@ node /absolute/wanwu-skills-sync/scripts/sync.mjs context
 | 合照、成员形象或场景参考 | [图像参考](references/image-references.md) |
 | 设备/文件夹/会话备注、跨设备派工 | [备注与任务编排](references/work-dispatch.md) |
 
-默认不广播、不写入、不生成语音。只有用户要求的操作才执行，明确的请求本身就是对应授权，不重复索要确认。群聊任务的最终回答由宿主自动回传；请求的结果附件按消息流程发送，避免重复文本。Wanwan Xiaohe 语音默认关闭，除非用户明确重新要求。
+公屏 @Bot / @会话触发的任务，若可信 context 中 `request.groupChat.autoReply` 为 true，可按 [长任务进度](references/progress.md) 在原公屏同步必要的开始、关键进展或交互信息；短任务保持安静，最终结果仍由宿主自动回传。其他任务默认不广播、不写入、不生成语音。只有用户要求的操作才执行，明确的请求本身就是对应授权，不重复索要确认。群聊任务的最终回答由宿主自动回传；请求的结果附件按消息流程发送，避免重复文本。Wanwan Xiaohe 语音默认关闭，除非用户明确重新要求。
 
 新写入使用 UUID；超时保持同一 UUID 查询或重试，只有实际成功回执才报告成功。修改前读取当前对象，保留无关内容；公告/TODO 写入后重新读取验证，冲突时重读并合并。角色修改仅限发起人自己。技能发布不授权安装、升级 CLI 或复制凭据。
 

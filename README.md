@@ -91,7 +91,7 @@ git --version
 ### 2. 安装 CLI
 
 ```sh
-npm install -g github:EdenShadow/omni_cli#v0.3.2
+npm install -g github:EdenShadow/omni_cli#v0.3.3
 omni setup
 ```
 
@@ -368,10 +368,10 @@ journalctl --user -u omni-cli -f
 
 ## 升级、停止和卸载
 
-先停止常驻进程，再安装目标版本。下面以当前的 `v0.3.2` 为例；未来更新时，把标签替换为已发布的新版本：
+先停止常驻进程，再安装目标版本。下面以当前的 `v0.3.3` 为例；未来更新时，把标签替换为已发布的新版本：
 
 ```sh
-npm install -g github:EdenShadow/omni_cli#v0.3.2
+npm install -g github:EdenShadow/omni_cli#v0.3.3
 omni --version
 omni start
 ```
@@ -424,3 +424,7 @@ GitHub CI 在 Windows、macOS、Linux 的 Node.js 24 上运行检查。测试覆
 0.3.2 起，CLI 承载的 Codex、Claude Code、DeepSeek Harness 会话与万物桌面端、H5/WebApp 共用设备外观技能链路。例如可以对执行任务的电脑说：“把项目里另一台电脑改成云上的终端，工作时命令行滚动”。技能先读取项目设备列表和已有外观，再生成、校验并应用到明确指定的目标设备；同名设备会要求进一步选择。
 
 需要万物服务端 1.2.403 或更新版本。修改权限按任务发起人判断：设备拥有者或项目创建者才可应用；更新后成员端同步显示。静态外观为默认，只有明确要求时生成空闲/工作动画，保留旧客户端静态显示。不修改设备名称、会话或办公室布局。已有 CLI 安装升级后需重启 `omni start` 常驻进程。
+
+## 公屏极简模式
+
+小内存设备只需要发起任务、读取结果时，可用零第三方依赖的 Omni Mini，无需本机安装 AI 终端。独立安装包与用法见 [极简模式](docs/mini.md)。

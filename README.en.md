@@ -91,7 +91,7 @@ Run as the ordinary OS user who owns your AI terminal configuration and working 
 ### 2. Install the CLI
 
 ```sh
-npm install -g github:EdenShadow/omni_cli#v0.3.2
+npm install -g github:EdenShadow/omni_cli#v0.3.3
 omni setup
 ```
 
@@ -369,10 +369,10 @@ The service must use the same user, HOME and configuration directory as the setu
 
 ## Updating, stopping and uninstalling
 
-Stop the running process before installing your target version. This example uses the current `v0.3.2` tag; replace it with a newly published tag when upgrading:
+Stop the running process before installing your target version. This example uses the current `v0.3.3` tag; replace it with a newly published tag when upgrading:
 
 ```sh
-npm install -g github:EdenShadow/omni_cli#v0.3.2
+npm install -g github:EdenShadow/omni_cli#v0.3.3
 omni --version
 omni start
 ```
@@ -425,3 +425,7 @@ When reporting an issue, include your OS, Node/CLI versions, terminal type and r
 From 0.3.2, Codex, Claude Code and DeepSeek Harness sessions hosted by Omni CLI use the same device appearance skill workflow as Wanwu desktop and H5/WebApp. Ask a session to redesign another named device in the project. The skill resolves the target, reads its current artwork, validates the result and applies it; ambiguous device names require a choice.
 
 Requires Wanwu server 1.2.403 or newer. The task sender must own the target device or project. Members receive the updated appearance without changing device names, sessions or office layout. Designs are static by default; idle/working animations are opt-in, with complete static artwork for older clients. Restart the `omni start` daemon after upgrading an existing installation.
+
+## Public-chat Mini mode
+
+Omni Mini is a standalone client with zero third-party dependencies for sending tasks, discovering mentionable sessions and their notes, and reading encrypted team-chat replies. It does not run an AI agent locally. See [installation and commands](docs/mini.md).

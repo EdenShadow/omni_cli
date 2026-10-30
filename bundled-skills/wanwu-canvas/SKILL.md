@@ -27,8 +27,12 @@ description: 按画布 ID 读取信息、修改万物项目的网页画布，创
 
 14. 需要多人画板、多个 AI 虚拟光标、SVG/流程图对象协作时，读 [通用多人协作](references/collaboration.md)。用 `Wanwu.collab` / 会话 `collaborate()`：身份取服务端发起人的项目昵称，光标和笔迹走临时通道，最终对象走 CAS 原子提交。先确认目标画布；不要向真实项目自动发布演示。
 
+15. 网页业务逻辑需要发送项目公屏或 @成员 Push 时，读 [公屏与提醒](references/messages.md)。使用 `Wanwu.chat.send` / `Wanwu.notifications.send`，经宿主授权、加密和幂等请求发送；不使用浏览器 Notification 绕过系统权限，不循环广播。
+
 每周 TODO 等应用可参考 [可持久保存的周计划](examples/weekly-todo/index.html)，按用户的设计要求调整；创建后验证写入、刷新读取和成员间同步，再报告完成。
 
 页面类型不限：数据看板、工具、游戏等只是示例。鼓励响应式 H5，不能兼容时说明。协议不提供任意账户 API/系统权限；工作流任务经绑定会话与用户授权。不要安装、升级或重置 CLI。
 
 网页里的对象 ID、操作 ID 使用 `Wanwu.uuid()`；隔离容器可能缺少原生 `crypto.randomUUID()`，不要以解除隔离、`Math.random()` 或时间戳绕过。兼容能力与客户端/服务端版本要求见 [网页协议](references/protocol.md)。
+
+页面底部有游戏按钮、工具栏等可能被万物浮窗遮挡时，可用 `Wanwu.ui.setLauncherPosition()` 为当前页面选择空闲位置，支持 PC/移动端分别配置、运行时计算及页面切换后更新；见 [浮窗位置](references/launcher.md)。仅有遮挡时调整，不需要时保留右下角默认位置，始终允许用户拖动。
