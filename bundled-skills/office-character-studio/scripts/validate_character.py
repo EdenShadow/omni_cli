@@ -8,12 +8,12 @@ from pathlib import Path
 from xml.etree import ElementTree as ET
 
 
-def validate(path, strict=False):
+def validate(path, strict=False, allow_legacy_pranked=False, allow_legacy_dancing=False):
     data = json.loads(path.read_text())
     required = {'idle', 'walk-left', 'walk-right', 'working', 'tired'}
-    public = required | {'done','sitting'}
+    public = required | {'done','sitting','pranked','dancing'}
     if strict:
-        required = public
+        required = public - ({"pranked"} if allow_legacy_pranked else set()) - ({"dancing"} if allow_legacy_dancing else set())
     assert data.get('schemaVersion') == 1, 'schemaVersion must be 1'
     for key in ('id', 'name', 'description', 'art'):
         assert isinstance(data.get(key), str) and data[key].strip(), f'{key} missing'
@@ -67,6 +67,11 @@ def validate(path, strict=False):
         assert not set(sitting) & (public | set(variants) | set(work) | set(celebrations)), 'sitting pool must be independent'
         assert all(data.get('sitLabels', {}).get(n) for n in sitting), 'sitting labels missing'
         assert 0 < data.get('seating', {}).get('hipAnchor', 0) <= 1, 'seat hipAnchor missing'
+    pranked = data.get('prankedVariants', [])
+    assert isinstance(pranked, list) and len(pranked) <= 8 and len(set(pranked)) == len(pranked), 'prankedVariants must be unique, at most 8'
+    assert not set(pranked) & (public | set(variants) | set(work) | set(celebrations) | set(sitting)), 'pranked pool must be independent'
+    if pranked: assert 'pranked' in data['states'] and all(data.get('prankedLabels', {}).get(n) for n in pranked), 'pranked state/labels missing'
+    assert set(pranked) <= data['clips'].keys(), 'missing pranked clips'
     assert set(data['states']) | set(variants) | set(work) | set(celebrations) | set(sitting) <= data['clips'].keys(), 'missing clips'
     for name, clip in data['clips'].items():
         assert isinstance(clip['duration'], (float,int)) and 0 < clip['duration'] <= 30000, f'{name}: invalid duration'
@@ -95,8 +100,10 @@ if __name__ == '__main__':
     try:
         args = sys.argv[1:]
         strict = '--strict' in args
-        args = [arg for arg in args if arg != '--strict']
-        print(json.dumps({'valid':True, **validate(Path(args[0]), strict=strict)}, ensure_ascii=False))
+        allow_legacy_pranked = '--allow-legacy-pranked' in args
+        allow_legacy_dancing = '--allow-legacy-dancing' in args
+        args = [arg for arg in args if arg not in ('--strict', '--allow-legacy-pranked', '--allow-legacy-dancing')]
+        print(json.dumps({'valid':True, **validate(Path(args[0]), strict=strict, allow_legacy_pranked=allow_legacy_pranked, allow_legacy_dancing=allow_legacy_dancing)}, ensure_ascii=False))
     except (AssertionError, KeyError, ValueError, OSError, IndexError, TypeError, ET.ParseError) as error:
         print(f'INVALID: {error}', file=sys.stderr)
         sys.exit(1)

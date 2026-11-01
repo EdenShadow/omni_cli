@@ -2,7 +2,7 @@
 
 当目录有 CREATION.md，先遵循其中的输出位置。只修改独立创作目录 output，不改全局配置、账号、设备、会话数据库，不另起页面。产品空间称“项目”、人称“成员”；技术兼容字段 office.json、officeAsset 和技能 ID 不改名。
 
-角色输出 character.json + character.svg，七状态和独立动作池与原契约一致。保留母版身份和服饰，不能烘焙背景、电脑或其他成员。
+角色输出 character.json + character.svg，八状态和独立动作池与原契约一致。保留母版身份和服饰，不能烘焙背景、电脑或其他成员。
 
 项目输出 office.json，schemaVersion 2、renderMode pixel-grid，background 字段为 background.svg。宿主按格子模块编译 SVG；不用 image2.5 等生图路线。columns/rows 与 modules 定义格子，palette 定义配色；walkable/boards/seats/deviceZones/props 使用百分比，详见项目场景技能中的 pixel-project.json 和格子规范。公告、白板、Skills 必须正对屏幕，不倾斜、不透视、不烘焙真实文字。角色和电脑仍为宿主动态层。
 

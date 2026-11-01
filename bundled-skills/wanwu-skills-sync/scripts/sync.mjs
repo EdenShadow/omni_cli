@@ -11,10 +11,12 @@ const actions=['question','credentials-status','credentials-run','work-context',
 const uuid=value=>{if(!/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i.test(value||''))throw Error('请用 --request UUID 指定操作标识，重试保持相同 / Supply --request UUID; reuse it for retries');return value;};
 async function main(){
 try{
- while(args.length){const item=args.shift();if(item.startsWith('--')){if(item==='--autoplay'){options.autoplay=true;continue;}if(!args[0]||args[0].startsWith('--'))throw Error('参数缺少值：'+item);if(item==='--file')files.push(args.shift());else if(item==='--todo-key')todoKeys.push(args.shift());else if(item==='--member')(options.members??=[]).push(args.shift());else if(item==='--prop')(options.props??=[]).push(args.shift());else if(['skill','dependency','entry','context','scope','project','runtime','native-session','provider','include','device','device-name','session','candidate','version','request','text','text-file','input','revision','todo','output','kind','workspace','destination','layout','asset','canvas-id','canvas-name','auto-size','x','y','query','cursor','limit','office'].includes(item.slice(2)))options[item.slice(2)]=args.shift();else throw Error('无法识别参数：'+item);}else if(!action)action=item;else throw Error('无法识别参数：'+item);}
+ while(args.length){const item=args.shift();if(item.startsWith('--')){if(item==='--mention-all'){options.mentionAll=true;continue;}if(item==='--autoplay'){options.autoplay=true;continue;}if(!args[0]||args[0].startsWith('--'))throw Error('参数缺少值：'+item);if(item==='--file')files.push(args.shift());else if(item==='--todo-key')todoKeys.push(args.shift());else if(item==='--mention')(options.mentionIds??=[]).push(args.shift());else if(item==='--member')(options.members??=[]).push(args.shift());else if(item==='--prop')(options.props??=[]).push(args.shift());else if(['skill','dependency','entry','context','scope','project','runtime','native-session','provider','include','device','device-name','session','candidate','version','request','text','text-file','input','revision','todo','output','kind','workspace','destination','layout','asset','canvas-id','canvas-name','auto-size','x','y','query','cursor','limit','office'].includes(item.slice(2)))options[item.slice(2)]=args.shift();else throw Error('无法识别参数：'+item);}else if(!action)action=item;else throw Error('无法识别参数：'+item);}
  if(!actions.includes(action))throw Error('用法：node sync.mjs [--scope REQUEST_ID | --context CONTEXT_FILE] [--project PROJECT] '+actions.join('|'));
  if(options.include&&options.include.split(',').some(v=>!['skills','devices','sessions'].includes(v)))throw Error('--include 支持 skills,devices,sessions');
  if(options.autoplay&&!['audio','chat'].includes(action))throw Error('--autoplay 仅用于 audio 或 chat / Use --autoplay with audio or chat');
+ if(options.mentionAll&&action!=='chat')throw Error('--mention-all 仅用于 chat / Use --mention-all with chat');
+ if(options.mentionIds&&action!=='chat')throw Error('--mention 仅用于 chat / Use --mention with chat');
  const resolved=await resolveContext(options);
  if(resolved.selection){if(action!=='context')throw Error('请先运行 context 并选择目标项目或运行时');process.stdout.write(JSON.stringify(resolved.selection,null,2)+'\n');return;}
  const context=resolved.context;options.context=resolved.file;
@@ -49,7 +51,7 @@ try{
   else{
    if(options.text&&options['text-file'])throw Error('选择 --text 或 --text-file / Use either --text or --text-file');
    const text=options['text-file']?readFileSync(options['text-file'],'utf8'):options.text||'';
-   if(text.length>4000||files.length>5)throw Error('消息最多 4000 字符，附件最多 5 个 / Up to 4000 characters and 5 files');
+   if(text.length>4000||files.length>30)throw Error('消息最多 4000 字符，附件最多 30 个 / Up to 4000 characters and 30 files');
    if(!text.trim()&&!files.length)throw Error('请输入消息或选择附件 / Add a message or file');
    if(action==='voice'){
     if(files.length!==1)throw Error('请用 --file 指定一个音频文件 / Use --file with one audio file');
@@ -57,10 +59,13 @@ try{
    }
    const capabilities=options.autoplay?(await request({action:'context'})).capabilities:null;
    if(options.autoplay&&!capabilities?.audioAutoplay)throw Error('请更新万物 AI 服务以自动播放音乐 / Update the server for music autoplay');
-   const body={action,id,text,files,...(options.autoplay?{autoplay:true}:{})};
+   if(options.mentionIds&&!(await request({action:'context'})).capabilities?.chatMemberMentions)throw Error('请更新发送端万物 AI 后使用 @成员 / Update the sending app for member mentions');
+   if(options.mentionAll&&!(await request({action:'context'})).capabilities?.chatEveryoneMentions)throw Error('请更新发送端万物 AI 后使用 Bot @所有人 / Update the sending app for Bot @everyone');
+   const body={action,id,text,files,...(options.mentionAll?{mentionAll:true}:{}),...(options.mentionIds?{mentionIds:options.mentionIds}:{}),...(options.autoplay?{autoplay:true}:{})};
    // Older native upload handlers strip unknown fields; use the portable path
    // unless this client explicitly advertises support for the autoplay flag.
    result=options.autoplay&&!capabilities?.audioAutoplayUpload?{status:'client-upload-required'}:await request(body);
+   if(result.status==='client-upload-required'&&(options.mentionIds||options.mentionAll))throw Error('发送端不支持 @成员，请更新客户端 / Update the sending app for member mentions');
    if(result.status==='client-upload-required')result=await portableChat(request,body,options.context);
   }
  }else if(action==='todo-delete'){

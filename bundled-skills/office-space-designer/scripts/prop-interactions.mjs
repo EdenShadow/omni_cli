@@ -21,7 +21,7 @@ export function fulfillPropCapabilities(manifest,prompt) {
   if(/不能坐|不可坐|无法坐|not sit|not seat/i.test(prompt))result.seats=[];
   if(/不能踢|不可踢|无法踢|not kick/i.test(prompt))delete result.physics;
   if(required.kick&&!result.physics)result.physics={kind:'kick',distance:4,duration:700};
-  if(required.trigger)result.trigger={...defaultPropTrigger(required.trigger),...result.trigger,effect:required.trigger};
+  if(required.trigger&&!result.behavior)result.trigger={...defaultPropTrigger(required.trigger),...result.trigger,effect:required.trigger};
   if(/不能触发|不可触发|不放烟花|不发光|no trigger|not interactive/i.test(prompt))delete result.trigger;
   return result;
 }

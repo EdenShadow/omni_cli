@@ -5,7 +5,7 @@
 需要 Node.js 24+。官网提供独立安装包（未发布到 npm registry）：
 
 ```sh
-npm install --global https://wanwu321.com/assets/omni-mini-0.3.3.tgz
+npm install --global https://wanwu321.com/assets/omni-mini-0.3.4.tgz
 omni-mini setup
 ```
 
@@ -15,7 +15,7 @@ omni-mini setup
 
 ```sh
 npm run package:mini
-npm install --global ./.local/mini-package/edenshadow-omni-mini-0.3.3.tgz
+npm install --global ./.local/mini-package/edenshadow-omni-mini-0.3.4.tgz
 omni-mini setup
 omni-mini projects
 omni-mini agents list PROJECT_ID

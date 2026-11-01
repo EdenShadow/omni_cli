@@ -1,7 +1,8 @@
 // Share resource work, never actor state. Each rendered character gets its own
-// manifest copy and SVG tree. Private assets are shared only while in flight.
+// manifest copy and SVG tree. Mounted actors pin private assets in memory;
+// after the final actor leaves, the next mount must recheck server access.
 export function createCharacterResources({fetcher=fetch,origin=location.origin,protocol=location.protocol,now=Date.now}={}){
-  const entries=new Map();let generation=0,delivery=null,pack=null,packPending=null,blockedUntil=0;
+  const entries=new Map(),pins=new Map();let generation=0,delivery=null,pack=null,packPending=null,blockedUntil=0;
   const controllers=new Set();
   function configure(value){
     if(protocol==='wanwu:')return;
@@ -12,6 +13,8 @@ export function createCharacterResources({fetcher=fetch,origin=location.origin,p
       delivery={...value,url:url.href};
     }catch{/* Older servers and offline builds need no CDN configuration. */}
   }
+  // Drop account data immediately; live leases still own their reference counts
+  // until disconnect. Their old reads are invalid, and the next load reauthorizes.
   function clear(){generation++;entries.clear();pack=null;packPending=null;blockedUntil=0;delivery=null;for(const c of controllers)c.abort();controllers.clear();}
   async function read(url,options={},timeout=15000){
     const controller=new AbortController();controllers.add(controller);
@@ -75,15 +78,32 @@ export function createCharacterResources({fetcher=fetch,origin=location.origin,p
         if(epoch!==generation)throw new DOMException('Account changed','AbortError');
         return result;
       })();
-      entry={pending};entries.set(url.href,entry);
-      pending.then(()=>{if(!builtin&&entries.get(url.href)===entry)entries.delete(url.href);},()=>{if(entries.get(url.href)===entry)entries.delete(url.href);});
+      entry={pending,builtin:!!builtin,value:null};entries.set(url.href,entry);
+      pending.then(result=>{entry.value=result;if(!builtin&&!pins.has(url.href)&&entries.get(url.href)===entry)entries.delete(url.href);},()=>{if(entries.get(url.href)===entry)entries.delete(url.href);});
       // Bound retained public manifests; pending readers hold their own promise.
-      if(entries.size>24)entries.delete(entries.keys().next().value);
+      if(entries.size>24)for(const key of entries.keys()){if(!pins.has(key)){entries.delete(key);break;}}
     }
     const result=await entry.pending;
     return {data:structuredClone(result.data),art:result.art};
   }
-  return {load,configure,clear};
+  function retain(value){
+    const url=new URL(value);if(url.origin!==origin)throw Error('角色包必须同源');
+    const key=url.href,epoch=generation;let released=false;
+    pins.set(key,(pins.get(key)||0)+1);
+    const check=()=>{if(released||epoch!==generation)throw new DOMException('Character released','AbortError');};
+    return {
+      peek(){check();const result=entries.get(key)?.value;return result?{data:structuredClone(result.data),art:result.art}:null;},
+      async load(){check();const result=await load(key);check();return result;},
+      release(){
+        if(released)return;released=true;
+        const count=(pins.get(key)||1)-1;
+        if(count){pins.set(key,count);return;}
+        pins.delete(key);const entry=entries.get(key);
+        if(entry?.value&&!entry.builtin)entries.delete(key);
+      },
+    };
+  }
+  return {load,retain,configure,clear};
 }
 
 export const characterResources=typeof window==='undefined'?null:createCharacterResources();

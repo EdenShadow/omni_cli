@@ -4,7 +4,7 @@
 
 角色输出 character.json + character.svg，七状态和独立动作池与原契约一致。保留母版身份和服饰，不能烘焙背景、电脑或其他成员。
 
-项目输出 office.json，schemaVersion 2、renderMode pixel-grid，background 字段为 background.svg。宿主按格子模块编译 SVG；不用 image2.5 等生图路线。columns/rows 与 modules 定义格子，palette 定义配色；walkable/boards/seats/deviceZones/props 使用百分比，详见项目场景技能中的 pixel-project.json 和格子规范。公告、画布、Skills 必须正对屏幕，不倾斜、不透视、不烘焙真实文字。角色和电脑仍为宿主动态层。
+项目输出 office.json，schemaVersion 2、renderMode pixel-grid，background 字段为 background.svg。宿主按格子模块编译 SVG；不用 image2.5 等整张背景生图路线。pixel-grid 仅为布局契约，DIY 可以使用 appearance 的墙面/地面 SVG、smooth 描边与家具 svg 覆盖，详见 creative-direction.md；默认仍为像素风。columns/rows 与 modules 定义格子，palette 定义配色；walkable/boards/seats/deviceZones/props 使用百分比，详见项目场景技能中的 pixel-project.json 和格子规范。公告、画布、Skills 必须正对屏幕，不倾斜、不透视、不烘焙真实文字。角色和电脑仍为宿主动态层。
 
 旧场景编辑需按新的格子契约转换，保留旧母版文件、模块身份和用户数据。电脑由绑定设备动态生成，按人数预留独立工位；工作分身由真实会话驱动。画布、Skills 的能力以宿主为准，不假造数据。
 

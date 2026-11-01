@@ -91,7 +91,7 @@ git --version
 ### 2. 安装 CLI
 
 ```sh
-npm install -g github:EdenShadow/omni_cli#v0.3.3
+npm install -g github:EdenShadow/omni_cli#v0.3.4
 omni setup
 ```
 
@@ -329,6 +329,12 @@ omni runtimes
 
 修改 `WANWU_RUNTIME_DIR` 时，也要把同一个值传给需要发现 CLI 的原生 AI 终端。机器上有多个万物运行实例时，协作技能可能要求明确选择目标运行实例。
 
+### 登录保护
+
+**0.3.4** 加入下列登录提示，并同步万物 AI 1.2.429 的共享核心和技能。
+
+Omni CLI 和 Omni Mini 共用服务端登录保护：不显示图片验证码，连续输错密码达到 10 次会同时锁定账号与来源 IP。锁定不会自动过期，需联系 **edenworm@gmail.com**，提供终端显示的解封编号，由管理员核实后手工解封。未锁定时，密码登录成功会重置错误次数；请求过于频繁时会提示稍后重试。需配合支持此规则的新版万物服务端。
+
 ### 凭据和文件访问
 
 CLI 使用独立于桌面版的设备身份和登录状态。密码只用于 HTTPS 登录；令牌保存在当前用户的私有配置目录。Unix 目录权限为 `0700`、文件为 `0600`；Windows 使用限制为当前用户和 SYSTEM 的 ACL。**这是系统文件权限保护，不是内容加密**，请不要分享或提交配置目录。
@@ -368,10 +374,10 @@ journalctl --user -u omni-cli -f
 
 ## 升级、停止和卸载
 
-先停止常驻进程，再安装目标版本。下面以当前的 `v0.3.3` 为例；未来更新时，把标签替换为已发布的新版本：
+先停止常驻进程，再安装目标版本。下面以当前的 `v0.3.4` 为例；未来更新时，把标签替换为已发布的新版本：
 
 ```sh
-npm install -g github:EdenShadow/omni_cli#v0.3.3
+npm install -g github:EdenShadow/omni_cli#v0.3.4
 omni --version
 omni start
 ```

@@ -41,7 +41,7 @@ scene-prepare --request UUID --kind action --text-file /absolute/request.txt --w
 - **角色**：读取 `office-character-studio/SKILL.md`，以准备的本人角色为底稿，按要求换装/改造，保留身份特征以及七种状态和所有随机动作池。不能用别人角色的文件替换底稿。新角色必须保留可运行的 SVG 部位与动画轨道。
 - **道具**：读取 `office-space-designer/SKILL.md` 的 SINGLE PROP 流程，只生成 `prop.json` 与 `prop.svg`。按当前办公室网格设计尺寸和风格；用户要求可坐、可踢、点击触发或持续动画时，在 manifest 中提供真实交互数据，不能只画一个外观。
 - **表情/动作**：使用 `--kind action`，读取 office-character-studio 的 CUSTOM ACTION 流程和 references/custom-actions.md。以 BASE_CHARACTER.json / .svg 为底稿，只给发起人的当前角色增加 1–3 个真实有限动画，输出 output/action.json 和 output/action.svg。保留原形象、旧动作和动作池。完成后存入发起人表情库，不自动播放或更换角色。
-- **办公室**：读取 `office-space-designer/SKILL.md` 的现有场景编辑流程，修改 `output/office.json`。保留未被明确要求修改的家具 ID、看板、设备区与互动能力，尤其保留现有自定义道具的 SVG、assetId、座位、物理、触发器和动画。配色/灯光调整不重排布局。宿主依据 JSON 生成 `background.svg`，不能用整张位图或独立 HTML 替代。保留足够的设备位和通路。
+- **办公室**：读取 `office-space-designer/SKILL.md` 的现有场景编辑流程，修改 `output/office.json`。保留未被明确要求修改的家具 ID、看板、设备区与互动能力，尤其保留现有自定义道具的 SVG、assetId、座位、物理、触发器和动画。默认保留像素风；主动 DIY 或指定风格时再读该技能 `references/creative-direction.md`，可使用独立墙面/地面 SVG、平滑描边和内置家具 SVG 重绘，不能把 pixel-grid 布局格式误认为只能画像素。配色/灯光调整不重排布局。宿主依据 JSON 生成 `background.svg`，不能用整张位图或独立 HTML 替代。保留足够的设备位和通路，并在实际场景截图中检查比例。
 
 只修改这次创作目录，不写入应用数据库、账号配置或现有素材文件。不要启动另一个任务、伪造能力或省略资产校验。若缺少必需的创作技能，先明确报告缺失，不声称已完成。
 

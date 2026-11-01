@@ -6,7 +6,7 @@ JSON 包含 `schemaVersion: 1`、id、name、description、art（相对 SVG 路�
 
 `clips[state]`：`duration` 毫秒，`loop` 布尔，`tracks` 数组。track 包含 `part`（对应 SVG `data-part`）、`frames`（WAAPI keyframes）、可选 `duration`、`easing`。只用 transform/opacity，动画组的 transform-origin 和 transform-box 在 SVG style 中定义。同一 clip 的同一 part 只放一条轨道。
 
-idle 使用 idle clip 作为基础，scheduler 不连续重复地选 idleVariants，每个小动作结束回到 idle，随机等待 3.5–6.5 秒。公开状态为 idle、walk-left、walk-right、working、tired、done、sitting。新生成角色交付七状态；旧五状态包仍可加载，未提供 done 的包调用该状态会报错并保留原状态。显式切回 idle 或 playIdle 后恢复 facing=front，包括脸的位置、身体宽度及手臂透明度。事件：`characterstatechange` 的 detail 为 `{state, clip, facing}`；完成加载发 `characterready`，detail 为 `{id, idleVariants: [{id, label}], workVariants: [{id, label}], doneVariants: [{id, label}], sitVariants: [{id, label}]}`，用于按当前角色创建全部待机按钮；失败发 `charactererror`。
+idle 使用 idle clip 作为基础，scheduler 不连续重复地选 idleVariants，每个小动作结束回到 idle，随机等待 3.5–6.5 秒。公开状态为 idle、walk-left、walk-right、working、tired、done、sitting、pranked、dancing。新生成角色交付九状态；旧五状态包仍可加载，未提供 done 的包调用该状态会报错并保留原状态。显式切回 idle 或 playIdle 后恢复 facing=front，包括脸的位置、身体宽度及手臂透明度。事件：`characterstatechange` 的 detail 为 `{state, clip, facing}`；完成加载发 `characterready`，detail 为 `{id, idleVariants: [{id, label}], workVariants: [{id, label}], doneVariants: [{id, label}], sitVariants: [{id, label}]}`，用于按当前角色创建全部待机按钮；失败发 `charactererror`。
 
 ## 原生网页
 
@@ -39,7 +39,7 @@ idle 使用 idle clip 作为基础，scheduler 不连续重复地选 idleVariant
 
 ## 随机工作动作
 
-新角色提供 `workVariants: ["work-..."]`（新建默认至少五个不同 clip id；兼容已有三动作包）和 `workLabels`（id 到显示名称）。工作变体 `loop: true`，首尾连续，避免与七个公开状态和 idleVariants 重名。旧包可不提供该字段，继续循环基础 working。
+新角色提供 `workVariants: ["work-..."]`（新建默认至少五个不同 clip id；兼容已有三动作包）和 `workLabels`（id 到显示名称）。工作变体 `loop: true`，首尾连续，避免与八个公开状态和 idleVariants 重名。旧包可不提供该字段，继续循环基础 working。
 
 进入 working 时随机选择变体；完整播放 2–3 个循环后选择下一个，连续不重复。整个过程中公开 state 始终是 working，道具保持显示。动画时钟随暂停、离屏和页面隐藏暂停；状态切换、换角色和卸载取消旧时钟。减少动态时直接显示基础 working 姿势。
 

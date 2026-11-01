@@ -31,6 +31,7 @@ export function validateFloorPlan(s){
   const ids=new Set();
   for(const room of f.rooms){
     if(!room||typeof room.id!=='string'||!room.id||ids.has(room.id)||typeof room.name!=='string'||!room.name.trim()||room.name.length>40||!['meeting','office','lounge'].includes(room.kind)||!materials.includes(room.material))throw Error('房间需要独立 ID、名称、用途与 glass/wood/solid 墙体');ids.add(room.id);
+    if(room.workstations!==undefined&&(!Number.isInteger(room.workstations)||room.workstations<0||room.workstations>100))throw Error('房间工位数须为 0–100 的整数');
     // Walls may meet the scene perimeter. Walking still uses the inset floor;
     // circulation validation separately checks both sides of every doorway.
     if(!['x','y','width','height'].every(k=>Number.isFinite(room[k]))||room.width<9||room.height<9||room.x<0||room.y<f.wallRows||room.x+room.width>s.columns||room.y+room.height>s.rows)throw Error(`${room.name} 太小或超出地面，请留出至少 9×9 格，墙体可贴场景边缘`);
@@ -45,8 +46,11 @@ export function validateFloorPlan(s){
   if(s.deviceZones.length<f.capacity)throw Error(`需要为 ${f.capacity} 人预留足够工位，目前只有 ${s.deviceZones.length} 个`);
 }
 export function workstationRect(s,p){return {x:p.x/100*s.columns-3.4,y:p.y/100*s.rows-3.3,width:6.8,height:5.5};}
+export function roomWorkstations(s,room){return s.deviceZones.filter(p=>{const r=workstationRect(s,p);return r.x>=room.x+.4&&r.y>=room.y+.4&&r.x+r.width<=room.x+room.width-.4&&r.y+7.2<=room.y+room.height-.4;});}
 export function validateOfficeCirculation(s,devices){
   if(!s.floorPlan)return true;validateFloorPlan(s);
+  // Capacity is reserved space, not the number of already bound computers.
+  for(const room of s.floorPlan.rooms)if(room.workstations&&roomWorkstations(s,room).length<room.workstations)throw Error(`${room.name} 需要 ${room.workstations} 个房内工位及前方通道，目前只有 ${roomWorkstations(s,room).length} 个`);
   const walls=floorPlanObstacles(s),obstacles=[...furnitureObstacles(s),...walls];
   const floor=s.walkable,entry=toPercent(s,s.floorPlan.entry);
   const blocked=(x,y)=>x<floor.x||y<floor.y||x>floor.x+floor.width||y>floor.y+floor.height||obstacles.some(o=>x>o.x-1&&x<o.x+o.width+1&&y>o.y-1&&y<o.y+o.height+1);
@@ -95,5 +99,14 @@ export function floorPlanLayers(s){
       layers.push({id:`door-${room.id}-${i}`,x:(p.x-w/2)/s.columns*100,y:(p.y-h/2)/s.rows*100,width:w/s.columns*100,height:h/s.rows*100,depth:1,svg:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w*40} ${h*40}">${art}</svg>`});
     }
   }
-  return layers;
+  // Border walls have thickness and rise above their logical footprint. Crop
+  // their art to the floor, including the right/bottom edges, without stretching.
+  const top=s.floorPlan.wallRows/s.rows*100;
+  return layers.map(layer=>{
+    const x=Math.max(0,layer.x),y=Math.max(top,layer.y),right=Math.min(100,layer.x+layer.width),bottom=Math.min(100,layer.y+layer.height);
+    if(x===layer.x&&y===layer.y&&right===layer.x+layer.width&&bottom===layer.y+layer.height)return layer;
+    const w=right-x,h=bottom-y;if(w<=0||h<=0)return null;
+    const view=layer.svg.match(/viewBox="0 0 ([\d.]+) ([\d.]+)"/),sx=Number(view[1])/layer.width,sy=Number(view[2])/layer.height;
+    return {...layer,x,y,width:w,height:h,svg:layer.svg.replace(/viewBox="[^"]+"/,`viewBox="${(x-layer.x)*sx} ${(y-layer.y)*sy} ${w*sx} ${h*sy}"`)};
+  }).filter(Boolean);
 }

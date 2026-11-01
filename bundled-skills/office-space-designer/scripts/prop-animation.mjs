@@ -4,7 +4,8 @@ const easings=['linear','ease-in-out','steps(4)'];
 const object=value=>value&&typeof value==='object'&&!Array.isArray(value);
 export function assertRequestedPropAnimation(manifest,prompt=''){
  const requests=String(prompt).split(/[，。；,;\n]/).some(s=>!/(不要|不用|不需要|无需|禁止|静态|\b(?:no|without|not|static)\b)/i.test(s)&&/(水.{0,3}在动|水.{0,3}流动|流动的水|循环.{0,3}(转|动)|闪烁|摇摆|动效|动画|会动|animated|animation|flowing water)/i.test(s));
- if(requests&&!manifest.animations?.length)throw Error('用户要求道具持续动画：请在 SVG 中分出 g[data-part] 局部部位，并在 prop.json 添加 animations 关键帧。水波需要真实循环位移或透明度变化，不能用静态波纹代替。');
+ const localRequested=String(prompt).split(/[，。；,;\n]/).some(s=>!/(不要|不用|无需|静态|\b(?:no|without|static)\b)/i.test(s)&&/水.{0,3}(在动|流动)|流动的水|闪烁|摇摆|旋转|flowing water|blinking|spinning/i.test(s));
+ if(requests&&!manifest.animations?.length&&(!manifest.behavior?.movement||localRequested))throw Error('用户要求道具持续动画：请在 SVG 中分出 g[data-part] 局部部位，并在 prop.json 添加 animations 关键帧。水波需要真实循环位移或透明度变化，不能用静态波纹代替。');
 }
 export function validatePropAnimations(animations,art){
  if(animations===undefined)return true;

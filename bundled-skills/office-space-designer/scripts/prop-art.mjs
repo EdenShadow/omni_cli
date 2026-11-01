@@ -1,3 +1,4 @@
+import {validatePropBehavior,validateBehaviorCompatibility} from './prop-behavior.mjs';
 import {explicitSeatCapacity, evenlySpacedSeats} from './seat-capacity.mjs';
 import {validatePropTrigger} from './prop-triggers.mjs';
 import {validatePropPhysics} from './prop-interactions.mjs';
@@ -31,10 +32,11 @@ export function validateProp(manifest, art) {
   validatePropPhysics(manifest.physics);
   validatePropTrigger(manifest.trigger);
   validatePropAnimations(manifest.animations,art);
-  return validatePropArt(art);
+  validatePropBehavior(manifest.behavior,art,validatePropArt);validateBehaviorCompatibility(manifest);
+  return validatePropArt(art,{allowText:true});
 }
 export function renderPropArt(art,animations) {
-  validatePropArt(art);
+  validatePropArt(art,{allowText:true});
   const {scope,css}=propAnimationStyle(art,animations);
   return art.replace(/<svg\b([^>]*)>/,(_,attrs)=>`<svg xmlns="http://www.w3.org/2000/svg"${attrs.replace(/\sxmlns\s*=\s*["'][^"']*["']/g,'')}${scope?` data-prop-animation="${scope}"`:''}>${css?`<style>${css}</style>`:''}`);
 }

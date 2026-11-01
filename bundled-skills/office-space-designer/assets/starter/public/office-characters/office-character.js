@@ -1,3 +1,5 @@
+import {installPranked} from './pranked.js';
+import {installDancing} from './dancing.js';
 // Office Character Studio v1. Original runtime; no third-party dependencies.
 import {characterGroundY, characterGroundOffset} from './grounding.js';
 import {characterPortraitViewBox} from './portrait.js';
@@ -5,8 +7,8 @@ import {characterActionViewBox} from './action-framing.js';
 import {expressiveWorkData, WORK_STAGE} from './work-performance.js';
 import {WorkEffects} from './work-effects.js';
 import {characterResources} from './resources.js';
-const STATES = ['idle', 'walk-left', 'walk-right', 'working', 'tired', 'done', 'sitting'];
-const LEGACY_STATES = STATES.filter(state=>!['done','sitting'].includes(state));
+const STATES = ['idle', 'walk-left', 'walk-right', 'working', 'tired', 'done', 'sitting', 'pranked', 'dancing'];
+const LEGACY_STATES = STATES.filter(state=>!['done','sitting','pranked','dancing'].includes(state));
 export class OfficeCharacter extends HTMLElement {
   static observedAttributes = ['src', 'state', 'paused', 'seed', 'reduced-motion', 'grounded', 'portrait', 'seat-anchor', 'action-preview'];
   constructor() {
@@ -33,6 +35,7 @@ export class OfficeCharacter extends HTMLElement {
   }
   disconnectedCallback() {
     this.abort?.abort();
+    this.resource?.release();this.resource=null;
     this.cancel();
     this.workEffects?.destroy();
     this.observer?.disconnect();
@@ -56,13 +59,16 @@ export class OfficeCharacter extends HTMLElement {
   get stopped() { return this.hasAttribute('paused') || document.hidden || (!this.inView && this.currentState !== 'action'); }
   emit(name, detail) {this.dispatchEvent(new CustomEvent(name,{detail,bubbles:true,composed:true}));}
   async load() {
-    this.abort?.abort(); this.cancel(); this.data = null;
+    this.abort?.abort();this.resource?.release();this.resource=null; this.cancel(); this.data = null;
     this.workEffects?.destroy();this.workEffects=null;
     const abort = this.abort = new AbortController();
     try {
       const url = new URL(this.getAttribute('src'), document.baseURI);
       if (url.origin !== location.origin) throw Error('角色包必须同源');
-      const {data,art} = await characterResources.load(url.href);
+      const resource=this.resource=characterResources.retain(url.href);
+      // A live body/clone already holds validated source bytes. Build this
+      // actor synchronously from memory, before the browser paints a blank slot.
+      const {data,art} = resource.peek() || await resource.load();
       if (abort.signal.aborted) return;
       if (data.schemaVersion!==1 || !LEGACY_STATES.every(s=>data.clips?.[s]) || (['done','sitting'].some(s=>data.states?.includes(s)&&!data.clips?.[s]))) throw Error('角色包状态不完整');
       const artURL = new URL(data.art, url);
@@ -134,6 +140,8 @@ export class OfficeCharacter extends HTMLElement {
         const footHalfWidth = footEdges.length ? Math.max(...footEdges) : box.width*.12;
         this.data = expressiveWorkData(data,{parts:new Set([...this.svg.querySelectorAll('[data-part]')].map(el=>el.dataset.part)),groundY:this.groundY,centerX,footHalfWidth,unit:box.height/260});
       }
+      this.data=installDancing(this.svg,this.data,{groundY:this.groundY});
+      this.data=installPranked(this.svg,this.data,{featureBox,headY:this.headY,groundY:this.groundY});
       const effectBox=this.svg.viewBox.baseVal;
       this.workEffects=new WorkEffects(this.art,{viewBox:[effectBox.x,effectBox.y,effectBox.width,effectBox.height],headY:this.headY,groundY:this.groundY,centerX:featureBox?featureBox.x+featureBox.width/2:effectBox.x+effectBox.width/2});
       this.framePortrait();
@@ -141,6 +149,7 @@ export class OfficeCharacter extends HTMLElement {
       this.emit('characterready',{id:data.id,idleVariants:data.idleVariants.map(id=>({id,label:data.idleLabels?.[id]||id})),workVariants:(data.workVariants||[]).map(id=>({id,label:data.workLabels?.[id]||id})),sitVariants:(data.sitVariants||[]).map(id=>({id,label:data.sitLabels?.[id]||id})),doneVariants:(data.doneVariants||[]).map(id=>({id,label:data.doneLabels?.[id]||id}))});
     } catch (error) {
       if (abort.signal.aborted || error.name==='AbortError') return;
+      this.resource?.release();this.resource=null;
       this.shadowRoot.textContent=error.message;
       this.emit('charactererror',{message:error.message});
     }
@@ -206,6 +215,7 @@ export class OfficeCharacter extends HTMLElement {
     if (state==='working' && this.data?.workVariants?.length && !this.reduced) this.nextWork();
     else if (state==='done' && this.data?.doneVariants?.length && !this.reduced) this.nextDone();
     else if (state==='sitting' && this.data?.sitVariants?.length && !this.reduced) this.nextSit();
+    else if (state==='pranked' && this.data?.prankedVariants?.length && !this.reduced) this.renderClip(this.data.prankedVariants[Math.floor(this.random()*this.data.prankedVariants.length)]);
     else this.renderClip(this.currentState);
   }
   restart() {this.facing='front'; this.setState('idle');}

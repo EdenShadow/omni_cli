@@ -5,10 +5,11 @@ export async function login(state){
   const proposed=endpoint(process.env.OMNI_SERVER_URL||store.endpoint||DEFAULT_ENDPOINT);
   if(store.token&&store.endpoint!==proposed)throw Error('先 logout 再更换服务器 / Log out before changing server');
   store.endpoint=proposed;
+  console.log('\n  万物 Omni · 登录 / Sign in\n');
   console.log('服务器 / Server: '+store.endpoint);
   const username=await ask('万物账号 / Username');
   let secret=await password();
-  let result;try{result=await createRequest(store)('/api/auth/login','POST',{username,password:secret,installation:store.installation,machineKey:store.machineKey});}finally{secret='';}
+  let result;try{result=await createRequest(store)('/api/auth/login','POST',{username,password:secret,client:'cli',installation:store.installation,machineKey:store.machineKey});}finally{secret='';}
   if(store.userId&&store.userId!==result.user.id)throw Error('请先 logout 再切换账号 / Log out before switching accounts');
   store.token=result.token;store.userId=result.user.id;store.username=result.user.username||username;
   if(result.deviceBinding){store.installation=result.deviceBinding.installation||store.installation;store.device=result.deviceBinding.device;store.deviceToken=result.deviceBinding.deviceToken;}

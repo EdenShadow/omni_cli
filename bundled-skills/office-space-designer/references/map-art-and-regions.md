@@ -2,7 +2,7 @@
 
 场景创作使用 `schemaVersion: 2`、`renderMode: "pixel-grid"`。只写模块 JSON，宿主绘制 SVG；禁止整张生图、嵌入 raster、外链图片、生成图片后猜区域坐标。
 
-从 `assets/pixel-project.json` 开始。columns 为 32–128、rows 为 24–128 的整数，每格基础 40 像素。modules 的 x/y/width/height 均为整数格子，模块必须在地图边界内。每个模块有稳定 id 和 kind，可选 color（六位 hex）。当前 kind：rug、sofa、table、plant、bookshelf、arcade、window、wall、lamp。palette 包含 wall、floor、tile、accent、wood、leaf。
+从 `assets/pixel-project.json` 的 50×32 格紧凑模板开始；在相同窗口宽度下，单格、设备与人物比旧 40 列模板小约 20%。家具仍使用原有格数，三块顶部看板由宿主保持原显示大小。不要通过增大家具或动态角色的素材尺寸抵消缩小效果。已有场景局部修改保留原始网格，生成新户型或自动整理采用至少 50 列。columns 为 32–128、rows 为 24–128 的整数，每格基础 40 像素。modules 的 width/height 为整数格子，x/y 可为小数以保留手动布局，模块必须在地图边界内。每个模块有稳定 id 和 kind，可选 color（六位 hex）。当前 kind：rug、sofa、table、plant、bookshelf、arcade、window、wall、lamp、custom。所有家具 kind 都可用 svg 覆盖内置外观而保留其语义与坐点；appearance 支持原创墙面/地面、三板独立底纹配色与 smooth 描边，详见 [DIY 美术自由度](creative-direction.md)。格子不强制像素风。palette 包含 wall、floor、tile、accent、wood、leaf。
 
 其他区域用 0–100 百分比：walkable（x/y/width/height）、boards（announcement/canvas/skills）、deviceZones（电脑落点）、seats（可达座位脚底点）、props（已有 DIY 行为数据）。宿主自动从实体模块的下半部生成碰撞，从底边 Y 排深度；地毯在地面层。别再把模块重复写进 obstacles；obstacles 只用于额外阻挡区域。
 
@@ -19,6 +19,6 @@
 
 ## 立体感
 
-正对屏幕不等于扁平：场景保持正交格子，用顶部、侧面、前沿和接触阴影表现体积。桌腿、层板、沙发扶手和显示器边框均应可辨认。使用同色系平涂明暗与边缘高光，不靠大面积渐变或旋转面板制造深度。模块外形保持在自身格子边界内，脚底深度与碰撞位置一致。
+正对屏幕不等于扁平：场景保持正交格子，用顶部、侧面、前沿和接触阴影表现体积。桌腿、层板、沙发扶手和显示器边框均应可辨认。使默认像素风使用同色系平涂明暗与边缘高光。DIY 可按主题设计不同材质、轮廓和绘画语言；看板内容仍正面可读。模块外形保持在自身格子边界内，脚底深度与碰撞位置一致。
 
 有 floorPlan 的场景遵循 [户型与容量](floor-plans.md)：顶部墙改为固定 9 行、看板高至少6格；门洞断开碰撞墙，实际桌宽约6.8格，桌前3.2格可达。其他百分比契约仅适用于无户型的普通场景。

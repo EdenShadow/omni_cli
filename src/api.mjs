@@ -11,7 +11,7 @@ export function createRequest(store,fetcher=fetch,{signal}={}){
     if(!/^\/api\/[\w/?=&%.-]+$/.test(p)||p.includes('..'))throw Error('Invalid API path');
     const token=device?store.deviceToken:store.token;
     const response=await fetcher(new URL(p,endpoint(store.endpoint)),{method,redirect:'error',headers:{'Content-Type':'application/json','X-Wanwu-Desktop':'1','X-Wanwu-Access-Client':client,...(token?{Authorization:'Bearer '+token}:{})},body:body===undefined?undefined:JSON.stringify(body),signal:AbortSignal.any([AbortSignal.timeout(/skills|blobs|attachment|outputs|skill-assistant/.test(p)?1800000:60000),...(signal?[signal]:[])])});
-    if(!response.ok){let detail;try{detail=await response.json();}catch{}throw Object.assign(Error(detail?.error||`Server returned ${response.status}`),{status:response.status,code:detail?.code});}
+    if(!response.ok){let detail;try{detail=await response.json();}catch{}throw Object.assign(Error(detail?.error||`Server returned ${response.status}`),{status:response.status,code:detail?.code,failures:detail?.failures,reference:detail?.reference,supportEmail:detail?.supportEmail});}
     return raw?Buffer.from(await response.arrayBuffer()):response.status===204?{}:response.json();
   };
 }

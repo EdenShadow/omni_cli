@@ -1,4 +1,6 @@
+import {validatePropBehavior,validateBehaviorCompatibility} from './prop-behavior.mjs';
 import {validateFloorPlan, floorPlanObstacles, floorPlanLayers} from './floor-plan.mjs';
+import {validateBoardAppearance} from './office-board-appearance.mjs';
 import {furnitureObstacles} from './scene-geometry.mjs';
 import {validatePropTrigger} from './prop-triggers.mjs';
 import {validatePropPhysics} from './prop-interactions.mjs';
@@ -11,7 +13,9 @@ const standardSofaCenter={x:(16/100*40-3)/7*100,y:68};
 const standardSofaSeats=[standardSofaCenter,{x:20,y:68},{x:80,y:68}];
 export const defaultProjectScene = {
   schemaVersion: 2, renderMode: 'pixel-grid', name: '灵感花园', background: 'background.svg',
-  columns: 40, rows: 26, width: 1600, height: 1040,
+  // More tiles at the same fitted width make the floor, props and host-rendered
+  // devices/people 20% smaller. Saved scenes retain their own grid dimensions.
+  columns: 50, rows: 32, width: 2000, height: 1280,
   palette: { wall: '#dbe8dc', floor: '#f2ecdd', tile: '#e5dcc7', accent: '#8573b2', wood: '#bb8e64', leaf: '#719b74' },
   walkable: { x: 4, y: 34, width: 92, height: 60 },
   boards: {
@@ -22,17 +26,26 @@ export const defaultProjectScene = {
   deviceZones: [{x:39,y:53},{x:60,y:53},{x:78,y:53},{x:39,y:78},{x:60,y:78},{x:81,y:78}],
   seats: [], props: [],
   modules: [
-    {id:'lounge-rug',kind:'rug',x:2,y:17,width:10,height:7},
-    {id:'sofa',kind:'sofa',x:3,y:18,width:7,height:3,seats:standardSofaSeats},
-    {id:'tea-table',kind:'table',x:5,y:22,width:4,height:2},
-    {id:'garden',kind:'plant',x:3,y:12,width:2,height:3},
-    {id:'books',kind:'bookshelf',x:32,y:22,width:5,height:3},
-    {id:'arcade',kind:'arcade',x:36,y:12,width:2,height:3},
-    {id:'fern',kind:'plant',x:33,y:12,width:2,height:3},
-    {id:'small-plant',kind:'plant',x:10,y:21,width:2,height:3},
+    {id:'lounge-rug',kind:'rug',x:2,y:21,width:10,height:9},
+    {id:'sofa',kind:'sofa',x:3,y:22,width:7,height:3,seats:standardSofaSeats},
+    {id:'tea-table',kind:'table',x:5,y:27,width:4,height:2},
+    {id:'garden',kind:'plant',x:3,y:14,width:2,height:3},
+    {id:'books',kind:'bookshelf',x:42,y:28,width:5,height:3},
+    {id:'arcade',kind:'arcade',x:47,y:13,width:2,height:3},
+    {id:'fern',kind:'plant',x:43,y:12,width:2,height:3},
+    {id:'small-plant',kind:'plant',x:10,y:25,width:2,height:3},
   ],
 };
 const clone = x => JSON.parse(JSON.stringify(x));
+// Choose once when creating a shared project, independently of each member's appearance.
+export function createDefaultProjectScene(theme = 'light') {
+  const scene = clone(defaultProjectScene);
+  if (theme === 'dark') scene.palette = {
+    wall: '#1c2429', floor: '#242e34', tile: '#20292f',
+    accent: '#506d77', wood: '#856c55', leaf: '#648573',
+  };
+  return scene;
+}
 const escape = x => String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
 const hex = (v, fallback) => /^#[\da-f]{6}$/i.test(v || '') ? v : fallback;
 const shade = (color, delta) => '#'+[1,3,5].map(i=>Math.max(0,Math.min(255,parseInt(color.slice(i,i+2),16)+delta)).toString(16).padStart(2,'0')).join('');
@@ -68,6 +81,13 @@ export function validateProjectScene(scene) {
   if(scene.background!=='background.svg')throw Error('项目预览必须为 background.svg，由格子模块渲染');
   for(const [key,min,max] of [['columns',32,128],['rows',24,128]])if(!Number.isInteger(scene[key])||scene[key]<min||scene[key]>max)throw Error(`格子 ${key} 必须为 ${min}–${max} 的整数`);
   if(!scene.palette||Object.values(scene.palette).some(c=>!/^#[\da-f]{6}$/i.test(c)))throw Error('项目配色须使用六位十六进制颜色');
+  if(scene.appearance!==undefined){
+    const a=scene.appearance;
+    if(!a||typeof a!=='object'||Array.isArray(a)||Object.keys(a).some(k=>!['rendering','floorSvg','wallSvg','boards'].includes(k)))throw Error('场景外观字段无效');
+    if(a.rendering!==undefined&&!['pixel','smooth'].includes(a.rendering))throw Error('场景描边使用 pixel 或 smooth');
+    for(const key of ['floorSvg','wallSvg'])if(a[key]!==undefined)validatePropArt(a[key],{allowText:key==='wallSvg'});
+    if(a.boards!==undefined)validateBoardAppearance(a.boards);
+  }
   const point = p => p && Number.isFinite(p.x) && Number.isFinite(p.y) && p.x>=0 && p.x<=100 && p.y>=0 && p.y<=100;
   const region = r => point(r) && Number.isFinite(r.width) && Number.isFinite(r.height) && r.width>0 && r.height>0 && r.x+r.width<=100 && r.y+r.height<=100;
   if(!region(scene.walkable)||scene.walkable.y<(scene.floorPlan?9/scene.rows*100:32))throw Error('可行走地面必须位于看板下方且在地图内');
@@ -75,17 +95,22 @@ export function validateProjectScene(scene) {
   for(const p of [...(scene.seats||[]),...(scene.props||[])])if(!point(p)||(p.destination&&!point(p.destination)))throw Error('交互位置必须位于地图内');
   if((scene.obstacles||[]).some(r=>!region(r)))throw Error('障碍区域必须位于地图内');
   if(!Array.isArray(scene.modules)||scene.modules.length>160)throw Error('项目模块列表无效');
+  if(scene.modules.filter(m=>m.behavior).length>16)throw Error('项目最多同时摆放 16 个自主道具');
   const ids=new Set();
   for(const m of scene.modules){
     if(typeof m.id!=='string'||!m.id||ids.has(m.id)||!moduleKinds.includes(m.kind))throw Error('模块需要唯一 ID 和受支持的 kind'); ids.add(m.id);
     if(!['x','y'].every(k=>Number.isFinite(m[k]))||!['width','height'].every(k=>Number.isInteger(m[k]))||m.x<0||m.y<0||m.width<1||m.height<1||m.x+m.width>scene.columns||m.y+m.height>scene.rows)throw Error('模块尺寸须使用格子且位于地图内');
     if(m.color&&!/^#[\da-f]{6}$/i.test(m.color))throw Error('模块颜色无效');
-    if(m.kind==='custom') validatePropArt(m.svg);
+    if(m.kind==='custom'||m.svg!==undefined) validatePropArt(m.svg,{allowText:true});
+    if(m.canvasId!==undefined&&(m.kind!=='custom'||typeof m.canvasId!=='string'||!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(m.canvasId)))throw Error('道具绑定的画布无效 / Invalid prop canvas binding');
     validatePropAnimations(m.animations,m.svg);
+    if(m.behavior&&m.kind!=='custom')throw Error('自主行为需要 custom 道具');
+    validatePropBehavior(m.behavior,m.svg,validatePropArt);validateBehaviorCompatibility(m);
     if(m.seats!==undefined)validatePropSeats(m.seats);
     validatePropPhysics(m.physics);
     validatePropTrigger(m.trigger);
     if(m.name!==undefined&&(typeof m.name!=='string'||m.name.length>80))throw Error('道具名称最多 80 字');
+    if(m.layoutGroup!==undefined&&(typeof m.layoutGroup!=='string'||!m.layoutGroup.trim()||m.layoutGroup.length>80))throw Error('家具分组需要 1–80 字的名称');
   }
   const boards=[];
   for(const key of ['announcement','canvas','skills']){
@@ -122,7 +147,9 @@ export function sceneObstacles(input) {
 }
 function moduleArt(m,p){
   const w=m.width*40,h=m.height*40, ink='#525266', c=hex(m.color,p.accent), wood=p.wood, leaf=p.leaf;
-  if(m.kind==='custom') return fitPropArt(m.svg,w,h,m.animations);
+  // A sofa or bookshelf can have original artwork without losing its semantic
+  // kind, grouping, seats, collision footprint or stable identity.
+  if(m.svg!==undefined) return fitPropArt(m.svg,w,h,m.animations);
   const r=(x,y,a,b,c,s)=>rect(x,y,a,b,c,s);
   const poly=(points,color)=>`<polygon points="${points}" fill="${color}"/>`;
   let out='';
@@ -163,7 +190,13 @@ function moduleArt(m,p){
 }
 export function sceneModuleLayers(input){
   const s=resolveProjectScene(input),p=Object.fromEntries(Object.entries(defaultProjectScene.palette).map(([k,v])=>[k,hex(s.palette[k],v)]));
-  return [...floorPlanLayers(s),...s.modules.map(m=>({id:m.id,x:m.x/s.columns*100,y:m.y/s.rows*100,width:m.width/s.columns*100,height:m.height/s.rows*100,depth:m.kind==='rug'||m.walkThrough?1:Math.round((m.y+m.height)/s.rows*1000),svg:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${m.width*40} ${m.height*40}" shape-rendering="crispEdges">${moduleArt(m,p)}</svg>`}))];
+  return [...floorPlanLayers(s),...s.modules.map(m=>({id:m.id,x:m.x/s.columns*100,y:m.y/s.rows*100,width:m.width/s.columns*100,height:m.height/s.rows*100,depth:m.kind==='rug'||m.walkThrough?1:Math.round((m.y+m.height)/s.rows*1000),svg:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${m.width*40} ${m.height*40}" shape-rendering="${sceneRendering(s)}">${moduleArt(m,p)}</svg>`}))];
+}
+const sceneRendering=s=>s.appearance?.rendering==='smooth'?'geometricPrecision':'crispEdges';
+// Surface artwork is decorative and clipped to its region. Navigation and
+// interactive objects remain separate editable layers, including on old maps.
+function surfaceArt(svg,x,y,width,height){
+  return svg.replace(/<svg\b([^>]*)>/,(_,attrs)=>`<svg${attrs.replace(/\s(?:x|y|width|height|overflow|preserveAspectRatio)\s*=\s*["'][^"']*["']/g,'')} x="${x}" y="${y}" width="${width}" height="${height}" preserveAspectRatio="none" overflow="hidden">`);
 }
 export function renderProjectWall(input){
   const s=resolveProjectScene(input),p=Object.fromEntries(Object.entries(defaultProjectScene.palette).map(([k,v])=>[k,hex(s.palette[k],v)]));
@@ -172,23 +205,29 @@ export function renderProjectWall(input){
   for(let x=0;x<w;x+=80)art+=rect(x,24,2,h-45,'#c4d5c6');
   for(const x of [w*.17,w*.5,w*.83])art+=rect(x-20,28,40,8,'#797583')+rect(x-28,36,56,12,'#f9edcc')+rect(x-20,48,40,4,'#c8b581');
   art+=rect(0,20,16,h-20,shade(p.wall,-28))+rect(16,20,8,h-20,shade(p.wall,9))+rect(w-20,20,20,h-20,shade(p.wall,-38));
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" shape-rendering="crispEdges">${art}</svg>`;
+  if(s.appearance?.wallSvg)art=rect(0,0,w,h,p.wall)+surfaceArt(s.appearance.wallSvg,0,0,w,h);
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" shape-rendering="${sceneRendering(s)}">${art}</svg>`;
 }
-export function renderProjectScene(input, {modules=true,boards=true,guides=false}={}){
+export function renderProjectScene(input, {modules=true,boards=true,guides=false,floorExtension=0}={}){
   const s=resolveProjectScene(input),w=s.columns*40,h=s.rows*40,wallHeight=s.floorPlan?s.floorPlan.wallRows*40:Math.round(h*.32/40)*40;
   const p=Object.fromEntries(Object.entries(defaultProjectScene.palette).map(([k,v])=>[k,hex(s.palette[k],v)]));
-  let art=rect(0,0,w,h,p.floor)+rect(0,0,w,wallHeight,p.wall)+rect(0,0,w,20,'#a7baa9')+rect(0,wallHeight-16,w,16,p.wood)+rect(0,wallHeight,w,8,'#8b7866');
-  for(let y=wallHeight+8;y<h;y+=40)for(let x=0;x<w;x+=40){const tile=(x/40+Math.floor(y/40))%2?p.floor:p.tile;art+=rect(x,y,40,40,tile)+rect(x+2,y+2,36,2,shade(tile,10))+rect(x+2,y+2,2,36,shade(tile,10))+rect(x,y+38,40,2,shade(tile,-15))+rect(x+38,y,2,40,shade(tile,-15));}
+  const paintHeight=h+Math.max(0,Number.isFinite(floorExtension)?floorExtension:0)*40;
+  let art=rect(0,0,w,paintHeight,p.floor)+rect(0,0,w,wallHeight,p.wall)+rect(0,0,w,20,'#a7baa9')+rect(0,wallHeight-16,w,16,p.wood)+rect(0,wallHeight,w,8,'#8b7866');
+  for(let y=wallHeight+8;y<paintHeight;y+=40)for(let x=0;x<w;x+=40){const tile=(x/40+Math.floor(y/40))%2?p.floor:p.tile;art+=rect(x,y,40,40,tile)+rect(x+2,y+2,36,2,shade(tile,10))+rect(x+2,y+2,2,36,shade(tile,10))+rect(x,y+38,40,2,shade(tile,-15))+rect(x+38,y,2,40,shade(tile,-15));}
   // Wall thickness, skirting and stepped contact shadows make a small cutaway diorama.
   art+=rect(0,wallHeight+8,w,8,'#62534622')+rect(0,wallHeight+16,w,6,'#62534610');
-  art+=rect(0,20,16,h-20,shade(p.wall,-28))+rect(16,20,8,h-20,shade(p.wall,9))+rect(w-20,20,20,h-20,shade(p.wall,-38));
-  art+=rect(0,h-16,w,16,shade(p.wood,-25))+rect(24,h-20,w-44,4,shade(p.wood,24));
+  art+=rect(0,20,16,paintHeight-20,shade(p.wall,-28))+rect(16,20,8,paintHeight-20,shade(p.wall,9))+rect(w-20,20,20,paintHeight-20,shade(p.wall,-38));
+  art+=rect(0,paintHeight-16,w,16,shade(p.wood,-25))+rect(24,paintHeight-20,w-44,4,shade(p.wood,24));
   for(let x=0;x<w;x+=80)art+=rect(x,24,2,wallHeight-45,'#c4d5c6');
   for(const x of [w*.17,w*.5,w*.83])art+=rect(x-20,28,40,8,'#797583')+rect(x-28,36,56,12,'#f9edcc')+rect(x-20,48,40,4,'#c8b581');
+  if(s.appearance?.floorSvg)art+=rect(0,wallHeight,w,paintHeight-wallHeight,p.floor)+surfaceArt(s.appearance.floorSvg,0,wallHeight,w,paintHeight-wallHeight);
+  if(s.appearance?.wallSvg)art+=rect(0,0,w,wallHeight,p.wall)+surfaceArt(s.appearance.wallSvg,0,0,w,wallHeight);
   if(boards)for(const [key,b] of Object.entries(s.boards)){
     const x=b.x*w/100,y=b.y*h/100,bw=b.width*w/100,bh=b.height*h/100;
+    const theme=s.appearance?.boards?.[key];
     art+=rect(x+10,y+12,bw,bh,'#433d5625')+rect(x+5,y+5,bw,bh,shade(p.wood,-30))+rect(x,y,bw,bh,p.wood)+rect(x+4,y+4,bw-8,4,shade(p.wood,35))+rect(x+8,y+8,bw-16,bh-16,key==='announcement'?'#f3ddb7':'#fffcf4');
-    art+=`<text x="${x+22}" y="${y+40}" fill="#525266" font-family="sans-serif" font-size="20" font-weight="700">${escape({announcement:'NOTICE',canvas:'WHITEBOARD',skills:'SKILLS'}[key]||key)}</text>`;
+    if(theme){art+=rect(x,y,bw,bh,theme.border||'#716451')+rect(x+8,y+8,bw-16,bh-16,theme.background||'#191b1f');if(theme.backgroundSvg)art+=surfaceArt(theme.backgroundSvg,x+8,y+8,bw-16,bh-16);}
+    art+=`<text x="${x+22}" y="${y+40}" fill="${theme?.foreground||'#525266'}" font-family="sans-serif" font-size="20" font-weight="700">${escape({announcement:'NOTICE',canvas:'WHITEBOARD',skills:'SKILLS'}[key]||key)}</text>`;
     for(let i=0;i<3;i++)art+=rect(x+22,y+62+i*28,bw*.7-i*12,6,'#c9c2b7');
   }
   if(modules){
@@ -199,6 +238,6 @@ export function renderProjectScene(input, {modules=true,boards=true,guides=false
     }
   }
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" shape-rendering="crispEdges"><title>${escape(s.name)}</title>${art}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${paintHeight}" viewBox="0 0 ${w} ${paintHeight}" shape-rendering="${sceneRendering(s)}"><title>${escape(s.name)}</title>${art}</svg>`;
 }
 export const sceneDataUrl = input => `data:image/svg+xml;charset=utf-8,${encodeURIComponent(renderProjectScene(input))}`;

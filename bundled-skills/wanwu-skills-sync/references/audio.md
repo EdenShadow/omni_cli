@@ -26,6 +26,6 @@ audio --request UUID --autoplay --file /absolute/first.mp3 --file /absolute/seco
 voice --request UUID --file /absolute/audio.mp3
 ```
 
-可加 `--text` 或 `--text-file` 附带说明。一次发送一个音频文件，支持 MP3、WAV、M4A/MP4、AAC、OGG/Opus、FLAC、WebM；文件最多 500 MB，时长 0.5 秒到 30 分钟。系统自动读取时长、转为兼容的语音格式并上传，群聊显示语音播放条；保留本地原音频。支持旧客户端的分块上传通道，`capabilities.voice` 缺失时服务端需要更新。
+可加 `--text` 或 `--text-file` 附带说明。一次发送一个音频文件，支持 MP3、WAV、M4A/MP4、AAC、OGG/Opus、FLAC、WebM；文件最多 1 GB，时长 0.5 秒到 30 分钟。系统自动读取时长、转为兼容的语音格式并上传，群聊显示语音播放条；保留本地原音频。支持旧客户端的分块上传通道，`capabilities.voice` 缺失时服务端需要更新。
 
 使用新的 UUID 发新语音，超时/结果不确定先用 `chat-status --request UUID` 查询，或用相同 UUID 和同一音频重试。只有 `status: sent` 才报告发送成功；不因重试重复发布，也不把失败的音频自动换成文字或普通附件发送。

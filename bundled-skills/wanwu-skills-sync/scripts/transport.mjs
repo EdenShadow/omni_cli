@@ -1,7 +1,7 @@
 import path from 'node:path';
 import {homedir} from 'node:os';
 import {constants} from 'node:fs';
-import {open,realpath} from 'node:fs/promises';
+import {open,realpath,lstat} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 
 const CHUNK=32*1024; // Base64 plus JSON stays below old clients' 64 KiB local limit.
@@ -11,11 +11,16 @@ export async function openFiles(paths,contextFile,maxBytes){
  try{
   for(const selected of paths){
    if(!path.isAbsolute(selected))throw Error('请使用文件的绝对路径 / Use an absolute file path');
+   const selectedStat=await lstat(selected);
+   if(selectedStat.isSymbolicLink())throw Error('不能发送符号链接 / Symbolic links cannot be shared');
    const canonical=await realpath(selected),runtimeRoot=await realpath(process.env.WANWU_RUNTIME_DIR||path.join(homedir(),'.wanwu','runtime')).catch(()=>null);
    if(runtimeRoot&&(canonical===runtimeRoot||canonical.startsWith(runtimeRoot+path.sep)))throw Error('不能发送运行时授权文件 / Runtime credentials cannot be shared');
    if(canonical===contextPath||(path.basename(path.dirname(contextPath))==='skill-contexts'&&(canonical===privateRoot||canonical.startsWith(privateRoot+path.sep))))throw Error('不能发送万物应用的私有数据 / App-private files cannot be shared');
    const file=await open(selected,constants.O_RDONLY|constants.O_NOFOLLOW);handles.push({file});
    const stat=await file.stat();if(!stat.isFile())throw Error('请选择文件；文件夹请先压缩 / Select a file; zip folders first');
+   // O_NOFOLLOW is unavailable on Windows; also reject replacement during open.
+   const current=await lstat(selected);
+   if(current.isSymbolicLink()||stamp(selectedStat)!==stamp(stat)||stamp(current)!==stamp(stat))throw Error('文件已改变，请重试 / File changed; retry');
    if(stat.size>maxBytes)throw Error(`文件过大，最多 ${maxBytes/1024/1024} MB / File is too large`);
    Object.assign(handles.at(-1),{name:path.basename(selected),size:stat.size,stamp:stamp(stat)});
   }
@@ -42,7 +47,7 @@ export async function upload(request,action,item,onCreated){
 export async function portableChat(request,body,contextFile){
  const context=await request({action:'context'}),receipt=await request({action:'chat-status',id:body.id});
  if(receipt.status==='sent')return {...receipt,projectName:context.project.name};
- const handles=await openFiles(body.files,contextFile,500*1024*1024),ids=[];
+ const handles=await openFiles(body.files,contextFile,1024*1024*1024),ids=[];
  try{
   for(const h of handles){if(body.action==='audio')h.mime=({mp3:'audio/mpeg',wav:'audio/wav',m4a:'audio/mp4',mp4:'audio/mp4',m4v:'audio/mp4',aac:'audio/aac',ogg:'audio/ogg',opus:'audio/ogg',flac:'audio/flac',webm:'audio/webm'})[path.extname(h.name).slice(1).toLowerCase()];await upload(request,'chat-upload',h,id=>ids.push(id));}
   const result=await request({id:body.id,text:body.text,autoplay:body.autoplay,...(body.action==='voice'?{action:'voice-send',voiceUploadId:ids[0]}:{action:'chat-send',attachments:ids.map(uploadId=>({uploadId}))})});

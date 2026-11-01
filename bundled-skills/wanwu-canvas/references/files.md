@@ -2,7 +2,7 @@
 
 `get --canvas ID` 列出网页源文件、封面、共享附件和摘要大小。
 `download --canvas ID --file-id FILE_ID --output /absolute/new-file` 按权限取短期下载地址并保存，拒绝覆盖已有文件。可选 `--cdn 1` 请求签名 CDN；未配置、旧端或限制可见范围的画布自动回退受限下载。校验 SHA256，不在回复中展示签名 URL。
-`attach --canvas ID --file /absolute/archive.zip --request UUID` 上传用户选定的资源。普通文件上限500MB，工程ZIP可到2GB（服务端限制为准）。目录先整理成 ZIP，排除 token、.env、账户配置和运行时凭据。上传使用现有分块接口；不把文件base64塞进模型上下文。
+`attach --canvas ID --file /absolute/archive.zip --request UUID` 上传用户选定的资源。普通文件上限1GB，工程ZIP可到2GB（服务端限制为准）。目录先整理成 ZIP，排除 token、.env、账户配置和运行时凭据。上传使用现有分块接口；不把文件base64塞进模型上下文。
 
 本地没配置 COS 时文件保存于服务端本地，返回 storage=local；配置 COS 后会上传云存储并可走现有签名 CDN，返回 storage=cos。不要把 local 称为已上传云存储。用户需要共享剪映草稿时共享源工程ZIP及其资源；这不等于已实现剪映格式的在线实时编辑器。
 

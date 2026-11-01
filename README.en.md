@@ -91,7 +91,7 @@ Run as the ordinary OS user who owns your AI terminal configuration and working 
 ### 2. Install the CLI
 
 ```sh
-npm install -g github:EdenShadow/omni_cli#v0.3.3
+npm install -g github:EdenShadow/omni_cli#v0.3.4
 omni setup
 ```
 
@@ -330,6 +330,12 @@ omni runtimes
 
 If you change `WANWU_RUNTIME_DIR`, pass the same value to native AI terminals that need to discover the CLI. When multiple Omni instances run on a machine, collaboration skills may ask you to select the target instance explicitly.
 
+### Sign-in protection
+
+**0.3.4** adds these sign-in messages and imports the shared core and skills from Wanwu AI 1.2.429.
+
+Omni CLI and Omni Mini share server-side sign-in protection. No image CAPTCHA is shown; 10 consecutive incorrect password attempts lock both the account and source IP. Locks do not expire automatically. Contact **edenworm@gmail.com** with the reference shown in the terminal for administrator review and manual unlock. Before a lock, a successful password sign-in resets the failure count. Frequent requests may be temporarily rate-limited. These protections require the updated Wanwu server.
+
 ### Credentials and filesystem access
 
 The CLI keeps its device identity and login state separate from the desktop client. Passwords are used only for HTTPS login. Tokens are stored in a private directory: Unix directories use `0700` and files `0600`; Windows uses ACLs limited to the current user and SYSTEM. **This is OS permission protection, not content encryption.** Do not share or commit the configuration directory.
@@ -369,10 +375,10 @@ The service must use the same user, HOME and configuration directory as the setu
 
 ## Updating, stopping and uninstalling
 
-Stop the running process before installing your target version. This example uses the current `v0.3.3` tag; replace it with a newly published tag when upgrading:
+Stop the running process before installing your target version. This example uses the current `v0.3.4` tag; replace it with a newly published tag when upgrading:
 
 ```sh
-npm install -g github:EdenShadow/omni_cli#v0.3.3
+npm install -g github:EdenShadow/omni_cli#v0.3.4
 omni --version
 omni start
 ```
