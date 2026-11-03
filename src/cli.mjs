@@ -1,3 +1,4 @@
+import {nasCommand} from './nas-command.mjs';
 import {login} from './login.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -16,6 +17,8 @@ const help=`Omni CLI / 万物命令行设备 ${version}
 omni setup              登录、检测终端、绑定设备、选择项目并启动
 omni login              输入账号密码登录（密码不保存）
 omni bind               选择 AI 终端，安装默认技能并绑定设备
+omni nas bind <project-id>    绑定本设备为 NAS 主机（无需 AI 终端）
+omni nas status <project-id>  查看 NAS 配置端口、实际地址和状态
 omni start              前台运行设备；Ctrl+C 停止
 omni status             显示当前账号和设备（不显示凭据）
 omni runtimes           检测 Codex / Claude Code / DeepSeek Harness
@@ -127,7 +130,7 @@ export async function main(args){
     if(args[1]!=='order')throw Error(runtimeOrderHelp);
     print(runtimeOrderCommand(loadState(),args.slice(2)));return;
   }
-  const allowed=['setup','login','bind','start','status','projects','join','import','skills','access','logout','chat','agents','sessions','discover'];
+  const allowed=['nas','setup','login','bind','start','status','projects','join','import','skills','access','logout','chat','agents','sessions','discover'];
   if(!allowed.includes(command))throw Error('Unknown command. Run omni --help');
   const state=loadState(),{store,save}=state;
   if(command==='status'){print({server:store.endpoint||DEFAULT_ENDPOINT,username:store.username||null,device:store.device?{id:store.device.id,name:store.device.name,runtimes:store.device.runtimes}:null,configured:!!store.deviceToken,folder:store.workspace,stateDirectory:state.directory});return;}
@@ -141,6 +144,15 @@ export async function main(args){
     }
     if(args.length!==1)throw Error('Use omni projects or omni projects join <code>');
     const r=await request('/api/me');print(r.projects.map(({id,name})=>({id,name})));return;
+  }
+  if(command==='nas'){
+    if(args.length!==3 || !['bind','status'].includes(args[1]))throw Error('Use omni nas bind <project-id> or omni nas status <project-id>');
+    logged(store);
+    const project=checkId(args[2]);
+    if(args[1]==='status'){print(await nasCommand(state,'status',project));return;}
+    const release=lock(state.directory);
+    try{print(await nasCommand(state,'bind',project));}finally{release();}
+    return;
   }
   const unlock=lock(state.directory);
   try{

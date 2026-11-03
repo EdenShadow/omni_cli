@@ -65,6 +65,17 @@ CLI 可以让本机 AI 使用已授权的脚本、工具和技能；实际控制
 
 ## 内网 NAS
 
+在 NAS 上准备 Node.js 24+，用 `npm install -g ./edenshadow-omni-cli-0.3.6.tgz` 安装完整版，登录创建 NAS 钥匙的账号。若原 Mac 正在托管，先退出万物客户端，等原主机离线。在 NAS 上执行以下命令，项目 ID 可用 `omni projects` 查看。
+
+```sh
+omni login
+omni projects
+omni nas bind <project-id>
+omni start
+```
+
+此绑定无需安装 AI 终端。用另一终端运行 `omni nas status <project-id>` 查看实际地址及端口。NAS 的 SMB 地址应填写它的局域网 IPv4 或解析到该地址的主机名。默认 HTTP 端口 54758，可在万物钥匙设置修改；查看画布的设备需能连接此地址。保持服务在线的方法见下文 systemd 配置。
+
 从 0.3.5 起，完整版运行 `omni start` 时可以为团队画布提供只读 HTTP 文件服务。在同一账号的项目里配置万物同步助手的 NAS 钥匙串。只填 SMB 主机地址可发现账号可读的共享，填写共享路径则限定目录。CLI 设备须能连到 NAS；在 WebApp 保存配置后，项目中符合条件的在线设备可以接管。已经指定桌面主机的配置继续使用那台主机。
 
 Mini 用于公屏派工和读取回复。要让 Linux 服务器或树莓派承载 NAS 服务，请安装完整版并保持在线。

@@ -26,6 +26,8 @@ Use it on a headless Linux server or a Windows/macOS computer where you do not n
 
 ## Read-only LAN access to a NAS
 
+On the NAS, install Node.js 24+ and the full package with `npm install -g ./edenshadow-omni-cli-0.3.6.tgz`, then use `omni login` with the owner of the selected SMB credential. Stop the previous host, run `omni nas bind <project-id>` and keep `omni start` running. NAS binding does not require an AI runtime. Use `omni nas status <project-id>` to see the actual LAN address. The device HTTP port defaults to 54758 and follows the project credential setting.
+
 In 0.3.5 the full CLI can host read-only HTTP access for project canvases while `omni start` is running. Configure the sync assistant’s NAS credential in the same account and project. An SMB host address lists readable shares, while a share path limits access to that directory. Save from the WebApp to let an eligible online device host it. Entries assigned to a specific desktop continue to use that desktop. Mini remains a chat client.
 
 ## What can you do with it?

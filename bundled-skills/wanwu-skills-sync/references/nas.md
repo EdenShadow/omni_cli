@@ -2,6 +2,8 @@
 
 在「项目 Skills → 万物同步助手 → 钥匙串」配置 SMB 共享目录、用户名、密码和可选域。仅填 `smb://192.168.1.23` 时，根目录按账号权限列出文件共享；取文件必须写“共享名/文件路径”。限定到一个共享时地址示例为 `smb://nas/Team/Projects` 或 `\\nas\Team\Projects`。执行任务的电脑需要能从局域网或 VPN 访问共享目录。每个任务按当前发起人的项目权限取用可见凭据；只在钥匙串设置这些值。
 
+查询当前 HTTP 主机和端口时，运行 `node scripts/sync.mjs credentials-status --skill wanwu-skills-sync` 并沿用当前任务范围。在 `nas-smb` 依赖下，以 `currentEntryId` 找到选中的条目，读取 `nasHttpOrigin`（协议、主机及实际端口）和 `nasWeb`。万物设备默认固定监听 54758，可在 NAS 钥匙设置中修改。技能启动执行 NAS HTTP 任务时先查询当前状态，nasHttpPort 是配置端口，nasHttpOrigin 是已就绪服务的实际地址。地址缺失时报告当前状态及地址尚不可用。不要扫描常用端口或猜测；读取画布文件仍通过画布授权接口。
+
 按任务选择操作，沿用当前的 `--scope` 或 `--context`：
 
 - 明确要求写入 NAS，用 `node scripts/sync.mjs nas-put --file /absolute/project.zip --path 交付/project.zip`。子目录按需创建。文件夹先整理成 ZIP。重复保存相同内容可重试；同名不同内容应另取文件名。

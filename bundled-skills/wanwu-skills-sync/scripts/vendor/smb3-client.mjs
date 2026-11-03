@@ -443,7 +443,9 @@ var PreauthHash = class {
 };
 
 // dist/connection/encryption.js
-import { createCipheriv, createDecipheriv } from "node:crypto";
+import { createCipheriv, createDecipheriv, getCiphers } from "node:crypto";
+import { AES_CCM } from "./asmcrypto-ccm.mjs";
+const nativeCiphers = new Set(getCiphers());
 
 // dist/errors.js
 var STATUS_TO_CODE = {
@@ -502,7 +504,13 @@ function counterNonce(counter, cipherId) {
 }
 function aeadEncrypt(cipherId, key, nonce, aad, plaintext) {
   if (cipherId === Cipher.AES_128_CCM || cipherId === Cipher.AES_256_CCM) {
-    let alg = cipherId === Cipher.AES_128_CCM ? "aes-128-ccm" : "aes-256-ccm", c = createCipheriv(alg, key, nonce, { authTagLength: AUTH_TAG_LEN });
+    const alg = cipherId === Cipher.AES_128_CCM ? "aes-128-ccm" : "aes-256-ccm";
+    // Electron lacks native CCM. Keep the cipher negotiated with the NAS.
+    if (!nativeCiphers.has(alg)) {
+      const sealed = Buffer.from(AES_CCM.encrypt(plaintext, key, nonce, aad, AUTH_TAG_LEN));
+      return { ciphertext: sealed.subarray(0, -AUTH_TAG_LEN), tag: sealed.subarray(-AUTH_TAG_LEN) };
+    }
+    const c = createCipheriv(alg, key, nonce, { authTagLength: AUTH_TAG_LEN });
     return c.setAAD(aad, { plaintextLength: plaintext.length }), { ciphertext: Buffer.concat([c.update(plaintext), c.final()]), tag: c.getAuthTag() };
   }
   if (cipherId === Cipher.AES_128_GCM || cipherId === Cipher.AES_256_GCM) {
@@ -513,7 +521,11 @@ function aeadEncrypt(cipherId, key, nonce, aad, plaintext) {
 }
 function aeadDecrypt(cipherId, key, nonce, aad, ciphertext, tag) {
   if (cipherId === Cipher.AES_128_CCM || cipherId === Cipher.AES_256_CCM) {
-    let alg = cipherId === Cipher.AES_128_CCM ? "aes-128-ccm" : "aes-256-ccm", d = createDecipheriv(alg, key, nonce, { authTagLength: AUTH_TAG_LEN });
+    const alg = cipherId === Cipher.AES_128_CCM ? "aes-128-ccm" : "aes-256-ccm";
+    if (!nativeCiphers.has(alg)) {
+      return Buffer.from(AES_CCM.decrypt(Buffer.concat([ciphertext, tag]), key, nonce, aad, AUTH_TAG_LEN));
+    }
+    const d = createDecipheriv(alg, key, nonce, { authTagLength: AUTH_TAG_LEN });
     return d.setAuthTag(tag), d.setAAD(aad, { plaintextLength: ciphertext.length }), Buffer.concat([d.update(ciphertext), d.final()]);
   }
   if (cipherId === Cipher.AES_128_GCM || cipherId === Cipher.AES_256_GCM) {
