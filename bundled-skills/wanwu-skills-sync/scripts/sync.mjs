@@ -4,19 +4,23 @@ import {runWithCredentials} from './credentials.mjs';
 import {resolveContext} from './runtime.mjs';
 import {readFileSync,writeFileSync,constants} from 'node:fs';
 import {openFiles,closeFiles,upload,portableChat} from './transport.mjs';
+import {resolveNas,nasTransfer} from './nas.mjs';
 import {sceneCommand} from './scene.mjs';
 import {referenceCommand} from './references.mjs';
 const args=process.argv.slice(2),options={},files=[],todoKeys=[];let action;
-const actions=['question','credentials-status','credentials-run','work-context','work-note','work-inspect','work-dispatch','work-status','context','catalog','preview','publish','result','chat','voice','audio','chat-status','board','announcement-publish','todo-create','todo-update','todo-delete','operation-status','scene-members','scene-references','scene-context','scene-prepare','scene-preview','scene-apply','scene-save','scene-inventory','scene-status'];
+const actions=['nas-put','nas-get','nas-list','question','credentials-status','credentials-run','work-context','work-note','work-inspect','work-dispatch','work-status','context','catalog','preview','publish','result','chat','voice','audio','chat-status','board','announcement-publish','todo-create','todo-update','todo-delete','operation-status','scene-members','scene-references','scene-context','scene-prepare','scene-preview','scene-apply','scene-save','scene-inventory','scene-status'];
 const uuid=value=>{if(!/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i.test(value||''))throw Error('请用 --request UUID 指定操作标识，重试保持相同 / Supply --request UUID; reuse it for retries');return value;};
 async function main(){
 try{
- while(args.length){const item=args.shift();if(item.startsWith('--')){if(item==='--mention-all'){options.mentionAll=true;continue;}if(item==='--autoplay'){options.autoplay=true;continue;}if(!args[0]||args[0].startsWith('--'))throw Error('参数缺少值：'+item);if(item==='--file')files.push(args.shift());else if(item==='--todo-key')todoKeys.push(args.shift());else if(item==='--mention')(options.mentionIds??=[]).push(args.shift());else if(item==='--member')(options.members??=[]).push(args.shift());else if(item==='--prop')(options.props??=[]).push(args.shift());else if(['skill','dependency','entry','context','scope','project','runtime','native-session','provider','include','device','device-name','session','candidate','version','request','text','text-file','input','revision','todo','output','kind','workspace','destination','layout','asset','canvas-id','canvas-name','auto-size','x','y','query','cursor','limit','office'].includes(item.slice(2)))options[item.slice(2)]=args.shift();else throw Error('无法识别参数：'+item);}else if(!action)action=item;else throw Error('无法识别参数：'+item);}
+ while(args.length){const item=args.shift();if(item.startsWith('--')){if(item==='--mention-all'){options.mentionAll=true;continue;}if(item==='--autoplay'){options.autoplay=true;continue;}if(!args[0]||args[0].startsWith('--'))throw Error('参数缺少值：'+item);if(item==='--file')files.push(args.shift());else if(item==='--todo-key')todoKeys.push(args.shift());else if(item==='--mention')(options.mentionIds??=[]).push(args.shift());else if(item==='--member')(options.members??=[]).push(args.shift());else if(item==='--prop')(options.props??=[]).push(args.shift());else if(['skill','dependency','entry','context','scope','project','runtime','native-session','provider','include','device','device-name','session','candidate','version','request','text','text-file','input','revision','todo','output','kind','workspace','path','destination','layout','asset','canvas-id','canvas-name','auto-size','x','y','query','cursor','limit','office'].includes(item.slice(2)))options[item.slice(2)]=args.shift();else throw Error('无法识别参数：'+item);}else if(!action)action=item;else throw Error('无法识别参数：'+item);}
  if(!actions.includes(action))throw Error('用法：node sync.mjs [--scope REQUEST_ID | --context CONTEXT_FILE] [--project PROJECT] '+actions.join('|'));
  if(options.include&&options.include.split(',').some(v=>!['skills','devices','sessions'].includes(v)))throw Error('--include 支持 skills,devices,sessions');
  if(options.autoplay&&!['audio','chat'].includes(action))throw Error('--autoplay 仅用于 audio 或 chat / Use --autoplay with audio or chat');
  if(options.mentionAll&&action!=='chat')throw Error('--mention-all 仅用于 chat / Use --mention-all with chat');
  if(options.mentionIds&&action!=='chat')throw Error('--mention 仅用于 chat / Use --mention with chat');
+ if(options.path&&!action.startsWith('nas-')&&!(action==='chat'&&['auto','nas'].includes(options.destination)))throw Error('--path 用于 NAS 共享目录内的相对路径');
+ if(['chat','voice','audio'].includes(action)&&options.destination&&!(action==='chat'&&['auto','nas','cdn'].includes(options.destination)))throw Error('无效的附件目的地');
+ if(action.startsWith('nas-')&&options.destination&&options.destination!=='nas')throw Error('NAS 操作只访问已配置的共享盘');
  const resolved=await resolveContext(options);
  if(resolved.selection){if(action!=='context')throw Error('请先运行 context 并选择目标项目或运行时');process.stdout.write(JSON.stringify(resolved.selection,null,2)+'\n');return;}
  const context=resolved.context;options.context=resolved.file;
@@ -28,7 +32,12 @@ try{
  };
  if(options.project){const current=await request({action:'context'});if(![current.project?.id,current.project?.name].includes(options.project))throw Error('不能把当前万物任务切换到另一个项目 / Project differs from the active scope');}
  let result;
- if(action==='question'){
+ if(action.startsWith('nas-')){
+  const operation=action.slice(4);
+  if(files.length!==(operation==='put'?1:0))throw Error('nas-put 需要一个 --file；nas-get 和 nas-list 使用 --path');
+  const remote=options.path??(operation==='put'?path.basename(files[0]):'');
+  result=await nasTransfer(await resolveNas(request,'nas'),{operation,remote,file:files[0],output:options.output,contextFile:options.context});
+ }else if(action==='question'){
   if(!(await request({action:'context'})).capabilities?.questionInput)throw Error('请升级客户端，并在万物会话内提问 / Update the app and ask in a Wanwu conversation');
   if(!options.input)throw Error('Use --input QUESTIONS_JSON');
   const input=JSON.parse(readFileSync(options.input,'utf8'));
@@ -47,10 +56,10 @@ try{
  else if(action.startsWith('scene-'))result=await sceneCommand(request,action,options,uuid);
  else if(action==='chat'||action==='voice'||action==='audio'||action==='chat-status'){
   const id=uuid(options.request);
-  if(action==='chat-status')result=await request({action,id});
-  else{
+  result=action==='chat-status'?await request({action,id}):await sendMessage();
+  async function sendMessage(){
    if(options.text&&options['text-file'])throw Error('选择 --text 或 --text-file / Use either --text or --text-file');
-   const text=options['text-file']?readFileSync(options['text-file'],'utf8'):options.text||'';
+   let text=options['text-file']?readFileSync(options['text-file'],'utf8'):options.text||'';
    if(text.length>4000||files.length>30)throw Error('消息最多 4000 字符，附件最多 30 个 / Up to 4000 characters and 30 files');
    if(!text.trim()&&!files.length)throw Error('请输入消息或选择附件 / Add a message or file');
    if(action==='voice'){
@@ -61,12 +70,26 @@ try{
    if(options.autoplay&&!capabilities?.audioAutoplay)throw Error('请更新万物 AI 服务以自动播放音乐 / Update the server for music autoplay');
    if(options.mentionIds&&!(await request({action:'context'})).capabilities?.chatMemberMentions)throw Error('请更新发送端万物 AI 后使用 @成员 / Update the sending app for member mentions');
    if(options.mentionAll&&!(await request({action:'context'})).capabilities?.chatEveryoneMentions)throw Error('请更新发送端万物 AI 后使用 Bot @所有人 / Update the sending app for Bot @everyone');
-   const body={action,id,text,files,...(options.mentionAll?{mentionAll:true}:{}),...(options.mentionIds?{mentionIds:options.mentionIds}:{}),...(options.autoplay?{autoplay:true}:{})};
+   let attachments=files;
+   if(action==='chat'&&['auto','nas'].includes(options.destination)){
+    if(!files.length||options.autoplay||options.path&&files.length!==1)throw Error('请选择附件；自定义 --path 只用于单个文件，自动播放请使用普通附件');
+    const receipt=await request({action:'chat-status',id});
+    if(receipt.status==='sent')return receipt;
+    const config=await resolveNas(request,options.destination);
+    if(config){
+     const paths=files.map(file=>options.path||path.basename(file));
+     text=[text,...paths.map(name=>'NAS · '+name)].filter(Boolean).join('\n');
+     if(text.length>4000)throw Error('消息和 NAS 文件名合计超过 4000 字符');
+     for(const [index,file] of files.entries())await nasTransfer(config,{operation:'put',remote:paths[index],file,contextFile:options.context});
+     attachments=[];
+    }
+   }
+   const body={action,id,text,files:attachments,...(options.mentionAll?{mentionAll:true}:{}),...(options.mentionIds?{mentionIds:options.mentionIds}:{}),...(options.autoplay?{autoplay:true}:{})};
    // Older native upload handlers strip unknown fields; use the portable path
    // unless this client explicitly advertises support for the autoplay flag.
-   result=options.autoplay&&!capabilities?.audioAutoplayUpload?{status:'client-upload-required'}:await request(body);
-   if(result.status==='client-upload-required'&&(options.mentionIds||options.mentionAll))throw Error('发送端不支持 @成员，请更新客户端 / Update the sending app for member mentions');
-   if(result.status==='client-upload-required')result=await portableChat(request,body,options.context);
+   const sent=options.autoplay&&!capabilities?.audioAutoplayUpload?{status:'client-upload-required'}:await request(body);
+   if(sent.status==='client-upload-required'&&(options.mentionIds||options.mentionAll))throw Error('发送端不支持 @成员，请更新客户端 / Update the sending app for member mentions');
+   return sent.status==='client-upload-required'?portableChat(request,body,options.context):sent;
   }
  }else if(action==='todo-delete'){
   const id=uuid(options.request),revision=Number(options.revision);
@@ -90,7 +113,7 @@ try{
   }finally{await closeFiles(handles);if(uploadId)await request({action:'board-upload',method:'DELETE',uploadId}).catch(()=>{});}
  }else if(action==='operation-status')result=await request({action,id:uuid(options.request)});
  else result=await request({action,deviceId:options.device,sessionId:options.session,candidateId:options.candidate,version:options.version,requestId:options.request});
- if(options.output){
+ if(options.output&&action!=='nas-get'){
   if(!path.isAbsolute(options.output))throw Error('输出文件需要绝对路径 / Use an absolute output path');
   writeFileSync(options.output,JSON.stringify(result,null,2)+'\n',{mode:0o600,flag:constants.O_WRONLY|constants.O_CREAT|constants.O_TRUNC|constants.O_NOFOLLOW});
   process.stdout.write(JSON.stringify({status:'saved',output:options.output,projectId:result.projectId||result.project?.id},null,2)+'\n');

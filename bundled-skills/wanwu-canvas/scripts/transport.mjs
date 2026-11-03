@@ -23,6 +23,26 @@ export async function openFiles(paths,contextFile,maxBytes){
  }catch(e){await closeFiles(handles);throw e;}
 }
 export const closeFiles=handles=>Promise.allSettled(handles.map(h=>h.file.close()));
+// Older desktop runtimes cap each local request at about 1 MiB. Stage larger
+// batches privately, then send a single atomic commit with the original request ID.
+export async function commitStateBatch(request,canvasId,batch){
+ const bytes=Buffer.from(JSON.stringify(batch));
+ if(bytes.length>10*1024*1024)throw Object.assign(Error('批量更新最多 10 MiB / Update batch exceeds 10 MiB'),{status:413});
+ if(bytes.length<=1024*1024)return request({...batch,action:'canvas-state-update',canvasId});
+ const transfer=(method,body,uploadId)=>request({action:'canvas-upload',method,body,uploadId});
+ const {id}=await transfer('POST',{name:'canvas-update.json',mime:'application/json',size:bytes.length});
+ try{
+  const chunkSize=512*1024;
+  let progress;
+  for(let offset=0;offset<bytes.length;offset+=chunkSize){
+   progress=await transfer('PUT',{offset,data:bytes.subarray(offset,offset+chunkSize).toString('base64')},id);
+  }
+  if(progress.sha256!==createHash('sha256').update(bytes).digest('hex'))throw Error('画布更新传输校验失败 / Canvas batch checksum mismatch');
+  return await request({action:'canvas-state-update-upload',canvasId,uploadId:id,requestId:batch.requestId});
+ }finally{
+  await transfer('DELETE',undefined,id).catch(()=>{}); // The temporary upload also expires server-side.
+ }
+}
 export async function upload(request,action,item,onCreated){
  const hash=createHash('sha256'),buffer=Buffer.alloc(CHUNK);
  let offset=0;

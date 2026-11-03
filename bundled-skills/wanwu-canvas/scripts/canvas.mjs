@@ -5,23 +5,27 @@ import {rm} from 'node:fs/promises';
 import {createHash,randomUUID} from 'node:crypto';
 import {Readable,Transform} from 'node:stream';
 import {pipeline} from 'node:stream/promises';
+import {verifyPublicDownloads} from './shared-downloads.mjs';
 import {resolveContext} from './runtime.mjs';
-import {openFiles,closeFiles,upload} from './transport.mjs';
+import {openFiles,closeFiles,upload,commitStateBatch} from './transport.mjs';
 
 const args=process.argv.slice(2),options={};let action;
 const uuid=v=>{if(!/^[a-f\d]{8}(?:-[a-f\d]{4}){3}-[a-f\d]{12}$/i.test(v||''))throw Error('Use --request UUID; reuse it after a timeout');return v;};
 const canvasUuid=v=>{if(!/^[a-f\d]{8}(?:-[a-f\d]{4}){3}-[a-f\d]{12}$/i.test(v||''))throw Error('Use --canvas with the complete canvas ID copied from Canvas tools');return v.toLowerCase();};
 async function main(){
 try{
- while(args.length){const a=args.shift();if(a.startsWith('--')){if(!['scope','context','project','runtime','native-session','provider','include','canvas','request','input','revision','key','mode','file','file-id','output','cdn','entry','document','cursor'].includes(a.slice(2))||!args.length)throw Error('Invalid option '+a);options[a.slice(2)]=args.shift();}else if(!action)action=a;else throw Error('Unexpected argument');}
- if(!['context','list','get','live','publish','capture','cover','patch','attach','download','state','update','signal','state-list','share','delete','usage-summary','usage-requests','collab-snapshot','collab-commit'].includes(action))throw Error('Usage: canvas.mjs context|list|get|live|publish|capture|cover|patch|attach|download|state|update|signal|state-list|share|delete|usage-summary|usage-requests|collab-snapshot|collab-commit [options]');
- const needsCanvas=['get','live','capture','cover','patch','attach','download','state','update','signal','state-list','share','delete','collab-snapshot','collab-commit'].includes(action);
+ while(args.length){const a=args.shift();if(a.startsWith('--')){if(!['scope','context','project','runtime','native-session','provider','include','canvas','request','input','revision','key','mode','file','file-id','output','path','cdn','entry','document','cursor'].includes(a.slice(2))||!args.length)throw Error('Invalid option '+a);options[a.slice(2)]=args.shift();}else if(!action)action=a;else throw Error('Unexpected argument');}
+ if(!['context','list','get','live','publish','capture','cover','patch','attach','archive','download','state','update','signal','state-list','page-script','share','verify-downloads','delete','usage-summary','usage-requests','collab-snapshot','collab-commit'].includes(action))throw Error('Usage: canvas.mjs context|list|get|live|publish|capture|cover|patch|attach|archive|download|state|update|signal|state-list|page-script|share|verify-downloads|delete|usage-summary|usage-requests|collab-snapshot|collab-commit [options]');
+ if(options.path!==undefined&&action!=='archive')throw Error('--path is a relative NAS path for archive');
+ const needsCanvas=['get','live','capture','cover','patch','attach','archive','download','state','update','signal','state-list','page-script','share','verify-downloads','delete','collab-snapshot','collab-commit'].includes(action);
  const canvasId=options.canvas!==undefined||needsCanvas?canvasUuid(options.canvas):undefined;
  const resolved=await resolveContext(options);if(resolved.selection){process.stdout.write(JSON.stringify(resolved.selection,null,2)+'\n');return;}
  const u=new URL(resolved.context.url);if(u.protocol!=='http:'||u.hostname!=='127.0.0.1'||u.pathname!=='/skills'||u.username||u.password||u.search)throw Error('Invalid runtime endpoint');
  const request=async body=>{const r=await fetch(u,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+resolved.context.token},body:JSON.stringify(body),signal:AbortSignal.timeout(120000),redirect:'error'});const result=await r.json();if(!r.ok)throw Object.assign(Error(result.error||'Canvas request failed'),{status:r.status});return result;};
  const context=await request({action:'context',detail:'summary',include:options.include?.split(',')||[]});if(options.project&&![context.project.id,context.project.name].includes(options.project))throw Error('Project does not match this request');
  if(action!=='context'&&!context.capabilities?.canvas)throw Error('请更新万物服务端与客户端以使用画布 / Update Wanwu server and app for canvas support');
+ if(action==='page-script'&&!context.capabilities?.canvasPageScripts)throw Error('请更新万物服务端以使用网页脚本 / Update the Wanwu server for page scripts');
+ if(action==='page-script'&&(options.input||options.mode)&&!context.capabilities?.canvasTeamPageScripts)throw Error('请更新万物服务端以启用团队网页脚本 / Update the server for team page scripts');
  if(action.startsWith('collab-')&&!context.capabilities?.canvasCollaboration)throw Error('请更新万物服务端以使用多人协作 / Update the server for canvas collaboration');
  const input=()=>{if(!options.input||!path.isAbsolute(options.input))throw Error('Use --input /absolute/manifest.json');return JSON.parse(readFileSync(options.input,'utf8'));};
  const mutating=async(id,fn)=>{const old=await request({action:'canvas-result',requestId:id});return old.status==='complete'?old.result:fn();};
@@ -57,21 +61,69 @@ try{
   });
   if(result.canvas.kind==='owned'&&['screenshot','page'].includes(cover.mode))try{const image=await capture(result.canvas.id,coverRequestId(requestId),cover.mode==='page'?cover.entry:undefined,result.canvas.contentRevision);result={...result,coverStatus:'ready',cover:image};}catch(e){result={...result,coverStatus:'failed',coverError:e.message};}
   else if(cover.mode==='preserve')result={...result,coverStatus:result.canvas.coverId?'preserved':'missing'};
- }else if(action==='attach'){
-  const requestId=uuid(options.request);result=await mutating(requestId,async()=>{const handles=await openFiles([options.file],resolved.file,2*1024*1024*1024);try{const h=handles[0];if(h.size>1024*1024*1024){if(!h.name.endsWith('.zip'))throw Error('Files over 1 GB must be a project ZIP');h.mime='application/zip';h.purpose='folder';}let id;await upload(request,'canvas-upload',h,value=>id=value);return request({action:'canvas-attach',canvasId,requestId,uploadId:id,path:h.name});}finally{await closeFiles(handles);}});
+ }else if(action==='attach'||action==='archive'){
+  const requestId=uuid(options.request);
+  if(action==='archive'){
+   if(!options.file||!path.isAbsolute(options.file))throw Error('Use --file with an absolute path');
+   await request({action:'canvas-get',canvasId});
+   const {resolveNas,nasTransfer}=await import('../../wanwu-skills-sync/scripts/nas.mjs').catch(err=>{
+    if(err.code==='ERR_MODULE_NOT_FOUND')throw Error('请先同步新版万物同步助手，再归档工程文件');
+    throw err;
+   });
+   const config=await resolveNas(request,'auto');
+   if(config)result=await nasTransfer(config,{operation:'put',remote:options.path??path.basename(options.file),file:options.file,contextFile:resolved.file});
+  }
+  if(!result)result=await attachFile(requestId);
  }else if(action==='download'){
   if(!options.output||!path.isAbsolute(options.output)||existsSync(options.output))throw Error('Use --output with a new absolute file path');
   const f=await request({action:'canvas-file',canvasId,fileId:uuid(options['file-id']),cdn:options.cdn==='1'});const target=options.cdn==='1'?(f.cdn?.url||f.url):f.url;if(!target)throw Error('This download transport is unavailable');const response=await fetch(target,{signal:AbortSignal.timeout(600000),redirect:'error'});if(!response.ok)throw Error('Download failed');
   let size=0;const hash=createHash('sha256');try{await pipeline(Readable.fromWeb(response.body),new Transform({transform(chunk,_,done){size+=chunk.length;if(size>f.file.size)return done(Error('Download exceeds expected size'));hash.update(chunk);done(null,chunk);}}),createWriteStream(options.output,{flags:constants.O_WRONLY|constants.O_CREAT|constants.O_EXCL|constants.O_NOFOLLOW,mode:0o600}));if(size!==f.file.size||hash.digest('hex')!==f.file.sha256)throw Error('Download verification failed');}catch(e){await rm(options.output,{force:true});throw e;}result={status:'downloaded',file:options.output,size};
- }else if(action==='state-list')result=await request({action:'canvas-state-list',canvasId});
+ }else if(action==='page-script'){
+  const command={action:'canvas-page-script',canvasId};
+  if(options.mode!==undefined){
+   if(options.mode!=='enable'||options.input||!/^\d+$/.test(options.revision||''))throw Error('Use --mode enable --revision REV for an existing script');
+   result=await request({...command,enable:{revision:Number(options.revision)}});
+  }else result=await request({...command,...(options.input?{settings:{...input(),scope:'team'}}:{})});
+ }
+ else if(action==='state-list')result=await request({action:'canvas-state-list',canvasId});
  else if(action==='state')result=options.input?await request({...input(),action:'canvas-state',canvasId,method:'PUT',requestId:uuid(options.request)}):await request({action:'canvas-state',canvasId,key:options.key||'main'});
  else if(action==='collab-snapshot')result=await request({action:'canvas-collab-snapshot',canvasId,document:options.document||'main',cursor:options.cursor||''});
  else if(action==='collab-commit')result=await request({action:'canvas-collab-commit',canvasId,document:options.document||'main',batch:{...input(),requestId:uuid(options.request)}});
- else if(action==='update')result=await request({...input(),action:'canvas-state-update',canvasId,requestId:uuid(options.request)});
+ else if(action==='update')result=await commitStateBatch(request,canvasId,{...input(),requestId:uuid(options.request)});
  else if(action==='signal')result=await request({...input(),action:'canvas-broadcast',canvasId,requestId:uuid(options.request)});
  else if(action==='patch')result=await request({...input(),action:'canvas-patch',canvasId,requestId:uuid(options.request)});
- else if(action==='share')result=await request({action:'canvas-share',canvasId,...(options.mode?{mode:options.mode,revision:Number(options.revision)}:{})});
+ else if(action==='share'){
+  const settings={action:'canvas-share',canvasId};
+  if(options.input){
+   const {attachmentIds}=input();
+   if(!options.mode||!options.revision||!Array.isArray(attachmentIds)||attachmentIds.some(id=>typeof id!=='string'||!/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(id)))throw Error('Provide --mode, --revision and an input containing attachmentIds');
+   const policy=await request(settings);
+   if(!Array.isArray(policy.attachmentIds))throw Error('Update the Wanwu server to select shared attachments');
+   settings.attachmentIds=attachmentIds;
+  }
+  result=await request({...settings,...(options.mode?{mode:options.mode,revision:Number(options.revision)}:{})});
+ }else if(action==='verify-downloads'){
+  const expected=input().attachmentIds;
+  const policy=await request({action:'canvas-share',canvasId});
+  const canvas=await request({action:'canvas-get',canvasId});
+  result=await verifyPublicDownloads(policy,canvas.files,expected);
+ }
  else if(action==='delete')result=await request({action:'canvas-delete',canvasId,revision:Number(options.revision),requestId:uuid(options.request)});
+ async function attachFile(requestId){
+  return mutating(requestId,async()=>{
+   const handles=await openFiles([options.file],resolved.file,2*1024*1024*1024);
+   try{
+    const file=handles[0];
+    if(file.size>1024*1024*1024){
+     if(!file.name.endsWith('.zip'))throw Error('Files over 1 GB must be a project ZIP');
+     file.mime='application/zip';file.purpose='folder';
+    }
+    let uploadId;
+    await upload(request,'canvas-upload',file,id=>{uploadId=id;});
+    return request({action:'canvas-attach',canvasId,requestId,uploadId,path:file.name});
+   }finally{await closeFiles(handles);}
+  });
+ }
  function coverRequestId(id){const h=createHash('sha256').update(id+':cover').digest('hex');return h.slice(0,8)+'-'+h.slice(8,12)+'-4'+h.slice(13,16)+'-a'+h.slice(17,20)+'-'+h.slice(20,32);}
  async function setImage(id,requestId,file,contentRevision){return mutating(requestId,async()=>{const handles=await openFiles([file],resolved.file,8*1024*1024);try{const uploadId=await upload(request,'canvas-upload',handles[0],()=>{});return request({action:'canvas-attach',canvasId:id,requestId,uploadId,role:'cover',contentRevision});}finally{await closeFiles(handles);}});}
  async function capture(id,requestId,entry,contentRevision){if(entry&&!context.capabilities?.canvasCoverPage)throw Error('请更新桌面客户端以截图专用封面页面 / Update desktop app for custom cover pages');if(!context.capabilities?.canvasCapture)throw Error('请更新桌面客户端以自动生成封面 / Update desktop app for cover capture');return request({action:'canvas-capture',canvasId:id,requestId,entry,contentRevision});}

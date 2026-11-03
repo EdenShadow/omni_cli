@@ -1,6 +1,7 @@
 import {createCollaborationClient} from './collaboration-client.mjs';
 import {randomUUID} from 'node:crypto';
 import {resolveContext} from './runtime.mjs';
+import {commitStateBatch} from './transport.mjs';
 
 // Reuse one scoped runtime connection for an agent loop. No account token is
 // exported or embedded in a canvas. Every request rechecks the running session.
@@ -19,7 +20,7 @@ export async function connectCanvas(canvasId,options={}){
   sessionId:context.session.id,projectId:context.project.id,
   prepare:operations=>({requestId:randomUUID(),sentAt:Date.now(),operations}),
   async commit(batch,{retries=3}={}){
-   for(let attempt=0;;attempt++)try{return await request({...batch,action:'canvas-state-update',canvasId});}
+   for(let attempt=0;;attempt++)try{return await commitStateBatch(request,canvasId,batch);}
    catch(e){if(attempt>=Math.min(5,retries)||e.status&&e.status!==429&&e.status<500)throw e;await new Promise(r=>setTimeout(r,Math.min(5000,300*2**attempt)));}
   },
   get:(key='main')=>request({action:'canvas-state',canvasId,key}),

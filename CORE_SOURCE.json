@@ -1,6 +1,6 @@
 {
   "repository": "EdenShadow/wanwu_ai",
-  "commit": "df017488279590b1612f4ef62437f3b37ab2299b",
+  "commit": "7782f35f6cef84c84fcf05d138e527c6e7a5a4d6",
   "modules": [
     "desktop/announcements.mjs",
     "desktop/approval-relay.mjs",
@@ -26,6 +26,7 @@
     "desktop/folder-attachments.mjs",
     "desktop/group-chat.mjs",
     "desktop/local-outputs.mjs",
+    "desktop/nas-http.mjs",
     "desktop/runtime-launch.mjs",
     "desktop/runtime-question-flow.mjs",
     "desktop/runtime-stream-outbox.mjs",
@@ -66,6 +67,7 @@
     "shared/image-chat-delivery.mjs",
     "shared/input-materials.mjs",
     "shared/local-schedule.mjs",
+    "shared/nas-lan-address.mjs",
     "shared/office-board-appearance.mjs",
     "shared/office-style.mjs",
     "shared/official-skills.mjs",

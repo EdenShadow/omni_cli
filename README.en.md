@@ -24,6 +24,10 @@ Use it on a headless Linux server or a Windows/macOS computer where you do not n
 
 **Website: [wanwu321.com](https://wanwu321.com/)** · **Source: [EdenShadow/omni_cli](https://github.com/EdenShadow/omni_cli)**
 
+## Read-only LAN access to a NAS
+
+In 0.3.5 the full CLI can host read-only HTTP access for project canvases while `omni start` is running. Configure the sync assistant’s NAS credential in the same account and project. An SMB host address lists readable shares, while a share path limits access to that directory. Save from the WebApp to let an eligible online device host it. Entries assigned to a specific desktop continue to use that desktop. Mini remains a chat client.
+
 ## What can you do with it?
 
 | Capability | How it works |
@@ -91,7 +95,7 @@ Run as the ordinary OS user who owns your AI terminal configuration and working 
 ### 2. Install the CLI
 
 ```sh
-npm install -g github:EdenShadow/omni_cli#v0.3.4
+npm install -g github:EdenShadow/omni_cli#v0.3.5
 omni setup
 ```
 
@@ -375,10 +379,10 @@ The service must use the same user, HOME and configuration directory as the setu
 
 ## Updating, stopping and uninstalling
 
-Stop the running process before installing your target version. This example uses the current `v0.3.4` tag; replace it with a newly published tag when upgrading:
+Stop the running process before installing your target version. This example uses the current `v0.3.5` tag; replace it with a newly published tag when upgrading:
 
 ```sh
-npm install -g github:EdenShadow/omni_cli#v0.3.4
+npm install -g github:EdenShadow/omni_cli#v0.3.5
 omni --version
 omni start
 ```

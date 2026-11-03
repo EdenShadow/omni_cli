@@ -122,9 +122,23 @@ test('online device advertises collaboration capabilities without remote control
   b.skills.verifyPlan=async()=>true;b.pump=async()=>{};b.workbench.pump=async()=>{};b.scheduler.tick=async()=>{};
   await b.start();
   const event=await received;assert.ok(event.capabilities.includes('session-mentions-v1'));assert.ok(event.capabilities.includes('skills-sync-v1'));assert.ok(event.capabilities.includes('group-chat-v1'));assert.ok(!event.capabilities.includes('remote-desktop-v1'));
+  assert.ok(event.capabilities.includes('nas-http-v1'));
   assert.equal(b.remoteDesktop,undefined);assert.equal(b.builtinRuntime,undefined);
 });
 
+
+test('the headless host loads its own SMB driver and discovers only readable disk shares',async t=>{
+  const {b}=fixture(t);
+  const {Client,parseShare,listNas}=await b.nasHost.tools();
+  assert.equal(typeof Client,'function');
+  assert.equal(parseShare('smb://192.168.1.23').base,'');
+  assert.equal(parseShare('smb://192.168.1.23/Media').base,'Media');
+  const client={
+    listShares:async()=>[{name:'Media',type:'disk'},{name:'Private',type:'disk'},{name:'IPC$',type:'ipc'}],
+    readdir:async name=>{if(name==='Private')throw Object.assign(Error('Denied'),{code:'EACCES'});return [];},
+  };
+  assert.deepEqual(await listNas(client,''),[{name:'Media',directory:true}]);
+});
 
 test('installed CLI version and help use the package version without creating account state',async t=>{
  const dir=temporary(t),env={...process.env,OMNI_HOME:path.join(dir,'unused-state')};

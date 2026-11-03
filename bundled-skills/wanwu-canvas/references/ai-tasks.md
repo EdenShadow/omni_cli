@@ -41,7 +41,7 @@ const stop = Wanwu.sessions.watch(task.id, snapshot => {
 - `sessions.status(id,{after})` 返回本任务的增量事件，`sessions.tasks()` 返回当前用户在当前画布最近 100 个任务。任务来源存服务端，刷新、关闭重开后可恢复。不能读取其他画布、其他用户或同会话无关任务的对话。
 - `watch` 每约 1.2 秒查询并在终态停止；注销函数用于关闭节点或页面。遇到 `unavailable` 停止轮询并提供恢复按钮；网络恢复时重新调用 watch，沿用 cursor。终态只有 `done`、`failed`、`cancelled`；收到一段回复不等于任务完成。
 - `sessions.cancel(id)` 请求取消；运行中的任务需等待 Runtime 确认，不能立即显示已取消。`sessions.open(sessionId)` 回到原会话查看、回答运行权限问题或进一步追问。
-- 事件可能包含 `message`、`delta`、`tool` 等。按消息 ID 归并，snapshot 覆盖同 ID、delta 追加；限制保存的输出大小，不把整个会话历史灌入单条 256 KB 节点记录。任务结果是数据，渲染用 textContent，不能当 HTML 执行。
+- 事件可能包含 `message`、`delta`、`tool` 等。按消息 ID 归并，snapshot 覆盖同 ID、delta 追加；限制保存的输出大小，不把整个会话历史灌入单条 1 MiB 节点记录。任务结果是数据，渲染用 textContent，不能当 HTML 执行。
 
 ## AI 返回文件
 

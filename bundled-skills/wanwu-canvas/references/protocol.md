@@ -12,7 +12,7 @@ const save = value => Wanwu.state.set('main', value, doc.revision);
 Wanwu.state.subscribe(next => { if (next.key === 'main') { doc = next; render(next.value); } });
 Wanwu.live.provide(() => ({page:'dashboard',filters,selection,visibleRows}));
 ```
-`state.list()` 列出所有共享 JSON 记录。每条最多 256 KB，每画布 1000 条。不同实体使用不同 key，降低冲突。`state.set(key,value,revision)` 409 时重新 get、合并本地变动再重试，不盲目覆盖。不存在记录 revision=0；设置 null 是一个持久值。修改 HTML 的 contentRevision 与共享数据 revision 独立。
+`state.list()` 列出所有共享 JSON 记录。每条最多 1 MiB，每画布 1000 条。不同实体使用不同 key，降低冲突。`state.set(key,value,revision)` 409 时重新 get、合并本地变动再重试，不盲目覆盖。不存在记录 revision=0；设置 null 是一个持久值。修改 HTML 的 contentRevision 与共享数据 revision 独立。
 
 实时广播：
 ```js
@@ -25,7 +25,7 @@ Wanwu.on('presence', ({userId,x,y,state}) => {});
 
 资源：`Wanwu.files.list()` / `Wanwu.files.url(fileId)` -> `{url,file,expiresAt}`，可 fetch 使用。链接会过期，需重新取，不能硬编码进网页或分享给项目外。上传可由 `Wanwu.files.upload(file,{onProgress,signal})` 处理用户选取或拖入的文件；见 [画布 AI 任务](ai-tasks.md)。
 - 下载附件优先用 `await Wanwu.files.download(fileId)`，返回 `{id}` 表示加入下载队列，**不代表完成**。用 `Wanwu.on('download', ({id,name,status,received,total}) => …)` 观察真实进度；`completed` 才表示接收结束（桌面已落盘，H5 交由浏览器保存）。宿主浮窗统一显示列表、取消、重试和总进度，页面不必另造下载进度条。
-- 已发布页面中的相对附件链接（例如 `<a href="assets/report.xlsx" download>下载</a>`）也自动接入浮窗。`files.url` 仍用于程序读取资源；不要将临时 URL 硬编码。分享页仅能下载该页面已公开的文件，不可用 `files.download` 获取项目私有附件。
+- 已发布页面中的相对附件链接（例如 `<a href="assets/report.xlsx" download>下载</a>`）也自动接入浮窗。`files.url` 仍用于程序读取资源；不要将临时 URL 硬编码。分享页的 files.list、files.url 和 files.download 使用同一份附件授权清单。用户也可从画布工具中下载勾选的文件。
 
 会话：`Wanwu.sessions.open(sessionId)` 快捷回到绑定会话；父窗口显示返回画布按钮。
 `Wanwu.sessions.run(sessionId,prompt,uuid?)` 返回排队结果。首次需用户批准此页面调用这个会话，随后同次打开可后台连续执行；刷新/更新/关闭后重新授权。现有设备密码、会话权限、加密和 CLI 审批仍生效。`sessions.status(commandId)` 只查当前用户在本画布发起的任务，支持刷新恢复、增量结果和取消。新版 `sessions.pick()` 选择并绑定真实会话，`run(id,prompt,{requestId,fileIds})` 支持附件；完整生命周期见 [画布 AI 任务](ai-tasks.md)。不得隐瞒任务或让网页授权覆盖系统审批。
