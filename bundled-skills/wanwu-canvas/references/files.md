@@ -23,15 +23,36 @@ COS 存储和 CDN 分发是两件事：`storage:cos` 仅表示已存入 COS；�
 需要从 NAS 取文件时，用同项目和发起人范围调用万物同步助手的 `nas-get --path 项目/交付/project.zip --output /absolute/new.zip`。已有画布 fileId 仍用 `download`。NAS 归档返回相对路径；在内网画布中用下述接口换取临时读取地址。仅用户另行要求网页附件或对外分享时，按对应流程上传并检查权限。
 
 
-## 内网 NAS 素材
+## 内网 NAS 文件读写
 
-在团队自有画布中，可按当前观看者选中的同步助手 NAS 钥匙串读取整个授权目录。项目画布使用观看者已选钥匙的只读权限。设备和观看者需连到同一可达内网或 VPN。分享链接、第三方网页不提供此接口。不要把临时链接写进画布源码、云数据或公屏，只保存相对路径。
+先区分操作发生在哪一端。画布页面通过 NAS HTTP 只读访问当前观看者选中的共享目录。执行任务的设备用同步助手通过 SMB 列目录、取回或写入文件。两端可以在不同机器上。此方法适用于文档、表格、压缩包、媒体等任意文件；是否能预览取决于文件格式和客户端。
+
+| 需求 | 调用 | 完成依据 |
+| --- | --- | --- |
+| 浏览目录 | `Wanwu.nas.list(relativeDirectory)` | 返回 `entries`，区分目录和文件 |
+| 页面读取、解析、预览 | `Wanwu.nas.url(relativeFile)` | 用返回的 `url` 读取文件内容或交给显示控件，验证一次实际使用 |
+| 用户点击下载或打开大文件 | `Wanwu.nas.link(relativeFile)` | 使用返回的限时地址，客户端能访问该内网 |
+| 从 NAS 取回到执行设备 | 同步助手 `nas-get --path … --output /新的绝对路径` | 核对返回的相对路径、字节数和 SHA-256 |
+| 将执行设备上的文件写入 NAS | 同步助手 `nas-put --file /绝对路径 --path …` | 返回 `stored`、`storage: nas`、路径、字节数和 SHA-256 |
+
+共享盘配置只填主机时，相对路径从共享名开始，如 `Team/reports/result.csv`；配置已限定到 Team 时，路径是 `reports/result.csv`。用 list 确认基准，从父目录和条目原名构造相对路径，保留空格、中文和大小写。不要拼接 SMB 地址、HTTP 端口或自己编码文件名来构造媒体链接。
 
 ```js
+// relativeFile 来自当前目录中选中的文件。只保留路径，打开时再换取地址。
 await Wanwu.ready;
-const { entries } = await Wanwu.nas.list(); // {name,directory}；主机级配置先列共享
-const { url } = await Wanwu.nas.url("素材/电影.mp4");
-document.querySelector("video").src = url;
+const { url } = await Wanwu.nas.url(relativeFile);
+try {
+  const response = await fetch(url);
+  if (!response.ok) throw Error('文件读取失败 HTTP ' + response.status);
+  const bytes = await response.arrayBuffer(); // 小型二进制文件；文本可用 text()
+  // 将 bytes 交给对应解析器。大文件优先使用下载或分段播放。
+} finally {
+  if (url.startsWith('blob:')) URL.revokeObjectURL(url);
+}
 ```
 
-若已将钥匙串限定到“素材”共享，上例的路径只写“电影.mp4”。直接将 SDK 返回的 url 赋给 img.src 或 video.src。桌面端返回 wanwu://canvas/api/nas-media/ 地址，支持分段读取。限制为 HTTP 或 Blob 会导致能看到文件名却无法显示图片。WebApp 的 `url` 由浏览器从内网读取文件后生成 Blob 地址，替换素材时可调用 `URL.revokeObjectURL(url)`。浏览器须允许本地网络访问；对于大文件或无法嵌入的浏览器，用 `Wanwu.nas.link(path)` 在用户点击时提供限时内网直链，或在桌面端播放。已有网站提供的原生文件链接沿用其权限与有效期。不要使用 `smb://` 作为图片或视频的 src。
+图片、音视频可以直接将 SDK 返回的 url 赋给控件 src。桌面端可能返回 `wanwu://canvas/api/nas-media/…`，浏览器端可能返回 Blob URL。不要用 HTTP 协议白名单误拦桌面地址。控件仍在使用时保留 URL；更换或关闭后再释放 Blob。过期时按原相对路径重新请求。临时地址和访问票据不存云数据或公屏。分享页面和第三方页面不能申请此能力。
+
+如果需求是在画布上保存编辑结果，先明确结果如何传到有权限的执行设备，再通过 SMB 写入用户指定的 NAS 路径。网页 SDK 没有 nas.put；网关不支持 PUT/POST 上传。云附件上传、画布数据保存与 NAS 落盘是不同结果，不要互相代替。
+
+验收使用目标文件本身。文本解析内容，二进制检查大小或哈希，媒体等待解码或分段播放成功。单独报告目录、文件读取、文件写入的验证情况，不用目录列表、ready 或首页响应代替文件读写。只有用户授权写入时才做写入验证。

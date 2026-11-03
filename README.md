@@ -65,7 +65,7 @@ CLI 可以让本机 AI 使用已授权的脚本、工具和技能；实际控制
 
 ## 内网 NAS
 
-在 NAS 上准备 Node.js 24+，用 `npm install -g ./edenshadow-omni-cli-0.3.6.tgz` 安装完整版，登录创建 NAS 钥匙的账号。若原 Mac 正在托管，先退出万物客户端，等原主机离线。在 NAS 上执行以下命令，项目 ID 可用 `omni projects` 查看。
+在 NAS 上准备 Node.js 24+，用 `npm install -g https://wanwu321.com/assets/omni-cli-0.3.6.tgz` 安装完整版，登录创建 NAS 钥匙的账号。若原 Mac 正在托管，先退出万物客户端，等原主机离线。在 NAS 上执行以下命令，项目 ID 可用 `omni projects` 查看。
 
 ```sh
 omni login
@@ -108,7 +108,7 @@ git --version
 ### 2. 安装 CLI
 
 ```sh
-npm install -g github:EdenShadow/omni_cli#v0.3.5
+npm install -g github:EdenShadow/omni_cli#v0.3.6
 omni setup
 ```
 
@@ -391,10 +391,10 @@ journalctl --user -u omni-cli -f
 
 ## 升级、停止和卸载
 
-先停止常驻进程，再安装目标版本。下面以当前的 `v0.3.5` 为例；未来更新时，把标签替换为已发布的新版本：
+先停止常驻进程，再安装目标版本。下面以当前的 `v0.3.6` 为例；未来更新时，把标签替换为已发布的新版本：
 
 ```sh
-npm install -g github:EdenShadow/omni_cli#v0.3.5
+npm install -g github:EdenShadow/omni_cli#v0.3.6
 omni --version
 omni start
 ```

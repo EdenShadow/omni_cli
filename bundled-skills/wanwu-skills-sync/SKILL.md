@@ -3,7 +3,7 @@ name: wanwu-skills-sync
 description: 按需获取万物项目与权限，发送指定消息或文件到团队、存取 NAS 文件、同步技能、编辑公告和待办、读取成员形象、修改角色、场景及指定设备外观，附带项目界面扩展，或进行备注和跨设备派工。普通问答不调用；公屏长任务可克制地同步关键进展。
 metadata:
   display_name: 万物同步助手
-  version: "1.18.4"
+  version: "1.18.5"
 ---
 
 # 万物同步助手
@@ -29,7 +29,7 @@ node /absolute/wanwu-skills-sync/scripts/sync.mjs context
 | 用户请求 | 按需阅读 |
 | --- | --- |
 | 需用户补充信息且无原生提问工具 | [会话内提问](references/questions.md) |
-| 附件与工程归档、取回，查询 NAS 当前 HTTP 地址与端口 | [NAS 与默认存储](references/nas.md) |
+| NAS 文件列举、读取、写入与归档，查询或排查 NAS HTTP | [NAS 与默认存储](references/nas.md) |
 | 公屏消息、文件、SVG、@成员提醒 | [消息与附件](references/chat.md) |
 | 音频或明确要求自动播放 | [音频](references/audio.md) |
 | 公告、创建/修改/删除指定 TODO | [公告与待办](references/board-workflow.md)，字段见 [格式](references/board-format.md) |
