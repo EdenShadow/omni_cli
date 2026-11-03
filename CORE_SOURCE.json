@@ -113,5 +113,8 @@
     "yauzl",
     "yazl",
     "zod"
-  ]
+  ],
+  "moduleCommits": {
+    "desktop/nas-http.mjs": "f69a29ac3676a33c8421b4b6fc3a9ea82f37bd86"
+  }
 }
