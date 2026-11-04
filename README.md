@@ -65,7 +65,7 @@ CLI 可以让本机 AI 使用已授权的脚本、工具和技能；实际控制
 
 ## 内网 NAS
 
-在 NAS 上准备 Node.js 24+，用 `npm install -g https://wanwu321.com/assets/omni-cli-0.3.10.tgz` 安装完整版，登录创建 NAS 钥匙的账号。若原 Mac 正在托管，先退出万物客户端，等原主机离线。在 NAS 上执行以下命令，项目 ID 可用 `omni projects` 查看。
+在 NAS 上准备 Node.js 24+，用 `npm install -g https://wanwu321.com/assets/omni-cli-0.3.11.tgz` 安装完整版，登录创建 NAS 钥匙的账号。若原 Mac 正在托管，先退出万物客户端，等原主机离线。在 NAS 上执行以下命令，项目 ID 可用 `omni projects` 查看。
 
 ```sh
 omni login
@@ -74,7 +74,7 @@ omni nas bind <project-id>
 omni start
 ```
 
-此绑定也可为 IM 和跨设备会话提供内网附件传输。在可写共享目录的 Wanwu-Transfers/<传输 ID>/ 下可以按原文件名直接打开新附件。IM 文件转存公网时继续加密。
+此绑定也可为 IM 和跨设备会话提供内网附件传输。在可写共享目录的 Wanwu-Transfers/send-<请求标识>/ 下可以直接打开同一次发送的所有新附件。IM 文件转存公网时继续加密。
 
 此绑定无需安装 AI 终端。用另一终端运行 `omni nas status <project-id>` 查看实际地址及端口。NAS 的 SMB 地址应填写它的局域网 IPv4 或解析到该地址的主机名。默认 HTTP 端口 54758，可在万物钥匙设置修改；查看画布的设备需能连接此地址。保持服务在线的方法见下文 systemd 配置。
 
@@ -110,7 +110,7 @@ git --version
 ### 2. 安装 CLI
 
 ```sh
-npm install -g github:EdenShadow/omni_cli#v0.3.10
+npm install -g github:EdenShadow/omni_cli#v0.3.11
 omni setup
 ```
 
@@ -393,10 +393,10 @@ journalctl --user -u omni-cli -f
 
 ## 升级、停止和卸载
 
-先停止常驻进程，再安装目标版本。下面以当前的 `v0.3.10` 为例；未来更新时，把标签替换为已发布的新版本：
+先停止常驻进程，再安装目标版本。下面以当前的 `v0.3.11` 为例；未来更新时，把标签替换为已发布的新版本：
 
 ```sh
-npm install -g github:EdenShadow/omni_cli#v0.3.10
+npm install -g github:EdenShadow/omni_cli#v0.3.11
 omni --version
 omni start
 ```
