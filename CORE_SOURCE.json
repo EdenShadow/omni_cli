@@ -122,6 +122,8 @@
     "desktop/bridge.mjs": "f2a6bb1e92ab1a5bbe965a889f40a66887db7b99",
     "desktop/group-chat.mjs": "f2a6bb1e92ab1a5bbe965a889f40a66887db7b99",
     "desktop/runtime-history.mjs": "f2a6bb1e92ab1a5bbe965a889f40a66887db7b99",
-    "desktop/workbench.mjs": "f2a6bb1e92ab1a5bbe965a889f40a66887db7b99"
+    "desktop/workbench.mjs": "f2a6bb1e92ab1a5bbe965a889f40a66887db7b99",
+    "shared/project-scene.mjs": "943ebfe0699957d6af785260f632af11429f76e5",
+    "bundled-skills/office-space-designer/scripts/project-scene.mjs": "943ebfe0699957d6af785260f632af11429f76e5"
   }
 }

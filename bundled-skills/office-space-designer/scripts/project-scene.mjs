@@ -198,6 +198,22 @@ const sceneRendering=s=>s.appearance?.rendering==='smooth'?'geometricPrecision':
 function surfaceArt(svg,x,y,width,height){
   return svg.replace(/<svg\b([^>]*)>/,(_,attrs)=>`<svg${attrs.replace(/\s(?:x|y|width|height|overflow|preserveAspectRatio)\s*=\s*["'][^"']*["']/g,'')} x="${x}" y="${y}" width="${width}" height="${height}" preserveAspectRatio="none" overflow="hidden">`);
 }
+function floorArtworkHeight(svg, width, height) {
+  // Some saved floors include a separate, full-width strip below the map.
+  // Keep that strip at its authored scale instead of squeezing it into a room.
+  const [root, ...layers] = svg.match(/<svg\b[^>]*>/g);
+  if (!layers.length) return height;
+  const viewBox = root.match(/\sviewBox\s*=\s*["']([^"']+)["']/)?.[1];
+  if (!viewBox) return height;
+  const [left, top, artWidth, artHeight] = viewBox.trim().split(/[ ,]+/).map(Number);
+  const mapBottom = top + height * artWidth / width;
+  const stripHeight = top + artHeight - mapBottom;
+  if (stripHeight <= 0) return height;
+  const attr = (tag, key, fallback) => Number(tag.match(new RegExp(`\\s${key}\\s*=\\s*["']([^"']+)["']`))?.[1] ?? fallback);
+  const hasBottomStrip = layers.some(tag => attr(tag, 'x', 0) === left && attr(tag, 'width') === artWidth &&
+    Math.abs(attr(tag, 'y', 0) - mapBottom) < 1e-6 && Math.abs(attr(tag, 'height') - stripHeight) < 1e-6);
+  return hasBottomStrip ? artHeight * width / artWidth : height;
+}
 export function renderProjectWall(input){
   const s=resolveProjectScene(input),p=Object.fromEntries(Object.entries(defaultProjectScene.palette).map(([k,v])=>[k,hex(s.palette[k],v)]));
   const w=1600,h=320;
@@ -220,7 +236,10 @@ export function renderProjectScene(input, {modules=true,boards=true,guides=false
   art+=rect(0,paintHeight-16,w,16,shade(p.wood,-25))+rect(24,paintHeight-20,w-44,4,shade(p.wood,24));
   for(let x=0;x<w;x+=80)art+=rect(x,24,2,wallHeight-45,'#c4d5c6');
   for(const x of [w*.17,w*.5,w*.83])art+=rect(x-20,28,40,8,'#797583')+rect(x-28,36,56,12,'#f9edcc')+rect(x-20,48,40,4,'#c8b581');
-  if(s.appearance?.floorSvg)art+=rect(0,wallHeight,w,paintHeight-wallHeight,p.floor)+surfaceArt(s.appearance.floorSvg,0,wallHeight,w,paintHeight-wallHeight);
+  if(s.appearance?.floorSvg){
+    const floor=s.appearance.floorSvg;
+    art+=rect(0,wallHeight,w,paintHeight-wallHeight,p.floor)+surfaceArt(floor,0,wallHeight,w,floorArtworkHeight(floor,w,h-wallHeight));
+  }
   if(s.appearance?.wallSvg)art+=rect(0,0,w,wallHeight,p.wall)+surfaceArt(s.appearance.wallSvg,0,0,w,wallHeight);
   if(boards)for(const [key,b] of Object.entries(s.boards)){
     const x=b.x*w/100,y=b.y*h/100,bw=b.width*w/100,bh=b.height*h/100;
