@@ -29,6 +29,7 @@
     "desktop/nas-http.mjs",
     "desktop/nas-originals.mjs",
     "desktop/nas-transfers.mjs",
+    "desktop/runtime-history.mjs",
     "desktop/runtime-launch.mjs",
     "desktop/runtime-question-flow.mjs",
     "desktop/runtime-stream-outbox.mjs",
@@ -116,5 +117,11 @@
   ],
   "moduleCommits": {
     "desktop/nas-http.mjs": "f69a29ac3676a33c8421b4b6fc3a9ea82f37bd86"
+  },
+  "moduleRevisions": {
+    "desktop/bridge.mjs": "f2a6bb1e92ab1a5bbe965a889f40a66887db7b99",
+    "desktop/group-chat.mjs": "f2a6bb1e92ab1a5bbe965a889f40a66887db7b99",
+    "desktop/runtime-history.mjs": "f2a6bb1e92ab1a5bbe965a889f40a66887db7b99",
+    "desktop/workbench.mjs": "f2a6bb1e92ab1a5bbe965a889f40a66887db7b99"
   }
 }

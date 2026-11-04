@@ -123,6 +123,7 @@ test('online device advertises collaboration capabilities without remote control
   await b.start();
   const event=await received;assert.ok(event.capabilities.includes('session-mentions-v1'));assert.ok(event.capabilities.includes('skills-sync-v1'));assert.ok(event.capabilities.includes('group-chat-v1'));assert.ok(!event.capabilities.includes('remote-desktop-v1'));
   assert.ok(event.capabilities.includes('nas-http-v1'));
+  assert.ok(event.capabilities.includes('session-runtime-switch-v1'));
   assert.equal(b.remoteDesktop,undefined);assert.equal(b.builtinRuntime,undefined);
 });
 
