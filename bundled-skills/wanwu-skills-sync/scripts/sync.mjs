@@ -5,14 +5,15 @@ import {resolveContext} from './runtime.mjs';
 import {readFileSync,writeFileSync,constants} from 'node:fs';
 import {openFiles,closeFiles,upload,portableChat} from './transport.mjs';
 import {resolveNas,nasTransfer} from './nas.mjs';
+import {readNasHttp} from './nas-http-read.mjs';
 import {sceneCommand} from './scene.mjs';
 import {referenceCommand} from './references.mjs';
 const args=process.argv.slice(2),options={},files=[],todoKeys=[];let action;
-const actions=['nas-put','nas-get','nas-list','question','credentials-status','credentials-run','work-context','work-note','work-inspect','work-dispatch','work-status','context','catalog','preview','publish','result','chat','voice','audio','chat-status','board','announcement-publish','todo-create','todo-update','todo-delete','operation-status','scene-members','scene-references','scene-context','scene-prepare','scene-preview','scene-apply','scene-save','scene-inventory','scene-status'];
+const actions=['nas-http-check','nas-http-get','nas-put','nas-get','nas-list','question','credentials-status','credentials-run','work-roster','work-context','work-note','work-inspect','work-dispatch','work-status','context','catalog','preview','publish','result','chat','voice','audio','chat-status','board','announcement-publish','todo-create','todo-update','todo-delete','operation-status','scene-members','scene-references','scene-context','scene-prepare','scene-preview','scene-apply','scene-save','scene-inventory','scene-status'];
 const uuid=value=>{if(!/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i.test(value||''))throw Error('请用 --request UUID 指定操作标识，重试保持相同 / Supply --request UUID; reuse it for retries');return value;};
 async function main(){
 try{
- while(args.length){const item=args.shift();if(item.startsWith('--')){if(item==='--mention-all'){options.mentionAll=true;continue;}if(item==='--autoplay'){options.autoplay=true;continue;}if(!args[0]||args[0].startsWith('--'))throw Error('参数缺少值：'+item);if(item==='--file')files.push(args.shift());else if(item==='--todo-key')todoKeys.push(args.shift());else if(item==='--mention')(options.mentionIds??=[]).push(args.shift());else if(item==='--member')(options.members??=[]).push(args.shift());else if(item==='--prop')(options.props??=[]).push(args.shift());else if(['skill','dependency','entry','context','scope','project','runtime','native-session','provider','include','device','device-name','session','candidate','version','request','text','text-file','input','revision','todo','output','kind','workspace','path','destination','layout','asset','canvas-id','canvas-name','auto-size','x','y','query','cursor','limit','office'].includes(item.slice(2)))options[item.slice(2)]=args.shift();else throw Error('无法识别参数：'+item);}else if(!action)action=item;else throw Error('无法识别参数：'+item);}
+ while(args.length){const item=args.shift();if(item.startsWith('--')){if(item==='--mention-all'){options.mentionAll=true;continue;}if(item==='--autoplay'){options.autoplay=true;continue;}if(!args[0]||args[0].startsWith('--'))throw Error('参数缺少值：'+item);if(item==='--file')files.push(args.shift());else if(item==='--todo-key')todoKeys.push(args.shift());else if(item==='--mention')(options.mentionIds??=[]).push(args.shift());else if(item==='--member')(options.members??=[]).push(args.shift());else if(item==='--prop')(options.props??=[]).push(args.shift());else if(['url','skill','dependency','entry','context','scope','project','runtime','native-session','provider','include','device','device-name','session','candidate','version','request','text','text-file','input','revision','todo','output','kind','workspace','path','destination','layout','asset','canvas-id','canvas-name','auto-size','x','y','query','cursor','limit','office'].includes(item.slice(2)))options[item.slice(2)]=args.shift();else throw Error('无法识别参数：'+item);}else if(!action)action=item;else throw Error('无法识别参数：'+item);}
  if(!actions.includes(action))throw Error('用法：node sync.mjs [--scope REQUEST_ID | --context CONTEXT_FILE] [--project PROJECT] '+actions.join('|'));
  if(options.include&&options.include.split(',').some(v=>!['skills','devices','sessions'].includes(v)))throw Error('--include 支持 skills,devices,sessions');
  if(options.autoplay&&!['audio','chat'].includes(action))throw Error('--autoplay 仅用于 audio 或 chat / Use --autoplay with audio or chat');
@@ -32,11 +33,15 @@ try{
  };
  if(options.project){const current=await request({action:'context'});if(![current.project?.id,current.project?.name].includes(options.project))throw Error('不能把当前万物任务切换到另一个项目 / Project differs from the active scope');}
  let result;
- if(action.startsWith('nas-')){
+ if (action === 'nas-http-check' || action === 'nas-http-get') {
+  if (!options.url || files.length || options.path) throw Error('请用 --url 指定已知 NAS 文件的完整地址');
+  if (action === 'nas-http-get' && !options.output) throw Error('请用 --output 指定新的本地绝对路径');
+  result = await readNasHttp(request, options.context, options.url, action === 'nas-http-get' ? options.output : undefined);
+ } else if(action.startsWith('nas-')){
   const operation=action.slice(4);
   if(files.length!==(operation==='put'?1:0))throw Error('nas-put 需要一个 --file；nas-get 和 nas-list 使用 --path');
   const remote=options.path??(operation==='put'?path.basename(files[0]):'');
-  result=await nasTransfer(await resolveNas(request,'nas'),{operation,remote,file:files[0],output:options.output,contextFile:options.context});
+  result=await nasTransfer(()=>resolveNas(request,'nas'),{operation,remote,file:files[0],output:options.output,contextFile:options.context});
  }else if(action==='question'){
   if(!(await request({action:'context'})).capabilities?.questionInput)throw Error('请升级客户端，并在万物会话内提问 / Update the app and ask in a Wanwu conversation');
   if(!options.input)throw Error('Use --input QUESTIONS_JSON');
@@ -44,6 +49,7 @@ try{
   result=await request({action,id:uuid(options.request),questions:input.questions});
  }else if(action==='credentials-status'){result=await request({action});if(options.skill)result.items=result.items.filter(s=>s.name===options.skill);}
  else if(action==='credentials-run'){if(!options.skill||!options.dependency||!options.input)throw Error('Use --skill NAME --dependency ID --input PLAN_JSON');result=await runWithCredentials(request,{skill:options.skill,dependency:options.dependency,entryId:options.entry,contextFile:options.context},JSON.parse(readFileSync(options.input,'utf8')));}
+ else if(action==='work-roster')result=await request({action});
  else if(action.startsWith('work-')){
   if(!(await request({action:'context'})).capabilities?.workDispatch)throw Error('此范围不支持派工或备注；原生会话请先导入万物，旧服务端请更新 / Import this native session before dispatching work');
   if(action==='work-context')result=await request({action});
@@ -113,7 +119,7 @@ try{
   }finally{await closeFiles(handles);if(uploadId)await request({action:'board-upload',method:'DELETE',uploadId}).catch(()=>{});}
  }else if(action==='operation-status')result=await request({action,id:uuid(options.request)});
  else result=await request({action,deviceId:options.device,sessionId:options.session,candidateId:options.candidate,version:options.version,requestId:options.request});
- if(options.output&&action!=='nas-get'){
+ if(options.output&&!['nas-get','nas-http-get'].includes(action)){
   if(!path.isAbsolute(options.output))throw Error('输出文件需要绝对路径 / Use an absolute output path');
   writeFileSync(options.output,JSON.stringify(result,null,2)+'\n',{mode:0o600,flag:constants.O_WRONLY|constants.O_CREAT|constants.O_TRUNC|constants.O_NOFOLLOW});
   process.stdout.write(JSON.stringify({status:'saved',output:options.output,projectId:result.projectId||result.project?.id},null,2)+'\n');

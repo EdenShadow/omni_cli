@@ -238,6 +238,9 @@ omni sessions models <项目ID> <会话ID>
 omni sessions model <项目ID> <会话ID> --model <models返回的型号ID> --effort high
 omni chat send <项目ID> --session <会话ID> --text "更新今日账单；画布ID：<画布ID>" --wait
 omni discover <项目ID>
+omni work roster <项目ID>  # 按工位列出会话、@名字、Runtime 和备注
+omni work dispatch --scope <来源会话任务ID> --request <批次UUID> --input /绝对路径/plan.json
+omni work status --scope <来源会话任务ID> --request <批次UUID>
 ```
 
 - `agents list` 返回当前账号有权限查看的 @会话；`sessions list` 同时包含普通会话、完整备注、设备、目录、状态与备注版本号。离线设备仍可发现，`online` 会说明状态。

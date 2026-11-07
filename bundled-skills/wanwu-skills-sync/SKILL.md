@@ -1,14 +1,20 @@
 ---
 name: wanwu-skills-sync
-description: 按需获取万物项目与权限，发送指定消息或文件到团队、存取 NAS 文件、同步技能、编辑公告和待办、读取成员形象、修改角色、场景及指定设备外观，附带项目界面扩展，或进行备注和跨设备派工。普通问答不调用；公屏长任务可克制地同步关键进展。
+description: 按需获取万物项目与权限，下载公开媒体链接、发送指定消息或文件到团队、存取 NAS 文件、同步技能、编辑公告和待办、读取成员形象、修改角色、场景及指定设备外观，附带项目界面扩展，或进行备注和跨设备派工。普通问答不调用；公屏长任务可克制地同步关键进展。
 metadata:
   display_name: 万物同步助手
-  version: "1.18.5"
+  version: "1.18.8"
 ---
 
 # 万物同步助手
 
+需要按设备、分身、@名字、Runtime 或会话备注排工时，运行 `node scripts/sync.mjs work-roster`，按[会话派工说明](references/work-dispatch.md)并行或按依赖执行。
+
 仅在用户要求操作万物时调用 `scripts/sync.mjs`，用用户当前语言回复。
+
+## 下载用户指定的媒体
+
+用户要求取回公开的 GIF、图片或视频时，在执行设备运行 `node <本技能目录>/scripts/download-media.mjs <完整URL> <本地目标文件>`。使用原链接（含查询参数），指定尚不存在的文件名。它保留原始字节，成功后返回文件路径和大小；GIF 会检查文件头。一次 Python urllib 请求被拒（403/1010）时，先用此命令实测，再告诉用户结果。若仍被拒，如实报告该次请求结果。仅发送网址或询问说明时不自行保存或转发。
 
 ## 获取任务上下文
 
@@ -22,7 +28,7 @@ node /absolute/wanwu-skills-sync/scripts/sync.mjs context
 
 `context` 默认只返回当前范围和能力。确有需要再加 `--include skills`、`--include devices,sessions`，或读取对应功能接口；不每次拉取完整项目资料。后续命令沿用相同的 `--scope` / `--project` / `--runtime` 选择。
 
-执行 NAS HTTP 任务时，启动后先运行 `credentials-status --skill wanwu-skills-sync`，沿用当前任务范围。在 nas-smb 当前选中的钥匙条目读取 nasHttpPort（默认 54758）与 nasHttpOrigin（实际就绪地址）。
+执行 NAS 任务时沿用当前任务范围，用本技能的 `nas-list`、`nas-get`、`nas-put`。Mac 安装了万物桌面端时，这些命令首次连接就使用万物 App。HTTP 检查先从 `credentials-status --skill wanwu-skills-sync` 的当前选中钥匙读取 `nasHttpOrigin`（实际就绪地址），再按 NAS 说明检查具体文件。
 
 ## 只读取本次需要的流程
 

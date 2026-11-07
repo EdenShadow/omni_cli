@@ -12,7 +12,7 @@ test('desktop DSH uses the official Electron CLI without shell expansion or an i
     const root=path.join(dir,'Programs/DeepSeek Harness'),exe=path.join(root,'DeepSeek Harness.exe');
     for(const f of [exe,path.join(root,'resources/app.asar'),path.join(root,'resources/runtime/cli/bin/dsh.cmd')]){fs.mkdirSync(path.dirname(f),{recursive:true});fs.writeFileSync(f,'fixture');}
     assert.equal(findDesktopDsh({env:{LOCALAPPDATA:dir},platform:'win32'}),exe);
-    assert.equal(findDesktopDsh({env:{LOCALAPPDATA:dir},platform:'darwin'}),null);
+    assert.equal(findDesktopDsh({env:{LOCALAPPDATA:dir,HOME:dir},platform:'darwin',exists:f=>f.startsWith(dir+path.sep)&&fs.existsSync(f)}),null);
     const desktop=desktopDshLaunch(exe,{platform:'win32'});
     const args=[...desktop.args,'web','--patch',path.join(dir,'中文 & %PATH%.json')];
     const launch=runtimeLaunch(exe,args,{platform:'win32',electronNode:true,env:{}});

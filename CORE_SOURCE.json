@@ -77,6 +77,7 @@
     "shared/office-board-appearance.mjs",
     "shared/office-style.mjs",
     "shared/official-skills.mjs",
+    "shared/project-computers.mjs",
     "shared/project-scene.mjs",
     "shared/prop-animation.mjs",
     "shared/prop-art.mjs",
@@ -124,6 +125,10 @@
     "desktop/runtime-history.mjs": "f2a6bb1e92ab1a5bbe965a889f40a66887db7b99",
     "desktop/workbench.mjs": "f2a6bb1e92ab1a5bbe965a889f40a66887db7b99",
     "shared/project-scene.mjs": "943ebfe0699957d6af785260f632af11429f76e5",
-    "bundled-skills/office-space-designer/scripts/project-scene.mjs": "943ebfe0699957d6af785260f632af11429f76e5"
+    "bundled-skills/office-space-designer/scripts/project-scene.mjs": "943ebfe0699957d6af785260f632af11429f76e5",
+    "shared/project-computers.mjs": "498cacd02f8c35bf0d44d2b307773ed9e21a84d7",
+    "shared/work-dispatch.mjs": "498cacd02f8c35bf0d44d2b307773ed9e21a84d7",
+    "bundled-skills/wanwu-skills-sync": "498cacd02f8c35bf0d44d2b307773ed9e21a84d7",
+    "bundled-skills/wanwu-canvas": "498cacd02f8c35bf0d44d2b307773ed9e21a84d7"
   }
 }

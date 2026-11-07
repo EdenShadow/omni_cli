@@ -1,3 +1,4 @@
+import {workCommand} from './work-command.mjs';
 import {nasCommand} from './nas-command.mjs';
 import {login} from './login.mjs';
 import fs from 'node:fs';
@@ -14,6 +15,7 @@ import {client,detectRuntimes,bootstrap,importAll} from './client.mjs';
 const {version}=JSON.parse(fs.readFileSync(new URL('../package.json',import.meta.url),'utf8'));
 const help=`Omni CLI / 万物命令行设备 ${version}
 
+omni work --help        按设备分身、会话备注和 Runtime 查找、派工与查看进度
 omni setup              登录、检测终端、绑定设备、选择项目并启动
 omni login              输入账号密码登录（密码不保存）
 omni bind               选择 AI 终端，安装默认技能并绑定设备
@@ -130,6 +132,7 @@ export async function main(args){
     if(args[1]!=='order')throw Error(runtimeOrderHelp);
     print(runtimeOrderCommand(loadState(),args.slice(2)));return;
   }
+  if(command==='work')return workCommand(args.slice(1));
   const allowed=['nas','setup','login','bind','start','status','projects','join','import','skills','access','logout','chat','agents','sessions','discover'];
   if(!allowed.includes(command))throw Error('Unknown command. Run omni --help');
   const state=loadState(),{store,save}=state;

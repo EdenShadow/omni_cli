@@ -49,3 +49,14 @@ test('models and efforts validate actual runtime catalog; account preference pre
   assert.deepEqual(await f.c.model(project,id,{model:''}),{model:'',effort:'',serviceTier:'default'});
   await assert.rejects(f.c.model(project,id,{effort:'high'}),/explicit/);
 });
+
+test('search selects distinct sessions by desk, runtime or short note on one physical device',async()=>{
+  const clone=randomUUID(),two=randomUUID();
+  const catalog=createCatalog({request:async()=>({devices:[{id:deviceId,name:'Mac',online:true}],
+    projectComputers:[{id:deviceId,name:'Mac'},{id:clone,physicalDeviceId:deviceId,name:'财神2',boundSessionId:id}],
+    sessions:[{id,deviceId,provider:'dsh',mentionAlias:'评论优化',title:'写作'},{id:two,deviceId,provider:'codex',note:'版本打包'}]})});
+  for(const query of ['财神2','dsh','评论优化'])assert.equal((await catalog.list(project,{query}))[0].computerId,clone);
+  assert.equal((await catalog.list(project,{query:'打包'}))[0].id,two);
+  assert.equal((await catalog.list(project,{device:deviceId})).length,2);
+  assert.equal((await catalog.list(project,{device:clone})).length,1);
+});

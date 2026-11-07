@@ -1,3 +1,4 @@
+import {computerForSession,projectComputers} from '../lib/shared/project-computers.mjs';
 import {randomUUID} from 'node:crypto';
 import {setTimeout as delay} from 'node:timers/promises';
 import {uuid} from './chat.mjs';
@@ -13,7 +14,14 @@ export function createCatalog({request,signal,sleep=(ms=1500)=>delay(ms,undefine
     if(device)uuid(device,'Device ID');
     const snapshot=await request(base(project)+'/snapshot');
     const devices=new Map(snapshot.devices.map(d=>[d.id,d]));
-    return (snapshot.sessions||[]).filter(s=>!s.archivedAt&&devices.has(s.deviceId)&&(!agents||s.mentionAlias)&&(!device||s.deviceId===device)).map(s=>({...view(s),deviceName:devices.get(s.deviceId).name,online:!!devices.get(s.deviceId).online})).filter(s=>!query||[s.name,s.notes,s.deviceName,s.folderName].some(v=>String(v||'').toLocaleLowerCase().includes(query.toLocaleLowerCase())));
+    const desks=projectComputers(snapshot);
+    return (snapshot.sessions||[]).filter(s=>!s.archivedAt&&devices.has(s.deviceId)&&(!agents||s.mentionAlias)).map(s=>{
+      const desk=computerForSession(desks,s.deviceId,s.id,s.computerId);
+      return {...view(s),computerId:desk?.id,computerName:desk?.name,appearanceName:desk?.appearance?.name,summary:s.note||'',
+        deviceName:devices.get(s.deviceId).name,online:!!devices.get(s.deviceId).online};
+    }).filter(s=>(!device||device===s.deviceId||device===s.computerId)&&(!query||
+      [s.name,s.alias,s.notes,s.summary,s.provider,s.appearanceName,s.computerName,s.deviceName,s.folderName].some(v=>String(v||'').toLocaleLowerCase().includes(query.toLocaleLowerCase()))));
+
   }
   async function session(project,id){return await request(base(project)+`/sessions/${uuid(id,'Session ID')}/open`);}
   async function show(project,id){const s=await session(project,id);return {...view(s),...(await request(`/api/sessions/${id}/model-preference`))};}

@@ -42,7 +42,7 @@ function copy(name){
     const ref=match[1];if(ref.startsWith('.'))copy(path.posix.normalize(path.posix.join(path.posix.dirname(name),ref)));else if(!ref.startsWith('node:')&&/^[@\w/-]+$/.test(ref))external.add(ref);
   }
 }
-copy('desktop/bridge.mjs');copy('desktop/dsh-host-plugin.mjs');
+copy('shared/project-computers.mjs');copy('desktop/bridge.mjs');copy('desktop/dsh-host-plugin.mjs');
 for(const name of ['announcement-designer','office-character-studio','office-space-designer','wanwu-canvas','wanwu-skills-sync'])fs.cpSync(path.join(source,'bundled-skills',name),path.join(target,'bundled-skills',name),{recursive:true,filter:p=>!p.includes('__pycache__')&&!p.endsWith('.pyc')});
 // Let pending HTTP handles close normally; forced exit can crash libuv on Windows.
 for(const name of ['wanwu-skills-sync/scripts/sync.mjs','wanwu-canvas/scripts/canvas.mjs']){

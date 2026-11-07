@@ -5,6 +5,8 @@ description: 按画布 ID 读取信息、修改万物项目的网页画布，创
 
 # 万物画布
 
+需要按设备、分身、@名字、Runtime 或会话备注排工时，运行 `node scripts/canvas.mjs work-roster`，按[会话派工说明](references/ai-tasks.md)并行或按依赖执行。
+
 按用户本次要求操作，不自动创建、覆盖、删除或广播。无需每轮注入画布内容或额外上下文。
 
 1. 用 `node scripts/canvas.mjs context` 发现当前万物运行时/项目；若消息带 `<wanwu scope="…"/>`，使用 `--scope`。不得读取、展示或复制授权文件内容。若需选择项目，按返回结果选择，不猜测。

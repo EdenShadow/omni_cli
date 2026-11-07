@@ -15,7 +15,7 @@ const canvasUuid=v=>{if(!/^[a-f\d]{8}(?:-[a-f\d]{4}){3}-[a-f\d]{12}$/i.test(v||'
 async function main(){
 try{
  while(args.length){const a=args.shift();if(a.startsWith('--')){if(!['scope','context','project','runtime','native-session','provider','include','canvas','request','input','revision','key','mode','file','file-id','output','path','cdn','entry','document','cursor'].includes(a.slice(2))||!args.length)throw Error('Invalid option '+a);options[a.slice(2)]=args.shift();}else if(!action)action=a;else throw Error('Unexpected argument');}
- if(!['context','list','get','live','publish','capture','cover','patch','attach','archive','download','state','update','signal','state-list','page-script','share','verify-downloads','delete','usage-summary','usage-requests','collab-snapshot','collab-commit'].includes(action))throw Error('Usage: canvas.mjs context|list|get|live|publish|capture|cover|patch|attach|archive|download|state|update|signal|state-list|page-script|share|verify-downloads|delete|usage-summary|usage-requests|collab-snapshot|collab-commit [options]');
+ if(!['work-roster','work-dispatch','work-status','context','list','get','live','publish','capture','cover','patch','attach','archive','download','state','update','signal','state-list','page-script','share','verify-downloads','delete','usage-summary','usage-requests','collab-snapshot','collab-commit'].includes(action))throw Error('Usage: canvas.mjs context|list|get|live|publish|capture|cover|patch|attach|archive|download|state|update|signal|state-list|page-script|share|verify-downloads|delete|usage-summary|usage-requests|collab-snapshot|collab-commit [options]');
  if(options.path!==undefined&&action!=='archive')throw Error('--path is a relative NAS path for archive');
  const needsCanvas=['get','live','capture','cover','patch','attach','archive','download','state','update','signal','state-list','page-script','share','verify-downloads','delete','collab-snapshot','collab-commit'].includes(action);
  const canvasId=options.canvas!==undefined||needsCanvas?canvasUuid(options.canvas):undefined;
@@ -23,7 +23,7 @@ try{
  const u=new URL(resolved.context.url);if(u.protocol!=='http:'||u.hostname!=='127.0.0.1'||u.pathname!=='/skills'||u.username||u.password||u.search)throw Error('Invalid runtime endpoint');
  const request=async body=>{const r=await fetch(u,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+resolved.context.token},body:JSON.stringify(body),signal:AbortSignal.timeout(120000),redirect:'error'});const result=await r.json();if(!r.ok)throw Object.assign(Error(result.error||'Canvas request failed'),{status:r.status});return result;};
  const context=await request({action:'context',detail:'summary',include:options.include?.split(',')||[]});if(options.project&&![context.project.id,context.project.name].includes(options.project))throw Error('Project does not match this request');
- if(action!=='context'&&!context.capabilities?.canvas)throw Error('请更新万物服务端与客户端以使用画布 / Update Wanwu server and app for canvas support');
+ if(action!=='context'&&!action.startsWith('work-')&&!context.capabilities?.canvas)throw Error('请更新万物服务端与客户端以使用画布 / Update Wanwu server and app for canvas support');
  if(action==='page-script'&&!context.capabilities?.canvasPageScripts)throw Error('请更新万物服务端以使用网页脚本 / Update the Wanwu server for page scripts');
  if(action==='page-script'&&(options.input||options.mode)&&!context.capabilities?.canvasTeamPageScripts)throw Error('请更新万物服务端以启用团队网页脚本 / Update the server for team page scripts');
  if(action.startsWith('collab-')&&!context.capabilities?.canvasCollaboration)throw Error('请更新万物服务端以使用多人协作 / Update the server for canvas collaboration');
@@ -31,6 +31,12 @@ try{
  const mutating=async(id,fn)=>{const old=await request({action:'canvas-result',requestId:id});return old.status==='complete'?old.result:fn();};
  let result;
  if(action==='context')result=context;
+ else if(action==='work-roster')result=await request({action});
+ else if(action==='work-status')result=await request({action,id:uuid(options.request)});
+ else if(action==='work-dispatch'){
+  if(!context.capabilities?.workDispatch||!context.capabilities?.workDispatchUpload)throw Error('派工需要已导入万物的来源会话和支持派工的客户端');
+  result=await request({action:'work-dispatch-local',plan:{...input(),id:uuid(options.request)}});
+ }
  else if(['usage-summary','usage-requests'].includes(action)){if(!context.capabilities?.aiUsage)throw Error('请更新服务端以读取 AI 用量');result=await request({action,filters:options.input?input():{}});}
  else if(action==='list')result=await request({action:'canvas-list'});
  else if(['get','live'].includes(action))result=await request({action:'canvas-'+action,canvasId});

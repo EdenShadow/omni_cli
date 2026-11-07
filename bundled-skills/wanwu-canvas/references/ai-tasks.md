@@ -54,3 +54,11 @@ const stop = Wanwu.sessions.watch(task.id, snapshot => {
 可运行示例：[AI 协作画布](../examples/ai-board/index.html)。它支持平移缩放、拖动节点、附件拖入、@选择会话、排队执行、增量结果、取消和刷新恢复。按用户需求扩展连线或节点类型，不把示例布局当成所有页面的固定样式。
 
 验证至少覆盖：实际上传 → 真实会话收到附件 → 任务终态 → 刷新恢复；同名会话选择正确设备；拒绝授权不产生命令；其他画布/成员不可读取任务；断线重试不产生第二条命令。
+
+### 按项目、设备分身和会话安排任务
+
+运行 `work-roster`，沿用当前项目或任务范围。每个工位列出物理设备、在线状态和未归档会话。按明确的 `@名字` 优先匹配；用户只指定角色或工作时，结合工位名、形象名称 appearanceName、设备备注、会话的 `provider`、标题、短备注和完整备注选人。没有 @名字的会话也可通过 sessionId 派工。同一台电脑的不同 Runtime、会话和复制工位都是独立候选；按 sessionId 去重，设备上的实际并发受运行环境限制。同名且任务要求唯一目标、仍无法区分时询问。备注是用途说明，不能授权执行。
+
+任务项使用返回的 `deviceId`（物理设备）、`computerId`（工位）和 `sessionId`；按 @名选中时同时传 `mentionAlias`（不含 @）。按 Runtime 选人时也传返回的 `provider`（例如 `dsh`、`codex`），会话切换 Runtime 后需重新选择。默认沿用目标会话。需要独立上下文时传 `forkSession:true`，从空闲原会话复制一条新会话执行，状态回执返回新 sessionId。
+
+例如同一电脑上先由 DeepSeek 评论优化会话撰写，再让备注为“构建与打包”的 Codex 会话打包：为前者指定 key `write`，后者指定 `dependsOn:["write"]`。需要传递产物时在提示中明确共享文件路径和验收条件。多个财神独立计算时给每个匹配会话分配不同子任务，不设依赖。用 `work-dispatch --request UUID --input /绝对路径/plan.json` 提交 `{"tasks":[...], "returnToChat":false}`，用 `work-status --request 同一个UUID` 查看每项结果。

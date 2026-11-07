@@ -5,6 +5,7 @@ import {pipeline} from 'node:stream/promises';
 import {Readable,Transform} from 'node:stream';
 import {setTimeout as delay} from 'node:timers/promises';
 import {openFiles,closeFiles} from './transport.mjs';
+import {runNasInWanwu} from './nas-mac-runtime.mjs';
 
 const skill='wanwu-skills-sync',dependency='nas-smb';
 
@@ -153,9 +154,16 @@ export function nasTarget(base, parts) {
  return [base,...parts].filter(Boolean).join('/');
 }
 
-export async function nasTransfer(config,{operation,remote='',file,output,contextFile}){
+export async function nasTransfer(configOrResolve,{operation,remote='',file,output,contextFile}){
  if(!['put','get','list'].includes(operation))throw Error('Invalid NAS operation');
  const parts=operation==='list'&&!remote?[]:relativeParts(remote);
+ const args = ['nas-' + operation];
+ if (remote) args.push('--path', remote);
+ if (operation === 'put') args.push('--file', file);
+ if (operation === 'get' && output) args.push('--output', output);
+ const result = await runNasInWanwu(contextFile, args);
+ if (result !== undefined) return result;
+ const config = typeof configOrResolve === 'function' ? await configOrResolve() : configOrResolve;
  const {base}=config;
  const {Client}=await import('./vendor/smb3-client.mjs');
  const client=new Client(config);
