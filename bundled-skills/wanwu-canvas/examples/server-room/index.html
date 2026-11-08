@@ -8,16 +8,18 @@
 <div class="controls" id="controls"></div><p class="subtle" id="hint"></p><p id="error" role="alert"></p>
 <details><summary>查看服务端快照</summary><pre id="snapshot"></pre></details>
 <p class="subtle">这是通用机制示例。切换发布配置的 entry，可替换为竞速、RPG 或塔防规则。</p>
-</main><script>
+</main><script src="latest-control.js"></script><script>
 let self,kind,sequence=0,connected=false,state,drive={throttle:0,steer:0},towerX=20;
 const $=id=>document.getElementById(id),fail=e=>{$('error').textContent=e.message;};
 function input(data){if(!connected)return;return Wanwu.rooms.input({...data,seq:++sequence}).catch(fail);}
+const movement=createLatestControl(data=>Wanwu.rooms.input({...data,seq:++sequence}),fail);
+function sendDrive(){if(connected)movement.offer({type:'drive',...drive});}
 function button(label,fn){const b=document.createElement('button');b.textContent=label;b.disabled=!connected;b.onclick=fn;$('controls').append(b);return b;}
 function controls(){
  $('controls').replaceChildren();
  if(kind==='race'){
-  const b=button('按住加速',()=>{});b.onpointerdown=e=>{b.setPointerCapture(e.pointerId);drive.throttle=1;void input({type:'drive',...drive});};b.onpointerup=b.onpointercancel=()=>{drive.throttle=0;void input({type:'drive',...drive});};
-  button('靠左',()=>{drive.steer=-1;void input({type:'drive',...drive});});button('回正',()=>{drive.steer=0;void input({type:'drive',...drive});});button('靠右',()=>{drive.steer=1;void input({type:'drive',...drive});});$('hint').textContent='服务器计算加速、阻力、碰撞和圈数；每秒重复发送控制状态。';
+  const b=button('按住加速',()=>{});b.onpointerdown=e=>{b.setPointerCapture(e.pointerId);drive.throttle=1;sendDrive();};b.onpointerup=b.onpointercancel=()=>{drive.throttle=0;sendDrive();};
+  button('靠左',()=>{drive.steer=-1;sendDrive();});button('回正',()=>{drive.steer=0;sendDrive();});button('靠右',()=>{drive.steer=1;sendDrive();});$('hint').textContent='服务器计算加速、阻力、碰撞和圈数；每秒重复发送控制状态。';
  }else if(kind==='rpg'){button('攻击',()=>input({type:'attack'}));button('治疗 · 5 金币',()=>input({type:'heal'}));$('hint').textContent='伤害、攻击冷却、怪物反击和奖励均由服务器决定。';}
  else{button('建造防御塔 · 25',()=>{void input({type:'build',x:towerX});towerX=towerX>=80?20:towerX+20;});$('hint').textContent='服务器负责波次、敌人移动、攻击范围判定和资源扣除。';}
 }
@@ -30,9 +32,9 @@ function render(s){
  else{const text=document.createElement('p');text.textContent='第 '+s.wave+' 波 · '+s.gold+' 金币 · '+s.lives+' 生命';world.append(text);const row=document.createElement('div');row.className='lane';for(const e of s.enemies){const dot=document.createElement('i');dot.className='car';dot.style.left=e.x+'%';dot.style.background='#e2a78c';row.append(dot);}for(const t of s.towers){const dot=document.createElement('b');dot.textContent='♜';dot.style.cssText='position:absolute;top:-10px;left:'+t.x+'%';row.append(dot);}world.append(row);}
 }
 Wanwu.rooms.subscribe(m=>{$('members').textContent=m.players.length+' 人在线';render(m.state);});
-Wanwu.rooms.onStatus(m=>{connected=m.status==='connected';$('status').textContent=({connecting:'正在连接',connected:'服务端在线',reconnecting:'正在重连',disconnected:'已离开',error:'连接异常'})[m.status]||m.status;if(m.message)$('error').textContent=m.message;if(m.player)self=m.player.id;if(kind)controls();});
+Wanwu.rooms.onStatus(m=>{connected=m.status==='connected';if(!connected){movement.reset();drive={throttle:0,steer:0};}$('status').textContent=({connecting:'正在连接',connected:'服务端在线',reconnecting:'正在重连',disconnected:'已离开',error:'连接异常'})[m.status]||m.status;if(m.message)$('error').textContent=m.message;if(m.player)self=m.player.id;if(kind)controls();});
 Wanwu.rooms.join('demo').then(m=>{self=m.player.id;render(m.state);}).catch(fail);
-setInterval(()=>{if(kind==='race'&&connected)void input({type:'drive',...drive});},150);
-window.addEventListener('blur',()=>{drive={throttle:0,steer:0};if(kind==='race')void input({type:'drive',...drive});});
+setInterval(()=>{if(kind==='race'&&connected&&(drive.steer||drive.throttle))sendDrive();},150);
+window.addEventListener('blur',()=>{drive={throttle:0,steer:0};if(kind==='race')sendDrive();});
 Wanwu.live.provide(()=>({kind,connected,state}));
 </script></body></html>

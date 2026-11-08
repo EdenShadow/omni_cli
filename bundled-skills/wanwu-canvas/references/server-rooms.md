@@ -121,3 +121,37 @@ KV get/set/remove/increment 按房间串行执行，写入必须传 revision，�
 轻量实时游戏可显式设置 `tickRate: 60, broadcastRate: 30`，小状态、低人数房间可试 `60/60`；已发布的显式频率保持不变。更高频率仍受脚本 CPU 和广播字节预算约束，不适合每帧发送大地图。服务端按固定广播截止时间推进，延迟后只发送当前快照，不补发旧快照；慢连接积压超过 64 KiB 时跳过可替换快照，可靠事件/回复保留原有保护。
 
 在本地立即绘制自己的输入；远端状态用插值展示，最终以服务器裁决为准。输入预测/回滚须按游戏规则实现，通用接口不假设输入可重放。画笔预览使用 `Wanwu.collab.preview`，完成一笔后再 `commit`，不要每个鼠标事件写数据库或用普通 HTTP 广播。
+
+### 连续运动的画面
+
+将技能的 `assets/room-motion.js` 复制到画布网页包，并在游戏脚本前加载。用 join 返回的 tickRate、broadcastRate 创建播放缓冲。在 rooms.subscribe 中用 `buffer.push(packet.tick*1000/tickRate, packet.state, performance.now(), packet.generation)` 记录权威帧；在 requestAnimationFrame 中用 `buffer.sample(now)` 返回的 from.state、to.state、t 插值。创建方式为 `createRoomMotion({intervalMs:1000/broadcastRate})`。只有一帧时使用该帧，predictionMs 大于零时可用游戏物理做短时显示预测。回合切换、瞬移和重新加入时 reset；胜负、碰撞判定及最终位置以服务器为准。网络抖动测试需含扎堆到包和短暂断流，并验证两个客户端最终状态一致。
+
+所有人看到完全相同的公开场地时，可提供 `Room.broadcastView(state,ctx)`，宿主每次广播生成一次公开投影并分发给各玩家。兼容旧宿主时也实现 `view(state,player,ctx)`。手牌、战争迷雾、私信等因人而异的状态只用 view，切勿放入 broadcastView。
+
+### 创建联机游戏时的网络约定
+
+- 先定义玩家输入、公开快照和玩家私有信息。桌球的击球、赛车的起跑等一次性动作发可靠 input，携带 actionId，服务端校验并去重。瞄准角度、方向盘等持续输入在本地立即响应，发送时只留一个在途请求和一个最新值；松手归零也要送达。切房或断线清掉待发送值。可直接复制示例的 [latest-control.js](../examples/server-room/latest-control.js)，输入变动时 offer 当前状态，断线时 reset。
+- 相同公开视图用 broadcastView，加上等价 view 兼容旧宿主。对象使用稳定 ID 和稳定数组顺序，静态资源随网页包发布。新宿主会协商增量传输，对相邻公开快照只发变化字段或数组项，初次加入、重连、基线不一致和周期校准使用全量。游戏继续在 subscribe 收完整状态，不自行拼网络包。
+- 用相同的输入序列和人数比较全量与增量的实际 WebSocket 消息字节。分别测静止、多人移动、旁观者中途加入；给一个客户端注入成簇延迟，核对两端最终位置、比分和回合。把游戏绘制耗时、输入往返耗时、广播间隔分别记录。
+
+### 自己操控的角色先动，服务器校正
+
+需要低延迟走位的游戏，将 [room-prediction.js](../assets/room-prediction.js) 加入网页包。为每次连接、每个本地操控对象建立一个预测器；断线停止发指令，重连、换角色或重开回合时从新快照重新建立。远端角色继续用 room-motion 插值。桌球可以立即画出杆反馈，最终进袋和得分等待权威快照。
+
+```js
+// advance 是客户端与房间脚本共用的纯函数：按一个固定步长更新自身姿态。
+const prediction = createRoomPrediction({step: advance});
+function onPlayerSnapshot(packet, me) {
+  prediction.reconcile({sequence: packet.sequence, processedSeq: me.processedSeq,
+                        authoritative: me.pose});
+}
+function onLocalStep(direction) { // 首个快照后才启用；固定步长采样
+  const command = prediction.issue({direction});
+  drawSelf(prediction.state);
+  return Wanwu.rooms.input({type:'move', ...command});
+}
+```
+
+服务端以已认证玩家为键，有序消费带 seq 的指令。在服务端 tick 按游戏的移动速度与每 tick 步数上限执行；限制队列长度、校验时间、方向与碰撞，不能让加速发包换来更快移动。快照里同时写入 pose 和已经处理到的 processedSeq，被规则拒绝的指令也应标记已处理。收到 input 回执只代表命令被接收。依赖每个步长的增量指令需要顺序递交；合并方向盘绝对值的 latest-control 适用于另一种输入语义。发送失败时停止预测、重新建立连接并从权威快照恢复，勿重新发送结果未知的击球或攻击。
+
+预测器从权威姿态重新执行尚未确认的本地输入，最多暂存 32 步，超过窗口时等待服务器追上。只预测可重演的动作；音效、奖励、积分、网络请求放在 step 外。校正后用新姿态继续模拟，小幅的画面误差可在渲染层逐帧收敛；瞬移、复活直接对齐。验收要覆盖即时本地反馈、服务器否决、过期快照、断网超出窗口以及重连后没有旧输入。
