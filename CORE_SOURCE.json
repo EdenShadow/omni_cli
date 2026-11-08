@@ -1,6 +1,6 @@
 {
   "repository": "EdenShadow/wanwu_ai",
-  "commit": "ede20f4250977fa8ab16b968533de707e794e2f8",
+  "commit": "083ac913a09bbbed169f2b63c3b93f8bba6c4404",
   "modules": [
     "desktop/announcements.mjs",
     "desktop/approval-relay.mjs",
@@ -115,20 +115,5 @@
     "yauzl",
     "yazl",
     "zod"
-  ],
-  "moduleCommits": {
-    "desktop/nas-http.mjs": "f69a29ac3676a33c8421b4b6fc3a9ea82f37bd86"
-  },
-  "moduleRevisions": {
-    "desktop/bridge.mjs": "f2a6bb1e92ab1a5bbe965a889f40a66887db7b99",
-    "desktop/group-chat.mjs": "f2a6bb1e92ab1a5bbe965a889f40a66887db7b99",
-    "desktop/runtime-history.mjs": "f2a6bb1e92ab1a5bbe965a889f40a66887db7b99",
-    "desktop/workbench.mjs": "f2a6bb1e92ab1a5bbe965a889f40a66887db7b99",
-    "shared/project-scene.mjs": "943ebfe0699957d6af785260f632af11429f76e5",
-    "bundled-skills/office-space-designer/scripts/project-scene.mjs": "943ebfe0699957d6af785260f632af11429f76e5",
-    "shared/project-computers.mjs": "498cacd02f8c35bf0d44d2b307773ed9e21a84d7",
-    "shared/work-dispatch.mjs": "498cacd02f8c35bf0d44d2b307773ed9e21a84d7",
-    "bundled-skills/wanwu-skills-sync": "498cacd02f8c35bf0d44d2b307773ed9e21a84d7",
-    "bundled-skills/wanwu-canvas": "634f3e5a015d3a7fe06ff860bd09c294fea3cbb1"
-  }
+  ]
 }

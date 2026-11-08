@@ -9,6 +9,24 @@ import {WorkEffects} from './work-effects.js';
 import {characterResources} from './resources.js';
 const STATES = ['idle', 'walk-left', 'walk-right', 'working', 'tired', 'done', 'sitting', 'pranked', 'dancing'];
 const LEGACY_STATES = STATES.filter(state=>!['done','sitting','pranked','dancing'].includes(state));
+// Let the browser interpolate the rig's pose while painting the SVG paths at
+// the final map scale. Direct transform animations can composite a scaled bitmap.
+const poseTransform = '--wanwu-rig-transform';
+const poseOpacity = '--wanwu-rig-opacity';
+const identity = 'matrix(1,0,0,1,0,0)';
+const supportsVectorFrames = typeof globalThis.CSS?.registerProperty === 'function';
+if (supportsVectorFrames && !customElements.get('office-character')) {
+  CSS.registerProperty({name:poseTransform, syntax:'<transform-list>', inherits:false, initialValue:identity});
+  CSS.registerProperty({name:poseOpacity, syntax:'<number>', inherits:false, initialValue:'1'});
+}
+
+function vectorFrames(frames) {
+  return frames.map(({transform, opacity, ...frame}) => {
+    if (transform !== undefined) frame[poseTransform] = transform === 'none' ? identity : transform;
+    if (opacity !== undefined) frame[poseOpacity] = opacity;
+    return frame;
+  });
+}
 export class OfficeCharacter extends HTMLElement {
   static observedAttributes = ['src', 'state', 'paused', 'seed', 'reduced-motion', 'grounded', 'portrait', 'seat-anchor', 'action-preview'];
   constructor() {
@@ -292,6 +310,7 @@ export class OfficeCharacter extends HTMLElement {
     for(const el of parts) {el.style.transform='';el.style.opacity='';}
     const tracks=new Map(clip.tracks.map(t=>[t.part,t]));
     const reduced=this.reduced;
+    const vector = this.hasAttribute('grounded') && supportsVectorFrames;
     for(const el of parts) {
       const track=tracks.get(el.dataset.part);
       const base={transform:getComputedStyle(el).transform,opacity:getComputedStyle(el).opacity};
@@ -301,16 +320,27 @@ export class OfficeCharacter extends HTMLElement {
         // A legible static pose, including the sleepy expression and work prop.
         Object.assign(el.style, first); continue;
       }
+      const before = previous.get(el);
+      if (vector && !track && (action || (before.transform === base.transform && before.opacity === base.opacity))) continue;
+      if (vector) {
+        el.style.setProperty(poseTransform,base.transform === 'none' ? identity : base.transform);
+        el.style.setProperty(poseOpacity,base.opacity);
+        el.style.transform = `var(${poseTransform})`;
+        el.style.opacity = `var(${poseOpacity})`;
+      }
       const startLoop=()=>{
         if(this.version!==version || !track) return;
-        const animation=this.animate(el,track.frames,{duration:track.duration||clip.duration,iterations:clip.loop?Infinity:1,fill:'forwards',easing:track.easing||'ease-in-out'});
+        const animation=this.animate(el,vector ? vectorFrames(track.frames) : track.frames,{duration:track.duration||clip.duration,iterations:clip.loop?Infinity:1,fill:'forwards',easing:track.easing||'ease-in-out'});
         if(action)animation.currentTime=action.elapsed;
       };
       if(action)startLoop();
-      else this.animate(el,[previous.get(el),first],{duration:200,fill:'forwards',easing:'ease-out'},startLoop);
+      else {
+        const transition = [before, first];
+        this.animate(el,vector ? vectorFrames(transition) : transition,{duration:200,fill:'forwards',easing:'ease-out'},startLoop);
+      }
     }
     if(action&&(!action.loop||!reduced)){
-      const clock=this.animate(this.svg,[{opacity:1},{opacity:1}],{duration:clip.duration},()=>{
+      const clock=this.animate(this.svg,[],{duration:clip.duration},()=>{
         if(this.version!==version)return;
         if(action.loop){this.resumeAction();return;}
         this.setState('idle');this.emit('characteractionend',{clip:name});
@@ -318,14 +348,14 @@ export class OfficeCharacter extends HTMLElement {
       clock.currentTime=action.elapsed;
     }
     // A clock animation pauses together with all visual tracks, unlike setTimeout.
-    if (this.data.idleVariants.includes(name) && !clip.loop && !reduced) this.animate(this.svg,[{opacity:1},{opacity:1}],{duration:clip.duration+220},()=>{
+    if (this.data.idleVariants.includes(name) && !clip.loop && !reduced) this.animate(this.svg,[],{duration:clip.duration+220},()=>{
       if(this.version!==version)return;
       this.renderClip('idle');
     });
     // Finish whole work cycles; the animation clock pauses with the character.
     if (this.currentState==='working' && this.data.workVariants?.length && clip.loop && !reduced) {
       const cycles=2+Math.floor(this.random()*2);
-      this.animate(this.svg,[{opacity:1},{opacity:1}],{duration:clip.duration*cycles+220},()=>{
+      this.animate(this.svg,[],{duration:clip.duration*cycles+220},()=>{
         if(this.version===version && this.currentState==='working') this.nextWork();
       });
     }
@@ -333,7 +363,7 @@ export class OfficeCharacter extends HTMLElement {
     if (['done','sitting'].includes(this.currentState) && !reduced) {
       const state=this.currentState;
       const duration=Math.max(clip.duration,...clip.tracks.map(t=>t.duration||clip.duration));
-      this.animate(this.svg,[{opacity:1},{opacity:1}],{duration:duration*(state==='sitting'?2:1)+220},()=>{
+      this.animate(this.svg,[],{duration:duration*(state==='sitting'?2:1)+220},()=>{
         if(this.version!==version || this.currentState!==state)return;
         state==='done'?this.nextDone():this.nextSit();
       });
