@@ -1,6 +1,6 @@
 {
   "repository": "EdenShadow/wanwu_ai",
-  "commit": "083ac913a09bbbed169f2b63c3b93f8bba6c4404",
+  "commit": "284abca936a540125859fdcceac26a607e286396",
   "modules": [
     "desktop/announcements.mjs",
     "desktop/approval-relay.mjs",
@@ -14,6 +14,7 @@
     "desktop/codex-desktop.mjs",
     "desktop/default-workspaces.mjs",
     "desktop/device-scheduler.mjs",
+    "desktop/device-services.mjs",
     "desktop/dsh-adapter.mjs",
     "desktop/dsh-desktop.mjs",
     "desktop/dsh-host-plugin.mjs",
@@ -43,6 +44,7 @@
     "desktop/skills/retention.mjs",
     "desktop/skills/runtime-discovery.mjs",
     "desktop/skills/service.mjs",
+    "desktop/skills/session-schedule.mjs",
     "desktop/skills/transfer.mjs",
     "desktop/skills/update-barrier.mjs",
     "desktop/skills/work-dispatch.mjs",
@@ -62,6 +64,7 @@
     "shared/claude-content.mjs",
     "shared/command-error.mjs",
     "shared/conversation-privacy.mjs",
+    "shared/device-service.mjs",
     "shared/dsh-content.mjs",
     "shared/encrypted-schedule.mjs",
     "shared/floor-plan.mjs",

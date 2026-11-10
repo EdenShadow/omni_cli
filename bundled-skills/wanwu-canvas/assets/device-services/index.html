@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>设备控制台</title><style>
+:root{color-scheme:light dark;--paper:light-dark(#fff,#1a2222);--line:light-dark(#cedad4,#354640);--accent:light-dark(#14654a,#9bdbb6);font:15px/1.6 system-ui,sans-serif}*{box-sizing:border-box}body{margin:0;background:light-dark(#f1f5f1,#101918);color:light-dark(#172a24,#e5efe8)}main{max-width:680px;margin:auto;padding:36px 20px}header{display:flex;align-items:center;justify-content:space-between}h1{font-size:26px}h2{font-size:18px;color:var(--accent);margin:0}article{margin:16px 0;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px}form{display:grid;gap:8px;padding:14px 0;border-bottom:1px solid var(--line)}button,input,select{font:inherit;padding:7px 13px;border-radius:8px;border:1px solid var(--line)}button{cursor:pointer}label{display:grid}pre{white-space:pre-wrap;overflow-wrap:anywhere}p{margin:6px 0}
+</style><main><header><h1>设备控制台</h1><button id="refresh">刷新</button></header><p id="status" role="status"></p><div id="services"></div><article><h2>设备回读</h2><pre id="result">等待设备返回数据</pre></article><button id="assist">请 AI 排查</button></main>
+<script type="module">
+const $=id=>document.getElementById(id),say=text=>{$('status').textContent=text;};
+const names={queued:'已排队',running:'设备正在执行',succeeded:'设备已返回结果',failed:'执行失败',expired:'请求已过期',cancelled:'已取消',needs_review:'结果待核对，请重新读取设备状态',unavailable:'连接中断，请刷新'};
+const el=(tag,text)=>{const node=document.createElement(tag);node.textContent=text;return node;};
+let stop,ctx,store,key,latest;
+async function remember(task){const saved=await Wanwu.state.set(key,task,store.revision);store=saved;}
+function observe(task){
+ stop?.();
+ if(!task?.id)return;
+ if(task.ai){
+  stop=Wanwu.sessions.watch(task.id,j=>{say('AI · '+(names[j.status]||j.status));if(j.status==='done')void refresh().catch(showError);});
+ }else stop=Wanwu.services.watch(task.id,j=>{say(names[j.status]||j.status);if(j.state!==undefined)$('result').textContent=JSON.stringify(j.state,null,2);else if(j.error)$('result').textContent=j.error;});
+}
+function showError(e){say(e.message||String(e));}
+async function refresh(){
+ const {items}=await Wanwu.services.list();$('services').replaceChildren();
+ if(!items.length){say('尚未连接设备。请在设备主人的万物会话里说“把设备接到这张画布”。');return;}
+ latest=items;
+ for(const service of items){
+  const card=el('article','');card.append(el('h2',service.title),el('small',service.online?'设备在线':'设备离线'));
+  if(service.lastVerified)card.append(el('p','上次验证 · '+new Date(service.lastVerified.at).toLocaleString()),el('pre',JSON.stringify(service.lastVerified.state,null,2)));
+  for(const a of service.actions){
+   const form=el('form',''),fields=[];
+   for(const f of a.fields){
+    const label=el('label',f.name),input=document.createElement(f.type==='boolean'?'select':'input');
+    if(f.type==='boolean'){for(const [name,v] of [['请选择',''],['是','true'],['否','false']]){const opt=el('option',name);opt.value=v;input.append(opt);}}
+    if(f.type==='number'){input.type='number';input.step='any';}input.required=f.required;label.append(input);form.append(label);fields.push([f,input]);
+   }
+   const submit=el('button',a.title);submit.disabled=!service.online;form.append(submit);
+   form.onsubmit=async e=>{e.preventDefault();submit.disabled=true;
+    try{const args=Object.fromEntries(fields.filter(([,i])=>i.value!=='').map(([f,i])=>[f.name,f.type==='number'?Number(i.value):f.type==='boolean'?i.value==='true':i.value]));
+     const id=Wanwu.uuid();await remember({id});say('正在提交…');
+     const job=await Wanwu.services.invoke(service.name,a.name,args,{requestId:id});observe(job);
+    }catch(e){showError(e);}finally{submit.disabled=!service.online;}
+   };card.append(form);
+  }$('services').append(card);
+ }
+}
+$('refresh').onclick=()=>refresh().catch(showError);
+$('assist').onclick=async()=>{try{
+ const source=await Wanwu.sessions.pick();if(!source)return;
+ const ops=await Wanwu.sessions.ensure(source.id,'设备运维');
+ const id=Wanwu.uuid();await remember({id,ai:true});
+ await Wanwu.sessions.run(ops.id,'请检查画布 '+ctx.canvas.id+' 已授权的设备服务 '+(latest||[]).map(s=>s.name).join('、')+'。用同步助手读取实际状态，说明问题；本次只读。',{requestId:id});observe({id,ai:true});
+}catch(e){showError(e);}};
+try{ctx=await Wanwu.ready;key='last-task.'+ctx.viewer.id;store=await Wanwu.state.get(key);await refresh();observe(store.value);}catch(e){showError(e);}
+</script></html>

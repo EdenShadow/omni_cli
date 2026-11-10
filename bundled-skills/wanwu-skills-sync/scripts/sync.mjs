@@ -9,7 +9,7 @@ import {readNasHttp} from './nas-http-read.mjs';
 import {sceneCommand} from './scene.mjs';
 import {referenceCommand} from './references.mjs';
 const args=process.argv.slice(2),options={},files=[],todoKeys=[];let action;
-const actions=['nas-http-check','nas-http-get','nas-put','nas-get','nas-list','question','credentials-status','credentials-run','work-roster','work-context','work-note','work-inspect','work-dispatch','work-status','context','catalog','preview','publish','result','chat','voice','audio','chat-status','board','announcement-publish','todo-create','todo-update','todo-delete','operation-status','scene-members','scene-references','scene-context','scene-prepare','scene-preview','scene-apply','scene-save','scene-inventory','scene-status'];
+const actions=['service-install','service-revoke','service-list','service-invoke','service-status','schedule-get','schedule-create','schedule-update','schedule-delete','nas-http-check','nas-http-get','nas-put','nas-get','nas-list','question','credentials-status','credentials-run','work-roster','work-context','work-note','work-inspect','work-dispatch','work-status','context','catalog','preview','publish','result','chat','voice','audio','chat-status','board','announcement-publish','todo-create','todo-update','todo-delete','operation-status','scene-members','scene-references','scene-context','scene-prepare','scene-preview','scene-apply','scene-save','scene-inventory','scene-status'];
 const uuid=value=>{if(!/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i.test(value||''))throw Error('请用 --request UUID 指定操作标识，重试保持相同 / Supply --request UUID; reuse it for retries');return value;};
 async function main(){
 try{
@@ -28,7 +28,7 @@ try{
  const url=new URL(context.url);
  if(url.protocol!=='http:'||url.hostname!=='127.0.0.1'||url.pathname!=='/skills'||url.username||url.password||url.search||url.hash||typeof context.token!=='string'||!context.token)throw Error('无效的万物会话上下文 / Invalid Wanwu session context');
  const request=async body=>{
-  const response=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+context.token},body:JSON.stringify(body.action==='context'?{...body,detail:'summary',include:options.include?.split(',')||[]}:body),redirect:'error',signal:AbortSignal.timeout(['work-dispatch-local','chat','voice','audio','voice-send','publish','question'].includes(body.action)?1800000:100000)});
+  const response=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+context.token},body:JSON.stringify(body.action==='context'?{...body,detail:'summary',include:options.include?.split(',')||[]}:body),redirect:'error',signal:AbortSignal.timeout(['service-install','work-dispatch-local','chat','voice','audio','voice-send','publish','question'].includes(body.action)?1800000:100000)});
   const result=await response.json();if(!response.ok)throw Object.assign(Error(result.error||'同步失败 / Sync failed'),{status:response.status});return result;
  };
  if(options.project){const current=await request({action:'context'});if(![current.project?.id,current.project?.name].includes(options.project))throw Error('不能把当前万物任务切换到另一个项目 / Project differs from the active scope');}
@@ -42,6 +42,20 @@ try{
   if(files.length!==(operation==='put'?1:0))throw Error('nas-put 需要一个 --file；nas-get 和 nas-list 使用 --path');
   const remote=options.path??(operation==='put'?path.basename(files[0]):'');
   result=await nasTransfer(()=>resolveNas(request,'nas'),{operation,remote,file:files[0],output:options.output,contextFile:options.context});
+ }else if(action.startsWith('service-')){
+  if(!options.input)throw Error('Use --input JSON_FILE');
+  const input=JSON.parse(readFileSync(options.input,'utf8'));
+  if(action==='service-install'){
+   if(!(await request({action:'context'})).capabilities?.deviceServiceInstall)throw Error('请在目标设备主人的万物会话内操作，并更新万物或 Omni CLI');
+   if(!path.isAbsolute(input.script))throw Error('请选择本机适配器的绝对路径');
+   input.source=readFileSync(input.script,'utf8');
+  }
+  result=await request({...input,action,...(['service-install','service-revoke','service-invoke'].includes(action)?{requestId:uuid(options.request)}:{})});
+ }else if(action.startsWith('schedule-')){
+  if(!(await request({action:'context'})).capabilities?.sessionScheduleLocal)throw Error('请在万物会话内使用，并更新执行设备和服务端');
+  const input=options.input?JSON.parse(readFileSync(options.input,'utf8')):{};
+  result=await request({action,prompt:input.prompt,rule:input.rule,scheduleId:input.scheduleId,revision:action==='schedule-create'?0:input.revision,
+   requestId:['schedule-create','schedule-update'].includes(action)?uuid(options.request):undefined});
  }else if(action==='question'){
   if(!(await request({action:'context'})).capabilities?.questionInput)throw Error('请升级客户端，并在万物会话内提问 / Update the app and ask in a Wanwu conversation');
   if(!options.input)throw Error('Use --input QUESTIONS_JSON');
