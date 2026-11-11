@@ -30,3 +30,7 @@
 `delete --canvas ID --revision N --request UUID` 删除；用户须明确指定，服务端检查作者/项目主人。
 
 需要自定义服务端逻辑时，将根目录 `wanwu.server.json` 和其 entry 脚本加入完整 files 清单；不是上传到独立外部服务器。发布前会隔离验证脚本，成功更新会关闭旧版本内存房间。先读 [服务端房间](server-rooms.md)。
+
+## 初始分享设置
+
+发布 manifest 可传 `sharing:{"mode":"off"}`、`public` 或 `account`，分别为关闭、公开只读和登录后使用。创建省略默认关闭；更新省略保留当前分享策略。此字段仅创建者和项目管理员可写，不会改变查看/AI 编辑权限；敏感结果不要默认公开。发布时提供标题和封面，回复 `[画布名称](返回的 canvas.openUri)`，会话显示原生封面卡片。

@@ -1,6 +1,6 @@
 {
   "repository": "EdenShadow/wanwu_ai",
-  "commit": "400d5d6537fc94f034d00de8afeb33d4538c0f9c",
+  "commit": "78ecef2010d5b29fdd83e5a7f891488c530ef3fc",
   "modules": [
     "desktop/announcements.mjs",
     "desktop/approval-relay.mjs",
@@ -38,6 +38,7 @@
     "desktop/skills/chat-share.mjs",
     "desktop/skills/exchange.mjs",
     "desktop/skills/github.mjs",
+    "desktop/skills/interactions.mjs",
     "desktop/skills/local-reuse.mjs",
     "desktop/skills/packages.mjs",
     "desktop/skills/questions.mjs",
@@ -99,6 +100,7 @@
     "shared/skill-credentials.mjs",
     "shared/skill-directory.mjs",
     "shared/skill-icon-art.mjs",
+    "shared/skill-interactions.mjs",
     "shared/skill-package.mjs",
     "shared/skill-presentation.mjs",
     "shared/skill-ui.mjs",

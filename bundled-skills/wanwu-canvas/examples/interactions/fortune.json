@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "title": "一事一签",
+  "display": "session",
+  "size": "compact",
+  "htmlFile": "fortune.html",
+  "capabilities": {"motion": true, "files": false},
+  "timeoutMs": 900000
+}
