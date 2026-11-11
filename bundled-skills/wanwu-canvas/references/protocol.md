@@ -48,3 +48,12 @@ Wanwu.on('presence', ({userId,x,y,state}) => {});
 
 ## 公屏与提醒
 `Wanwu.chat.send(text, options)` 与 `Wanwu.notifications.send(text, options)` 支持业务关键事件的加密公屏消息和成员提醒。先检查 `context.messaging`；请求 ID、收件人、授权、限频和在线限制见 [公屏与提醒](messages.md)。
+
+## 用外部浏览器打开链接
+从万物 1.2.474 起，检查 `(await Wanwu.ready).externalLinks` 后，可在**用户点击事件内直接**调用 `Wanwu.browser.open(url)`。桌面端打开系统默认浏览器，Web/手机打开浏览器新页；保留当前画布和数据。仅允许无用户名/密码的 HTTP(S) URL，不能在初始化、定时器中自动弹窗，也不要先 await 网络请求再打开。
+```js
+const context = await Wanwu.ready;
+openButton.disabled = !context.externalLinks;
+openButton.onclick = () => Wanwu.browser.open(videoUrl).catch(error => showError(error.message));
+```
+TikTok 等「打开原视频」「访问官网」按钮使用此接口，配外链图标；不要把这些 URL 当成画布入口。普通 `<a href="https://www.tiktok.com/..." target="_blank" rel="noopener noreferrer">打开原视频 ↗</a>` 和点击时的 `window.open(url, '_blank')` 也兼容已有桌面画布。下载附件继续使用 `Wanwu.files.download`，画布内跳会话继续使用 `Wanwu.sessions.open`。失败可提供「复制链接」，不自动重复弹窗。

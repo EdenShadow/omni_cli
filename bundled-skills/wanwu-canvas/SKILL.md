@@ -43,3 +43,5 @@ description: 可按自然语言把局域网设备服务接入云端画布，执�
 页面底部有游戏按钮、工具栏等可能被万物浮窗遮挡时，可用 `Wanwu.ui.setLauncherPosition()` 为当前页面选择空闲位置，支持 PC/移动端分别配置、运行时计算及页面切换后更新；见 [浮窗位置](references/launcher.md)。仅有遮挡时调整，不需要时保留右下角默认位置，始终允许用户拖动。
 
 13. 用户要让导入的第三方网页在加载后自动执行 JavaScript（例如填表、登录或调整网页显示），读 [第三方网页脚本](references/page-scripts.md)。写入后为团队启用，有权限的成员打开桌面画布即可运行。密码箱仅引用账号 ID。
+
+需要用户点击 TikTok、原视频或官网链接并在系统浏览器打开时，使用 `Wanwu.browser.open(url)`；用法与旧按钮兼容见 [网页协议](references/protocol.md#用外部浏览器打开链接)。
