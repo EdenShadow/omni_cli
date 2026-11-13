@@ -9,7 +9,7 @@ import {readNasHttp} from './nas-http-read.mjs';
 import {sceneCommand} from './scene.mjs';
 import {referenceCommand} from './references.mjs';
 const args=process.argv.slice(2),options={},files=[],todoKeys=[];let action;
-const actions=['service-install','service-revoke','service-list','service-invoke','service-status','schedule-get','schedule-create','schedule-update','schedule-delete','nas-http-check','nas-http-get','nas-put','nas-get','nas-list','interact','question','credentials-status','credentials-run','work-roster','work-context','work-note','work-inspect','work-dispatch','work-status','context','catalog','preview','publish','result','chat','voice','audio','chat-status','board','announcement-publish','todo-create','todo-update','todo-delete','operation-status','scene-members','scene-references','scene-context','scene-prepare','scene-preview','scene-apply','scene-save','scene-inventory','scene-status'];
+const actions=['service-install','service-revoke','service-list','service-invoke','service-status','schedule-get','schedule-create','schedule-update','schedule-delete','nas-http-check','nas-http-get','nas-put','nas-get','nas-list','interact','question','credentials-status','credentials-run','work-roster','work-context','work-note','work-inspect','work-dispatch','work-status','conversation-files','context','catalog','preview','publish','result','chat','voice','audio','chat-status','board','announcement-publish','todo-create','todo-update','todo-delete','operation-status','scene-members','scene-references','scene-context','scene-prepare','scene-preview','scene-apply','scene-save','scene-inventory','scene-status'];
 const uuid=value=>{if(!/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i.test(value||''))throw Error('请用 --request UUID 指定操作标识，重试保持相同 / Supply --request UUID; reuse it for retries');return value;};
 async function main(){
 try{
@@ -28,7 +28,7 @@ try{
  const url=new URL(context.url);
  if(url.protocol!=='http:'||url.hostname!=='127.0.0.1'||url.pathname!=='/skills'||url.username||url.password||url.search||url.hash||typeof context.token!=='string'||!context.token)throw Error('无效的万物会话上下文 / Invalid Wanwu session context');
  const request=async body=>{
-  const response=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+context.token},body:JSON.stringify(body.action==='context'?{...body,detail:'summary',include:options.include?.split(',')||[]}:body),redirect:'error',signal:AbortSignal.timeout(['service-install','work-dispatch-local','chat','voice','audio','voice-send','publish','interact','question'].includes(body.action)?1800000:100000)});
+  const response=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+context.token},body:JSON.stringify(body.action==='context'?{...body,detail:'summary',include:options.include?.split(',')||[]}:body),redirect:'error',signal:AbortSignal.timeout(['conversation-files','service-install','work-dispatch-local','chat','voice','audio','voice-send','publish','interact','question'].includes(body.action)?1800000:100000)});
   const result=await response.json();if(!response.ok)throw Object.assign(Error(result.error||'同步失败 / Sync failed'),{status:response.status});return result;
  };
  if(options.project){const current=await request({action:'context'});if(![current.project?.id,current.project?.name].includes(options.project))throw Error('不能把当前万物任务切换到另一个项目 / Project differs from the active scope');}
@@ -62,6 +62,11 @@ try{
   const input=JSON.parse(readFileSync(options.input,'utf8'));
   if(input.htmlFile){if(input.html)throw Error('Choose html or htmlFile');input.html=readFileSync(path.resolve(path.dirname(options.input),input.htmlFile),'utf8');delete input.htmlFile;}
   result=await request({action,id:uuid(options.request),interaction:input});
+ }else if(action==='conversation-files'){
+  if(!(await request({action:'context'})).capabilities?.conversationFileUpload)throw Error('请更新万物客户端和服务端，并在已导入的 AI 会话中交付附件');
+  if(options.destination||options.autoplay||options.mentionIds||options.mentionAll)throw Error('会话附件不支持公屏参数');
+  if(options.text&&options['text-file'])throw Error('选择 --text 或 --text-file');
+  result=await request({action,id:uuid(options.request),text:options['text-file']?readFileSync(options['text-file'],'utf8'):options.text||'',files});
  }else if(action==='question'){
   if(!(await request({action:'context'})).capabilities?.questionInput)throw Error('请升级客户端，并在万物会话内提问 / Update the app and ask in a Wanwu conversation');
   if(!options.input)throw Error('Use --input QUESTIONS_JSON');

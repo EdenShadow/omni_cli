@@ -2,7 +2,7 @@
   <a href="https://wanwu321.com/"><img src="docs/images/omni-logo.png" width="88" height="88" alt="Omni AI logo"></a>
 </p>
 
-Full CLI 0.3.13 keeps room floors aligned with walls when previewing saved offices, including older artwork with a painted scroll margin. Existing conversations can switch between enabled AI runtimes with their history, notes and @ alias intact.
+Full CLI 0.3.20 lets AI deliver attachments directly into the current conversation, fixes legacy encrypted-message visibility and file retries, and keeps official apps on the project release channel. Existing accounts, device bindings, NAS and session settings are retained. Restart `omni start` after upgrading. [Release notes](docs/release-0.3.20.md).
 
 <h1 align="center">Omni CLI</h1>
 
@@ -28,7 +28,7 @@ Use it on a headless Linux server or a Windows/macOS computer where you do not n
 
 ## Read-only LAN access to a NAS
 
-On the NAS, install Node.js 24+ and the full package with `npm install -g https://wanwu321.com/assets/omni-cli-0.3.13.tgz`, then use `omni login` with the owner of the selected SMB credential. Stop the previous host, run `omni nas bind <project-id>` and keep `omni start` running. The host can also stage IM and session attachments as ordinary files in one Wanwu-Transfers/send-<request identifier>/ folder per send on a writable share. Public IM copies retain their encrypted format. NAS binding does not require an AI runtime. Use `omni nas status <project-id>` to see the actual LAN address. The device HTTP port defaults to 54758 and follows the project credential setting.
+On the NAS, install Node.js 24+ and the full package with `npm install -g https://wanwu321.com/assets/omni-cli-0.3.20.tgz`, then use `omni login` with the owner of the selected SMB credential. Stop the previous host, run `omni nas bind <project-id>` and keep `omni start` running. The host can also stage IM and session attachments as ordinary files in one Wanwu-Transfers/send-<request identifier>/ folder per send on a writable share. Public IM copies retain their encrypted format. NAS binding does not require an AI runtime. Use `omni nas status <project-id>` to see the actual LAN address. The device HTTP port defaults to 54758 and follows the project credential setting.
 
 In 0.3.5 the full CLI can host read-only HTTP access for project canvases while `omni start` is running. Configure the sync assistant’s NAS credential in the same account and project. An SMB host address lists readable shares, while a share path limits access to that directory. Save from the WebApp to let an eligible online device host it. Entries assigned to a specific desktop continue to use that desktop. Mini remains a chat client.
 
@@ -79,6 +79,12 @@ Concurrent sessions keep independent questions. Only the task requester can answ
 
 Schedules configured in Omni for a CLI session can execute encrypted prompts with the chosen model and effort. Selecting a deferred first run saves the schedule without running immediately. Offline recovery follows Omni's scheduler rules. The CLI does not bundle, install or update the desktop app's built-in AI Runtime.
 
+## Receive files in the current AI conversation
+
+Ask an AI session hosted by this CLI to “send me the attachment here.” The bundled sync assistant delivers the specified files into the current imported conversation rather than broadcasting them to team chat. Explicit requests to post to team chat still use the existing public-chat workflow. A failed conversation delivery never falls back to a public post.
+
+Files are encrypted on the executing device. Downloads enforce source-conversation and project access, while remote members remain limited to authorized project folders. Device-owner credentials and private application data cannot be delivered. Retrying the same delivery UUID resumes completed uploads without creating duplicate files. Requires Wanwu server and viewing client **1.2.488 or newer**, with Omni CLI **0.3.20** running. This is a session-scoped skill operation, not a new attachment option for `omni chat`.
+
 ## Quick start
 
 ### 1. Prepare your machine
@@ -99,7 +105,7 @@ Run as the ordinary OS user who owns your AI terminal configuration and working 
 ### 2. Install the CLI
 
 ```sh
-npm install -g github:EdenShadow/omni_cli#v0.3.13
+npm install -g github:EdenShadow/omni_cli#v0.3.20
 omni setup
 ```
 
@@ -383,10 +389,10 @@ The service must use the same user, HOME and configuration directory as the setu
 
 ## Updating, stopping and uninstalling
 
-Stop the running process before installing your target version. This example uses the current `v0.3.13` tag; replace it with a newly published tag when upgrading:
+Stop the running process before installing your target version. This example uses the current `v0.3.20` tag; replace it with a newly published tag when upgrading:
 
 ```sh
-npm install -g github:EdenShadow/omni_cli#v0.3.13
+npm install -g github:EdenShadow/omni_cli#v0.3.20
 omni --version
 omni start
 ```

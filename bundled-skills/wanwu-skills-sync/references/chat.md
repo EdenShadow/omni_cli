@@ -43,3 +43,7 @@ chat --request UUID --text-file /absolute/message.txt --mention MEMBER_ID
 用户要求通知所有人时，用 `chat --request UUID --text-file /absolute/message.txt --mention-all`；客户端会在正文保留或添加一个可见的 @所有人，并按当前项目成员列表生成加密提及信息。无需逐个拼接 ID，重试仍使用相同 UUID。普通任务不要自行添加全员提醒。
 
 需要发送端 `context.capabilities.chatEveryoneMentions` 为 true（客户端 1.2.417 起）；旧客户端只更新 skill 不够，脚本会在发送前提示升级。服务端和接收端沿用既有成员提及格式；成员已离开项目时不再列入。宿主自动回传正文里的 @所有人 也支持全员提醒，无需再用 chat 重复发送。
+
+## 只交付到当前 AI 会话
+
+“发给我”“给我一个附件”“就在这里给我”默认使用 `conversation-files --request UUID --file /absolute/file.zip`，重复 `--file` 可交付多个附件。它不发公屏，不指定别的会话或收件人；失败时不能擅自改发公屏。明确要求公屏／群聊／团队通知时继续使用上面的 `chat` 流程。原生客户端外的会话需要先导入万物。新功能要求万物客户端与服务端 1.2.488。

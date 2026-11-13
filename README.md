@@ -2,7 +2,7 @@
   <a href="https://wanwu321.com/"><img src="docs/images/omni-logo.png" width="88" height="88" alt="万物 AI Logo"></a>
 </p>
 
-完整版 0.3.13 的办公室预览支持旧场景预留的地面延伸区，缩放后房间地板与墙体仍对齐。已有会话也支持切换 AI Runtime。执行设备须已启用目标 Runtime，切换后可沿用同一会话的历史、备注和 @ 名称。
+完整版 0.3.20 支持 AI 在当前会话直接交付附件，修复旧加密会话的可见性判定和附件重试，并让官方应用沿用项目发布通道更新。现有账号、设备绑定、NAS 与会话配置保留。升级后需重启 `omni start`。[查看发布说明](docs/release-0.3.20.md)。
 
 <h1 align="center">Omni CLI · 万物命令行设备</h1>
 
@@ -67,7 +67,7 @@ CLI 可以让本机 AI 使用已授权的脚本、工具和技能；实际控制
 
 ## 内网 NAS
 
-在 NAS 上准备 Node.js 24+，用 `npm install -g https://wanwu321.com/assets/omni-cli-0.3.13.tgz` 安装完整版，登录创建 NAS 钥匙的账号。若原 Mac 正在托管，先退出万物客户端，等原主机离线。在 NAS 上执行以下命令，项目 ID 可用 `omni projects` 查看。
+在 NAS 上准备 Node.js 24+，用 `npm install -g https://wanwu321.com/assets/omni-cli-0.3.20.tgz` 安装完整版，登录创建 NAS 钥匙的账号。若原 Mac 正在托管，先退出万物客户端，等原主机离线。在 NAS 上执行以下命令，项目 ID 可用 `omni projects` 查看。
 
 ```sh
 omni login
@@ -92,6 +92,12 @@ CLI 设备运行任务时，另一台已登录的万物客户端、H5 或 WebApp
 
 在万物界面为 CLI 设备上的会话设置定时任务后，CLI 可执行加密计划，保留模型和强度设置。选择“首次到时间再执行”时只保存计划，不立即运行；设备恢复在线后沿用万物的调度规则。CLI 不包含桌面版的内置 AI Runtime，也不会安装或更新它。
 
+## 在当前 AI 会话交付附件
+
+对 CLI 设备上的 AI 说“发给我”“给我附件”或“这里直接给我”，万物同步助手会把指定文件交付到当前已导入的 AI 会话，不自动广播到团队公屏。仍可明确要求“发到公屏”，沿用原有团队聊天能力；会话交付失败时不会自动改发公屏。
+
+附件在执行设备上加密上传，下载遵守来源会话与项目权限。远程成员只能交付已授权的项目目录中的文件，不能读取设备主人的私人凭据或应用数据。重试沿用同一交付 UUID，已完成的上传可恢复，不重复保存附件。此功能需要万物服务端与查看端 **1.2.488 或更新版本**，以及正在运行的 Omni CLI **0.3.20**；内置命令由技能在当前会话范围内调用，不是新增的 `omni chat` 附件参数。
+
 ## 快速开始
 
 ### 1. 准备环境
@@ -112,7 +118,7 @@ git --version
 ### 2. 安装 CLI
 
 ```sh
-npm install -g github:EdenShadow/omni_cli#v0.3.13
+npm install -g github:EdenShadow/omni_cli#v0.3.20
 omni setup
 ```
 
@@ -398,10 +404,10 @@ journalctl --user -u omni-cli -f
 
 ## 升级、停止和卸载
 
-先停止常驻进程，再安装目标版本。下面以当前的 `v0.3.13` 为例；未来更新时，把标签替换为已发布的新版本：
+先停止常驻进程，再安装目标版本。下面以当前的 `v0.3.20` 为例；未来更新时，把标签替换为已发布的新版本：
 
 ```sh
-npm install -g github:EdenShadow/omni_cli#v0.3.13
+npm install -g github:EdenShadow/omni_cli#v0.3.20
 omni --version
 omni start
 ```
