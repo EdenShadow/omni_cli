@@ -1,10 +1,11 @@
 {
   "repository": "EdenShadow/wanwu_ai",
-  "commit": "c7b32d600bc7f499b293f80bb2c10aff2e25dc4a",
+  "commit": "7f0dad46bb60e064ba13b7cdba1546b31fb48237",
   "modules": [
     "desktop/announcements.mjs",
     "desktop/approval-relay.mjs",
     "desktop/approvals.mjs",
+    "desktop/binding-recovery.mjs",
     "desktop/bot-mentions.mjs",
     "desktop/bot-provider-order.mjs",
     "desktop/bridge.mjs",
@@ -12,6 +13,7 @@
     "desktop/cdn-download.mjs",
     "desktop/chat-encryption.mjs",
     "desktop/codex-desktop.mjs",
+    "desktop/command-security.mjs",
     "desktop/default-workspaces.mjs",
     "desktop/device-scheduler.mjs",
     "desktop/device-services.mjs",
@@ -65,6 +67,7 @@
     "shared/chat-mentions.mjs",
     "shared/claude-content.mjs",
     "shared/command-error.mjs",
+    "shared/command-security.mjs",
     "shared/conversation-privacy.mjs",
     "shared/device-service.mjs",
     "shared/dsh-content.mjs",

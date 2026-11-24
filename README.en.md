@@ -2,7 +2,7 @@
   <a href="https://wanwu321.com/"><img src="docs/images/omni-logo.png" width="88" height="88" alt="Omni AI logo"></a>
 </p>
 
-Full CLI 0.3.20 lets AI deliver attachments directly into the current conversation, fixes legacy encrypted-message visibility and file retries, and keeps official apps on the project release channel. Existing accounts, device bindings, NAS and session settings are retained. Restart `omni start` after upgrading. [Release notes](docs/release-0.3.20.md).
+Full CLI 0.3.21 updates scoped security reporting, authenticated recovery, live file cards and project membership requests. Restart `omni start` after installation. [Release notes](docs/release-0.3.21.md)
 
 <h1 align="center">Omni CLI</h1>
 
@@ -28,7 +28,7 @@ Use it on a headless Linux server or a Windows/macOS computer where you do not n
 
 ## Read-only LAN access to a NAS
 
-On the NAS, install Node.js 24+ and the full package with `npm install -g https://wanwu321.com/assets/omni-cli-0.3.20.tgz`, then use `omni login` with the owner of the selected SMB credential. Stop the previous host, run `omni nas bind <project-id>` and keep `omni start` running. The host can also stage IM and session attachments as ordinary files in one Wanwu-Transfers/send-<request identifier>/ folder per send on a writable share. Public IM copies retain their encrypted format. NAS binding does not require an AI runtime. Use `omni nas status <project-id>` to see the actual LAN address. The device HTTP port defaults to 54758 and follows the project credential setting.
+On the NAS, install Node.js 24+ and the full package with `npm install -g https://wanwu321.com/assets/omni-cli-0.3.21.tgz`, then use `omni login` with the owner of the selected SMB credential. Stop the previous host, run `omni nas bind <project-id>` and keep `omni start` running. The host can also stage IM and session attachments as ordinary files in one Wanwu-Transfers/send-<request identifier>/ folder per send on a writable share. Public IM copies retain their encrypted format. NAS binding does not require an AI runtime. Use `omni nas status <project-id>` to see the actual LAN address. The device HTTP port defaults to 54758 and follows the project credential setting.
 
 In 0.3.5 the full CLI can host read-only HTTP access for project canvases while `omni start` is running. Configure the sync assistant’s NAS credential in the same account and project. An SMB host address lists readable shares, while a share path limits access to that directory. Save from the WebApp to let an eligible online device host it. Entries assigned to a specific desktop continue to use that desktop. Mini remains a chat client.
 
@@ -105,7 +105,7 @@ Run as the ordinary OS user who owns your AI terminal configuration and working 
 ### 2. Install the CLI
 
 ```sh
-npm install -g github:EdenShadow/omni_cli#v0.3.20
+npm install -g github:EdenShadow/omni_cli#v0.3.21
 omni setup
 ```
 
@@ -348,7 +348,7 @@ If you change `WANWU_RUNTIME_DIR`, pass the same value to native AI terminals th
 
 **0.3.4** adds these sign-in messages and imports the shared core and skills from Wanwu AI 1.2.429.
 
-Omni CLI and Omni Mini share server-side sign-in protection. No image CAPTCHA is shown; 10 consecutive incorrect password attempts lock both the account and source IP. Locks do not expire automatically. Contact **edenworm@gmail.com** with the reference shown in the terminal for administrator review and manual unlock. Before a lock, a successful password sign-in resets the failure count. Frequent requests may be temporarily rate-limited. These protections require the updated Wanwu server.
+Check your sign-in details and try again. Contact your team administrator if the problem persists.
 
 ### Credentials and filesystem access
 
@@ -389,10 +389,10 @@ The service must use the same user, HOME and configuration directory as the setu
 
 ## Updating, stopping and uninstalling
 
-Stop the running process before installing your target version. This example uses the current `v0.3.20` tag; replace it with a newly published tag when upgrading:
+Stop the running process before installing your target version. This example uses the current `v0.3.21` tag; replace it with a newly published tag when upgrading:
 
 ```sh
-npm install -g github:EdenShadow/omni_cli#v0.3.20
+npm install -g github:EdenShadow/omni_cli#v0.3.21
 omni --version
 omni start
 ```

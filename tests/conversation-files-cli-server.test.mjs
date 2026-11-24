@@ -24,3 +24,36 @@ integration('bundled conversation-files command delivers through the CLI bridge 
   await assert.rejects(invoke());assert.equal(f.app.db.prepare('SELECT COUNT(*) n FROM team_chat').get().n,0);
  }finally{await f.close();}
 });
+
+integration('scoped security reports travel from the included skill through the CLI device',async()=>{
+  const f=await fixture();
+  try{
+    const d=f.devices[0];
+    const id=await enqueue(f,d,'Security integration fixture',f.other.token);
+    const scope=await until(()=>[...d.b.skillExchange.tokens.values()].find(s=>s.commandId===id));
+    const script=fileURLToPath(new URL('../bundled-skills/wanwu-skills-sync/scripts/sync.mjs',import.meta.url));
+    await promisify(execFile)(process.execPath,[script,'--context',scope.file,'--scope',id,'security-report','--reason','private-file-read'],{windowsHide:true});
+    assert.equal(f.app.db.prepare('SELECT count(*) n FROM command_security_incidents').get().n,1);
+    assert.equal(f.app.db.prepare('SELECT status FROM commands WHERE id=?').get(id).status,'done');
+  }finally{await f.close();}
+});
+
+integration('the full client restores a previously bound installation without creating a second device',async()=>{
+  const {client}=await import('../src/client.mjs');
+  const f=await fixture();const installation=randomUUID();
+  const runtimeDirectory=process.env.WANWU_RUNTIME_DIR;
+  try{
+    const bound=await f.call('/devices/bind',f.owner.token,'POST',{installation,name:'CLI restore fixture',platform:'test',runtimes:['codex']});
+    const store={token:f.owner.token,userId:f.owner.user.id,device:bound.device,deviceToken:'expired-fixture',installation,endpoint:f.devices[0].b.store.endpoint};
+    process.env.WANWU_RUNTIME_DIR=path.join(f.dir,'runtime');
+    const bridge=client({store,directory:f.dir,save(){}});
+    try{
+      await Promise.all([bridge.recoverBinding(true),bridge.recoverBinding(true)]);
+      assert.equal(store.device.id,bound.device.id);assert.ok(store.deviceToken&&store.deviceToken!=='expired-fixture');
+      assert.deepEqual(await f.call('/bridge/commands',store.deviceToken),[]);
+    }finally{bridge.stop();}
+  }finally{
+    if(runtimeDirectory===undefined)delete process.env.WANWU_RUNTIME_DIR;else process.env.WANWU_RUNTIME_DIR=runtimeDirectory;
+    await f.close();
+  }
+});

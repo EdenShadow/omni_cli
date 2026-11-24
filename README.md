@@ -2,7 +2,7 @@
   <a href="https://wanwu321.com/"><img src="docs/images/omni-logo.png" width="88" height="88" alt="万物 AI Logo"></a>
 </p>
 
-完整版 0.3.20 支持 AI 在当前会话直接交付附件，修复旧加密会话的可见性判定和附件重试，并让官方应用沿用项目发布通道更新。现有账号、设备绑定、NAS 与会话配置保留。升级后需重启 `omni start`。[查看发布说明](docs/release-0.3.20.md)。
+完整版 0.3.21 更新任务安全上报、设备恢复、运行中的远程文件卡片和团队加入申请。安装后重启 `omni start`。[发布说明](docs/release-0.3.21.md)
 
 <h1 align="center">Omni CLI · 万物命令行设备</h1>
 
@@ -67,7 +67,7 @@ CLI 可以让本机 AI 使用已授权的脚本、工具和技能；实际控制
 
 ## 内网 NAS
 
-在 NAS 上准备 Node.js 24+，用 `npm install -g https://wanwu321.com/assets/omni-cli-0.3.20.tgz` 安装完整版，登录创建 NAS 钥匙的账号。若原 Mac 正在托管，先退出万物客户端，等原主机离线。在 NAS 上执行以下命令，项目 ID 可用 `omni projects` 查看。
+在 NAS 上准备 Node.js 24+，用 `npm install -g https://wanwu321.com/assets/omni-cli-0.3.21.tgz` 安装完整版，登录创建 NAS 钥匙的账号。若原 Mac 正在托管，先退出万物客户端，等原主机离线。在 NAS 上执行以下命令，项目 ID 可用 `omni projects` 查看。
 
 ```sh
 omni login
@@ -118,7 +118,7 @@ git --version
 ### 2. 安装 CLI
 
 ```sh
-npm install -g github:EdenShadow/omni_cli#v0.3.20
+npm install -g github:EdenShadow/omni_cli#v0.3.21
 omni setup
 ```
 
@@ -363,7 +363,7 @@ omni runtimes
 
 **0.3.4** 加入下列登录提示，并同步万物 AI 1.2.429 的共享核心和技能。
 
-Omni CLI 和 Omni Mini 共用服务端登录保护：不显示图片验证码，连续输错密码达到 10 次会同时锁定账号与来源 IP。锁定不会自动过期，需联系 **edenworm@gmail.com**，提供终端显示的解封编号，由管理员核实后手工解封。未锁定时，密码登录成功会重置错误次数；请求过于频繁时会提示稍后重试。需配合支持此规则的新版万物服务端。
+登录遇到问题时，请核对账号和密码后再试。持续失败可联系团队管理员。
 
 ### 凭据和文件访问
 
@@ -404,10 +404,10 @@ journalctl --user -u omni-cli -f
 
 ## 升级、停止和卸载
 
-先停止常驻进程，再安装目标版本。下面以当前的 `v0.3.20` 为例；未来更新时，把标签替换为已发布的新版本：
+先停止常驻进程，再安装目标版本。下面以当前的 `v0.3.21` 为例；未来更新时，把标签替换为已发布的新版本：
 
 ```sh
-npm install -g github:EdenShadow/omni_cli#v0.3.20
+npm install -g github:EdenShadow/omni_cli#v0.3.21
 omni --version
 omni start
 ```

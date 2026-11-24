@@ -122,12 +122,14 @@ test('project membership join works without a bound device while daemon is runni
   const server=http.createServer(async(req,res)=>{
     assert.equal(req.url,'/api/projects/join');assert.equal(req.method,'POST');assert.equal(req.headers.authorization,'Bearer test-only');
     let body='';for await(const chunk of req)body+=chunk;received=JSON.parse(body);
-    res.setHeader('Content-Type','application/json');res.end(JSON.stringify({id:project,name:'Fixture team',invite:'DO_NOT_OUTPUT'}));
+    res.setHeader('Content-Type','application/json');res.end(JSON.stringify(received.code==='NEW'?{status:'pending',requestId:project}:{id:project,name:'Fixture team',invite:'DO_NOT_OUTPUT'}));
   });
   await new Promise(r=>server.listen(0,'127.0.0.1',r));t.after(()=>new Promise(r=>server.close(r)));
   state.store.endpoint=`http://127.0.0.1:${server.address().port}`;state.save();
   const {stdout}=await exec(process.execPath,['bin/omni.mjs','projects','join','TESTCODE'],{env:{...process.env,OMNI_HOME:state.directory}});
   assert.deepEqual(received,{code:'TESTCODE'});assert.deepEqual(JSON.parse(stdout),{id:project,name:'Fixture team'});
+  const pending=await exec(process.execPath,['bin/omni.mjs','projects','join','NEW'],{env:{...process.env,OMNI_HOME:state.directory}});
+  assert.deepEqual(JSON.parse(pending.stdout),{status:'pending',requestId:project});
 });
 
 test('wait timeout exits with code 2 without cancelling or sending anything',async t=>{

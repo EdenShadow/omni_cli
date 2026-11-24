@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {homedir} from 'node:os';
 import {fileURLToPath} from 'node:url';
+import {createBindingRecovery} from '../lib/desktop/binding-recovery.mjs';
 import {RuntimeBridge} from '../lib/desktop/bridge.mjs';
 import {detectRuntimes,installSkills} from '../lib/desktop/runtimes.mjs';
 import {createRequest} from './api.mjs';
@@ -17,10 +18,10 @@ export function client(state,notify=()=>{}){
   const request=createRequest(store);
   const bridge=new RuntimeBridge({store,save,request,notify,skillsRoot,dataDir,publicDir:skillsRoot,documentsPath,runtimeDirectory});
   installRuntimeOrderReporting(bridge,state);
-  bridge.recoverBinding=async(force=false)=>{
-    if(!force)return;
-    const r=await request('/api/devices/bind','POST',{installation:store.installation,machineKey:store.machineKey,name:store.deviceName||store.device.name,platform:process.platform,runtimes:store.device.runtimes});
-    store.device=r.device;store.deviceToken=r.deviceToken;save();
+  const recover=createBindingRecovery({store,request,save,notify,isCurrent:()=>!bridge.stopped});
+  bridge.recoverBinding=(force=false)=>{
+    if(!store.token||!store.userId)throw Error('请先登录 / Sign in to reconnect this device');
+    return recover(force);
   };
   return bridge;
 }

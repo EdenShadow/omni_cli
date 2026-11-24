@@ -14,7 +14,8 @@ async function fixture({outputStorage,folderStorage,requireEncryptedChat=false}=
  const serverOptions={dataDir:path.join(dir,'server'),test:true,requireEncryptedChat,outputStorage,folderStorage,skillStorage:storage,chatStorage:storage};let app=createWanwuServer(serverOptions);await new Promise(r=>app.server.listen(0,'127.0.0.1',r));const port=app.server.address().port,base=`http://127.0.0.1:${port}`;
  const call=async(route,token,method='GET',body)=>{const r=await fetch(base+'/api'+route,{method,headers:{'Content-Type':'application/json','X-Wanwu-Desktop':'1',...(token?{Authorization:'Bearer '+token}:{})},body:body===undefined?undefined:JSON.stringify(body)}),data=await r.json();if(!r.ok)throw Object.assign(Error(data.error),{status:r.status});return data;};
  const owner=await call('/auth/register',null,'POST',{username:'skill_test_owner',password:'test-password-only'}),other=await call('/auth/register',null,'POST',{username:'skill_test_other',password:'test-password-only'});
- const project=(await call('/me',owner.token)).projects[0];await call('/projects/join',other.token,'POST',{code:project.invite});
+ const project=(await call('/me',owner.token)).projects[0];const join=await call('/projects/join',other.token,'POST',{code:project.invite});
+ if(join.status==='pending')await call(`/projects/${project.id}/join-requests/${join.requestId}`,owner.token,'POST',{status:'approved'});
  const devices=[];
  for(let i=0;i<2;i++){
   const bound=await call('/devices/bind',owner.token,'POST',{installation:randomUUID(),name:'Test device '+i,platform:'test',runtimes:['codex','claude']});await call(`/projects/${project.id}/devices`,owner.token,'POST',{deviceId:bound.device.id});

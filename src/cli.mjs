@@ -143,7 +143,8 @@ export async function main(args){
     logged(store);const request=createRequest(store);
     if(args[1]==='join'&&args.length===3){
       const code=args[2].trim();if(!code||code.length>200)throw Error('Invalid project ID / invite code');
-      const p=await request('/api/projects/join','POST',{code});print({id:p.id,name:p.name});return;
+      const p=await request('/api/projects/join','POST',{code});
+      print(p.status==='pending'?{status:p.status,requestId:p.requestId}:{id:p.id,name:p.name});return;
     }
     if(args.length!==1)throw Error('Use omni projects or omni projects join <code>');
     const r=await request('/api/me');print(r.projects.map(({id,name})=>({id,name})));return;
