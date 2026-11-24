@@ -1,3 +1,4 @@
+import {Readable} from 'node:stream';
 import path from 'node:path';
 import {homedir} from 'node:os';
 import {constants} from 'node:fs';
@@ -6,7 +7,7 @@ import {createHash} from 'node:crypto';
 
 const CHUNK=32*1024; // Base64 plus JSON stays below old clients' 64 KiB local limit.
 const stamp=s=>[s.dev,s.ino,s.size,s.mtimeMs,s.ctimeMs].join(':');
-export async function openFiles(paths,contextFile,maxBytes){
+export async function openFiles(paths,contextFile,maxBytes,oversizeHint=''){
  const contextPath=await realpath(contextFile),privateRoot=path.dirname(path.dirname(contextPath)),handles=[];
  try{
   for(const selected of paths){
@@ -16,7 +17,7 @@ export async function openFiles(paths,contextFile,maxBytes){
    if(canonical===contextPath||(path.basename(path.dirname(contextPath))==='skill-contexts'&&(canonical===privateRoot||canonical.startsWith(privateRoot+path.sep))))throw Error('不能发送万物应用的私有数据 / App-private files cannot be shared');
    const file=await open(selected,constants.O_RDONLY|constants.O_NOFOLLOW);handles.push({file});
    const stat=await file.stat();if(!stat.isFile())throw Error('请选择文件；文件夹请先压缩 / Select a file; zip folders first');
-   if(stat.size>maxBytes)throw Error(`文件过大，最多 ${maxBytes/1024/1024} MB / File is too large`);
+   if(stat.size>maxBytes)throw Error(`文件过大，最多 ${maxBytes/1024/1024} MB / File is too large${oversizeHint}`);
    Object.assign(handles.at(-1),{name:path.basename(selected),size:stat.size,stamp:stamp(stat)});
   }
   return handles;
@@ -43,19 +44,45 @@ export async function commitStateBatch(request,canvasId,batch){
   await transfer('DELETE',undefined,id).catch(()=>{}); // The temporary upload also expires server-side.
  }
 }
-export async function upload(request,action,item,onCreated){
+export async function fileSha256(item){
  const hash=createHash('sha256'),buffer=Buffer.alloc(CHUNK);
  let offset=0;
  while(offset<item.size){const {bytesRead}=await item.file.read(buffer,0,Math.min(buffer.length,item.size-offset),offset);if(!bytesRead)throw Error('文件在读取时已改变 / File changed while reading');hash.update(buffer.subarray(0,bytesRead));offset+=bytesRead;}
  const sha=hash.digest('hex');if(stamp(await item.file.stat())!==item.stamp)throw Error('文件已改变，请重试 / File changed; retry');
+ return sha;
+}
+export async function upload(request,action,item,onCreated,sha256){
+ const sha=sha256??await fileSha256(item),buffer=Buffer.alloc(CHUNK);
  let progress=await request({action,method:'POST',body:{name:item.name,mime:item.mime||(['board-upload','scene-upload'].includes(action)?'application/json':'application/octet-stream'),size:item.size,purpose:item.purpose||'file'}});
  const id=progress.id;onCreated(id);let failures=0;
  while(progress.received<item.size){
-  offset=progress.received;const wanted=Math.min(buffer.length,item.size-offset);let read=0;
+  const offset=progress.received;const wanted=Math.min(buffer.length,item.size-offset);let read=0;
   while(read<wanted){const {bytesRead}=await item.file.read(buffer,read,wanted-read,offset+read);if(!bytesRead)throw Error('文件已改变 / File changed');read+=bytesRead;}
   try{progress=await request({action,method:'PUT',uploadId:id,body:{offset,data:buffer.subarray(0,wanted).toString('base64')}});failures=0;}
   catch(e){if(++failures>3||[403,404,413].includes(e.status))throw e;progress=await request({action,method:'GET',uploadId:id});}
  }
  if(progress.sha256!==sha||stamp(await item.file.stat())!==item.stamp)throw Error('文件校验失败 / File verification failed');
  return id;
+}
+
+export async function uploadDirectAsset(request,canvasId,item,requestId){
+ const sha=createHash('sha256'),md5=createHash('md5'),buffer=Buffer.alloc(1024*1024);
+ let offset=0;
+ while(offset<item.size){const {bytesRead}=await item.file.read(buffer,0,Math.min(buffer.length,item.size-offset),offset);if(!bytesRead)throw Error('File changed while reading');const bytes=buffer.subarray(0,bytesRead);sha.update(bytes);md5.update(bytes);offset+=bytesRead;}
+ if(stamp(await item.file.stat())!==item.stamp)throw Error('File changed while reading');
+ let plan;
+ try{plan=await request({action:'canvas-direct-begin',canvasId,body:{requestId,name:item.name,size:item.size,sha256:sha.digest('hex'),md5:md5.digest('base64')}});}
+ catch(e){if(e.status===400&&/Unknown canvas command/.test(e.message))return null;throw e;}
+ if(plan.file)return plan.file;
+ if(!plan.supported)return null;
+ const body=item.size?Readable.from((async function*(){
+  let offset=0;
+  while(offset<item.size){const buffer=Buffer.alloc(Math.min(256*1024,item.size-offset)),{bytesRead}=await item.file.read(buffer,0,buffer.length,offset);if(!bytesRead)throw Error('File changed during upload');offset+=bytesRead;yield buffer.subarray(0,bytesRead);}
+ })()):Buffer.alloc(0);
+ try{
+  const response=await fetch(plan.upload.url,{method:'PUT',headers:{...plan.upload.headers,'Content-Length':String(item.size)},body,duplex:'half',signal:AbortSignal.timeout(30*60*1000)});
+  if(!response.ok)throw Error('Cloud upload failed ('+response.status+')');
+ }finally{if(item.size)body.destroy();}
+ if(stamp(await item.file.stat())!==item.stamp)throw Error('File changed during upload');
+ return request({action:'canvas-direct-finish',canvasId,body:{requestId}});
 }

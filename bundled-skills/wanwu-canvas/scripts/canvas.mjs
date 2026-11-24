@@ -5,19 +5,28 @@ import {rm} from 'node:fs/promises';
 import {createHash,randomUUID} from 'node:crypto';
 import {Readable,Transform} from 'node:stream';
 import {pipeline} from 'node:stream/promises';
+import {cdnReference} from '../assets/asset-source.mjs';
+import {checkPageAssets} from './page-assets.mjs';
 import {verifyPublicDownloads} from './shared-downloads.mjs';
 import {resolveContext} from './runtime.mjs';
-import {openFiles,closeFiles,upload,commitStateBatch} from './transport.mjs';
+import {openFiles,closeFiles,uploadDirectAsset,fileSha256,upload,commitStateBatch} from './transport.mjs';
 
 const args=process.argv.slice(2),options={};let action;
 const uuid=v=>{if(!/^[a-f\d]{8}(?:-[a-f\d]{4}){3}-[a-f\d]{12}$/i.test(v||''))throw Error('Use --request UUID; reuse it after a timeout');return v;};
 const canvasUuid=v=>{if(!/^[a-f\d]{8}(?:-[a-f\d]{4}){3}-[a-f\d]{12}$/i.test(v||''))throw Error('Use --canvas with the complete canvas ID copied from Canvas tools');return v.toLowerCase();};
-async function main(){
-try{
- while(args.length){const a=args.shift();if(a.startsWith('--')){if(!['scope','context','project','runtime','native-session','provider','include','canvas','request','input','revision','key','mode','file','file-id','output','path','cdn','entry','document','cursor'].includes(a.slice(2))||!args.length)throw Error('Invalid option '+a);options[a.slice(2)]=args.shift();}else if(!action)action=a;else throw Error('Unexpected argument');}
- if(!['interact','work-roster','work-dispatch','work-status','context','list','get','live','publish','capture','cover','patch','attach','archive','download','state','update','signal','state-list','page-script','share','verify-downloads','delete','usage-summary','usage-requests','collab-snapshot','collab-commit'].includes(action))throw Error('Usage: canvas.mjs context|list|get|live|publish|capture|cover|patch|attach|archive|download|state|update|signal|state-list|page-script|share|verify-downloads|delete|usage-summary|usage-requests|collab-snapshot|collab-commit [options]');
+async function run(){
+ while(args.length){const a=args.shift();if(a.startsWith('--')){if(!['scope','context','project','runtime','native-session','provider','include','canvas','request','input','revision','key','mode','file','file-id','output','path','url','cdn','entry','document','cursor'].includes(a.slice(2))||!args.length)throw Error('Invalid option '+a);options[a.slice(2)]=args.shift();}else if(!action)action=a;else throw Error('Unexpected argument');}
+ if(!['interact','work-roster','work-dispatch','work-status','context','list','get','live','publish','capture','cover','patch','asset','attach','archive','download','state','update','signal','state-list','page-script','share','verify-downloads','delete','usage-summary','usage-requests','collab-snapshot','collab-commit'].includes(action))throw Error('Usage: canvas.mjs context|list|get|live|publish|capture|cover|patch|asset|attach|archive|download|state|update|signal|state-list|page-script|share|verify-downloads|delete|usage-summary|usage-requests|collab-snapshot|collab-commit [options]');
  if(options.path!==undefined&&action!=='archive')throw Error('--path is a relative NAS path for archive');
- const needsCanvas=['get','live','capture','cover','patch','attach','archive','download','state','update','signal','state-list','page-script','share','verify-downloads','delete','collab-snapshot','collab-commit'].includes(action);
+ if(options.url!==undefined&&action!=='asset')throw Error('--url is a source for asset');
+ if(action==='asset'){
+  if([options.file,options.url,options['file-id']].filter(v=>v!==undefined).length!==1)throw Error('Use one asset source: --file, --file-id or --url');
+ }
+ if(action==='asset'&&options.url!==undefined){
+  console.log(JSON.stringify(cdnReference(options.url)));
+  return;
+ }
+ const needsCanvas=['get','live','capture','cover','patch','asset','attach','archive','download','state','update','signal','state-list','page-script','share','verify-downloads','delete','collab-snapshot','collab-commit'].includes(action);
  const canvasId=options.canvas!==undefined||needsCanvas?canvasUuid(options.canvas):undefined;
  const resolved=await resolveContext(options);if(resolved.selection){process.stdout.write(JSON.stringify(resolved.selection,null,2)+'\n');return;}
  const u=new URL(resolved.context.url);if(u.protocol!=='http:'||u.hostname!=='127.0.0.1'||u.pathname!=='/skills'||u.username||u.password||u.search)throw Error('Invalid runtime endpoint');
@@ -58,22 +67,27 @@ try{
   if(cover.mode==='page'&&!(manifest.files||[]).some(f=>f.path===cover.entry&&f.path.endsWith('.html')))throw Error('Include cover.entry HTML in the files list');
   if(cover.mode==='image'&&(!cover.file||!path.isAbsolute(cover.file)))throw Error('Use cover.file with an absolute image path');
   result=await mutating(requestId,async()=>{
-   const refs=manifest.files||[],handles=await openFiles(refs.map(f=>f.file),resolved.file,8*1024*1024),ids=[];
+   const refs=manifest.files||[],handles=await openFiles(refs.map(f=>f.file),resolved.file,8*1024*1024,'；大素材用 asset 保存为画布附件，按需读取'),ids=[];
    try{
+    await checkPageAssets(refs,handles,manifest.assetDelivery);
     for(let i=0;i<handles.length;i++){
-     if(/(?:^|\/)(?:\.env(?:\.|$)|auth\.json$|credentials)/i.test(refs[i].path))throw Error('Do not publish credential files');
-     if(/\.(html|js|mjs|json|txt)$/i.test(refs[i].path)){const text=await handles[i].file.readFile('utf8');if(/-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----|\b(?:sk-[a-zA-Z0-9_-]{24,}|AKID[a-zA-Z0-9]{28,})\b/.test(text))throw Error('Remove credentials from '+refs[i].path);}
      await upload(request,'canvas-upload',handles[i],id=>ids.push(id));
     }
     const payload={...manifest,requestId,files:refs.map((f,i)=>({path:f.path,uploadId:ids[i]}))};delete payload.file;
     delete payload.cover;
+    delete payload.assetDelivery;
     if(cover.mode==='image'){const images=await openFiles([cover.file],resolved.file,8*1024*1024);try{payload.coverUploadId=await upload(request,'canvas-upload',images[0],()=>{});}finally{await closeFiles(images);}}
     return request({action:'canvas-publish',...payload});
    }finally{await closeFiles(handles);}
   });
   if(result.canvas.kind==='owned'&&['screenshot','page'].includes(cover.mode))try{const image=await capture(result.canvas.id,coverRequestId(requestId),cover.mode==='page'?cover.entry:undefined,result.canvas.contentRevision);result={...result,coverStatus:'ready',cover:image};}catch(e){result={...result,coverStatus:'failed',coverError:e.message};}
   else if(cover.mode==='preserve')result={...result,coverStatus:result.canvas.coverId?'preserved':'missing'};
- }else if(action==='attach'||action==='archive'){
+ }else if(action==='asset'&&options['file-id']!==undefined){
+  const canvas=await request({action:'canvas-get',canvasId});
+  const file=canvas.files.find(f=>f.role==='attachment'&&f.id===options['file-id']);
+  if(!file)throw Error('当前画布找不到可引用的附件 / Attachment unavailable in this canvas');
+  result=file;
+ }else if(action==='asset'||action==='attach'||action==='archive'){
   const requestId=uuid(options.request);
   if(action==='archive'){
    if(!options.file||!path.isAbsolute(options.file))throw Error('Use --file with an absolute path');
@@ -130,8 +144,17 @@ try{
      if(!file.name.endsWith('.zip'))throw Error('Files over 1 GB must be a project ZIP');
      file.mime='application/zip';file.purpose='folder';
     }
+    let sha;
+    if(action==='asset'){
+     if(/^(?:\.env(?:\.|$)|auth\.json$|credentials(?:\.|$))/i.test(file.name))throw Error('Do not publish credential files');
+     sha=await fileSha256(file);
+     const canvas=await request({action:'canvas-get',canvasId});
+     const existing=canvas.files.find(f=>f.role==='attachment'&&f.path===file.name&&f.size===file.size&&f.sha256===sha);
+     if(existing)return existing;
+    }
+    const direct=await uploadDirectAsset(request,canvasId,file,requestId);if(direct)return direct;
     let uploadId;
-    await upload(request,'canvas-upload',file,id=>{uploadId=id;});
+    await upload(request,'canvas-upload',file,id=>{uploadId=id;},sha);
     return request({action:'canvas-attach',canvasId,requestId,uploadId,path:file.name});
    }finally{await closeFiles(handles);}
   });
@@ -143,7 +166,9 @@ try{
  if(result?.canvas?.id&&['publish'].includes(action))result.canvas.openUri=`wanwu://app/canvas/${canvasUuid(result.canvas.id)}?project=${canvasUuid(result.canvas.projectId||context.project.id)}`;
  if(['get','patch'].includes(action)&&result?.id)result.openUri=`wanwu://app/canvas/${canvasUuid(result.id)}?project=${canvasUuid(result.projectId||context.project.id)}`;
  process.stdout.write(JSON.stringify(result,null,2)+'\n');
-}catch(e){process.stderr.write(e.message+'\n');process.exitCode=1;}
+}
+async function main(){
+try{await run();}catch(e){process.stderr.write(e.message+'\n');process.exitCode=1;}
 
 }
 await main();

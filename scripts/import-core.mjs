@@ -7,6 +7,8 @@ const source=path.resolve(process.argv[2]||'../wanwu_ai');
 const target=path.resolve(fileURLToPath(new URL('..',import.meta.url)));
 function transform(name,s){
   if(name==='desktop/bridge.mjs'){
+    // Headless CLI uses Node networking; Electron system networking is desktop-only.
+    s=s.replace(/from ['"]\.\/system-network\.mjs['"]/g,"from 'ws'");
     s=s.slice(0,s.indexOf('  async generate({'))+s.slice(s.indexOf('  stop() {'));
     for(const module of ['builtin-runtime','remote-desktop','creation-models','creation-jobs','assets'])s=s.replace(new RegExp('^import .*?[\x27\x22]\\./'+module+'\\.mjs[\x27\x22];\\r?\\n','gm'),'');
     for(const module of ['character-actions','prop-animation','device-appearance','office-floorplan','office-furnishing','prop-interactions','project-scene','default-characters','character-context'])s=s.replace(new RegExp('^import .*?[\x27\x22]\\.\\./shared/'+module+'\\.mjs[\x27\x22];\\r?\\n','gm'),'');
