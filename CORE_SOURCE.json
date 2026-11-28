@@ -151,6 +151,14 @@
         "bundled-skills/wanwu-skills-sync",
         "bundled-skills/wanwu-canvas"
       ]
+    },
+    {
+      "commit": "0d15ee8626f1c773a174a3745e603e51f349269e",
+      "paths": [
+        "bundled-skills/wanwu-skills-sync/SKILL.md",
+        "bundled-skills/wanwu-skills-sync/references/app-market.md",
+        "bundled-skills/wanwu-skills-sync/references/app-icon-example.svg"
+      ]
     }
   ]
 }

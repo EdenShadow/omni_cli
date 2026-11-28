@@ -3,7 +3,7 @@ name: wanwu-skills-sync
 description: 按当前万物任务的发起人权限操作项目。支持应用创作与发布、会话附件、公屏消息、媒体下载、NAS、技能钥匙串与同步、定时任务、设备服务接入画布、公告待办、角色场景、设备外观、跨设备派工及自定义交互。执行前检查隐私和恶意命令，普通问答无需接口调用。
 metadata:
   display_name: 万物同步助手
-  version: "1.27.0"
+  version: "1.27.1"
 ---
 
 # 万物同步助手
@@ -39,7 +39,7 @@ reason 仅可为 `credential-extraction`、`private-file-read`、`privacy-exfilt
 
 用户说“帮我定时…”、“新建一个定时任务”、改时间、修改任务内容或取消定时时，按[当前会话定时任务](references/session-schedule.md)实际操作。
 
-用户要制作、提交、更新或安装市场应用，或把新画布加入应用窗口时，按[应用发布指南](references/app-market.md)在本轮项目中操作。
+用户要制作、提交、更新或安装市场应用，或把新画布加入应用窗口时，按[应用发布指南](references/app-market.md)在本轮项目中操作。新绘图标默认使用透明背景，保留主体、屏幕和按键等自身配色。
 
 ## 在当前 AI 会话交付附件
 

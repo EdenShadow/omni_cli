@@ -2,7 +2,7 @@
   <a href="https://wanwu321.com/"><img src="docs/images/omni-logo.png" width="88" height="88" alt="万物 AI Logo"></a>
 </p>
 
-完整版 0.3.25 支持会话创建和上架应用、单独保存项目版本、设置画布 AI 编辑权限和按权限读取其他设备的会话。需要万物 AI 服务端 1.2.526。升级后重启 `omni start`。[发布说明](docs/release-0.3.25.md)
+完整版 0.3.26 内置万物同步助手 1.27.1。新建应用默认生成透明背景图标，在桌面侧栏和手机抽屉中展示物件本身。升级后重启 `omni start`。[发布说明](docs/release-0.3.26.md)
 
 <h1 align="center">Omni CLI · 万物命令行设备</h1>
 
@@ -67,7 +67,7 @@ CLI 可以让本机 AI 使用已授权的脚本、工具和技能；实际控制
 
 ## 内网 NAS
 
-在 NAS 上准备 Node.js 24+，用 `npm install -g https://wanwu321.com/assets/omni-cli-0.3.25.tgz` 安装完整版，登录创建 NAS 钥匙的账号。若原 Mac 正在托管，先退出万物客户端，等原主机离线。在 NAS 上执行以下命令，项目 ID 可用 `omni projects` 查看。
+在 NAS 上准备 Node.js 24+，用 `npm install -g https://wanwu321.com/assets/omni-cli-0.3.26.tgz` 安装完整版，登录创建 NAS 钥匙的账号。若原 Mac 正在托管，先退出万物客户端，等原主机离线。在 NAS 上执行以下命令，项目 ID 可用 `omni projects` 查看。
 
 ```sh
 omni login
@@ -118,7 +118,7 @@ git --version
 ### 2. 安装 CLI
 
 ```sh
-npm install -g github:EdenShadow/omni_cli#v0.3.25
+npm install -g github:EdenShadow/omni_cli#v0.3.26
 omni setup
 ```
 
@@ -404,10 +404,10 @@ journalctl --user -u omni-cli -f
 
 ## 升级、停止和卸载
 
-先停止常驻进程，再安装目标版本。下面以当前的 `v0.3.25` 为例；未来更新时，把标签替换为已发布的新版本：
+先停止常驻进程，再安装目标版本。下面以当前的 `v0.3.26` 为例；未来更新时，把标签替换为已发布的新版本：
 
 ```sh
-npm install -g github:EdenShadow/omni_cli#v0.3.25
+npm install -g github:EdenShadow/omni_cli#v0.3.26
 omni --version
 omni start
 ```
