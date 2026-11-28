@@ -2,7 +2,7 @@
   <a href="https://wanwu321.com/"><img src="docs/images/omni-logo.png" width="88" height="88" alt="Omni AI logo"></a>
 </p>
 
-Full CLI 0.3.23 lets you create and update your own project skill credentials in Wanwu conversations. Only their creator can edit shared credentials. Restart `omni start` after installing. [Release notes](docs/release-0.3.23.md)
+Full CLI 0.3.23 lets you create and update your own project skill credentials in Wanwu conversations. Project owners can also edit team-wide credentials. Private and member-restricted credentials can only be edited by their creator. Restart `omni start` after installing. [Release notes](docs/release-0.3.23.md)
 
 <h1 align="center">Omni CLI</h1>
 

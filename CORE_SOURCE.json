@@ -128,7 +128,7 @@
   ],
   "overrides": [
     {
-      "commit": "a43e71c6cbc7d8d56e9d1cbbefb746ca165ea990",
+      "commit": "6949dbff6987b906a0ceb185fc87f718d7261185",
       "paths": [
         "desktop/skills/credential-input.mjs",
         "desktop/skills/exchange.mjs",

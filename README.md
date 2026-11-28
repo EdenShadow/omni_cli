@@ -2,7 +2,7 @@
   <a href="https://wanwu321.com/"><img src="docs/images/omni-logo.png" width="88" height="88" alt="万物 AI Logo"></a>
 </p>
 
-完整版 0.3.23 支持在万物会话里新增或更新自己的项目技能钥匙串。共享凭据仅创建者可修改。安装后重启 `omni start`。[发布说明](docs/release-0.3.23.md)
+完整版 0.3.23 支持在万物会话里新增或更新自己的项目技能钥匙串。项目创建者也可编辑全团队共享凭据；私有或指定成员共享的凭据仅凭据创建者可改。安装后重启 `omni start`。[发布说明](docs/release-0.3.23.md)
 
 <h1 align="center">Omni CLI · 万物命令行设备</h1>
 
