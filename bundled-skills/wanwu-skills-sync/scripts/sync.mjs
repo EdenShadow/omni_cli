@@ -9,7 +9,7 @@ import {readNasHttp} from './nas-http-read.mjs';
 import {sceneCommand} from './scene.mjs';
 import {referenceCommand} from './references.mjs';
 const args=process.argv.slice(2),options={},files=[],todoKeys=[];let action;
-const actions=['security-report','service-install','service-revoke','service-list','service-invoke','service-status','schedule-get','schedule-create','schedule-update','schedule-delete','nas-http-check','nas-http-get','nas-put','nas-get','nas-list','interact','question','credentials-status','credentials-run','work-roster','work-context','work-note','work-inspect','work-dispatch','work-status','conversation-files','context','catalog','preview','publish','result','chat','voice','audio','chat-status','board','announcement-publish','todo-create','todo-update','todo-delete','operation-status','scene-members','scene-references','scene-context','scene-prepare','scene-preview','scene-apply','scene-save','scene-inventory','scene-status'];
+const actions=['security-report','service-install','service-revoke','service-list','service-invoke','service-status','schedule-get','schedule-create','schedule-update','schedule-delete','nas-http-check','nas-http-get','nas-put','nas-get','nas-list','interact','question','credentials-status','credentials-create','credentials-update','credentials-run','work-roster','work-context','work-note','work-inspect','work-dispatch','work-status','conversation-files','context','catalog','preview','publish','result','chat','voice','audio','chat-status','board','announcement-publish','todo-create','todo-update','todo-delete','operation-status','scene-members','scene-references','scene-context','scene-prepare','scene-preview','scene-apply','scene-save','scene-inventory','scene-status'];
 const uuid=value=>{if(!/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i.test(value||''))throw Error('请用 --request UUID 指定操作标识，重试保持相同 / Supply --request UUID; reuse it for retries');return value;};
 async function main(){
 try{
@@ -76,7 +76,19 @@ try{
   const input=JSON.parse(readFileSync(options.input,'utf8'));
   result=await request({action,id:uuid(options.request),questions:input.questions});
  }else if(action==='credentials-status'){result=await request({action});if(options.skill)result.items=result.items.filter(s=>s.name===options.skill);}
- else if(action==='credentials-run'){if(!options.skill||!options.dependency||!options.input)throw Error('Use --skill NAME --dependency ID --input PLAN_JSON');result=await runWithCredentials(request,{skill:options.skill,dependency:options.dependency,entryId:options.entry,contextFile:options.context},JSON.parse(readFileSync(options.input,'utf8')));}
+ else if(action==='credentials-create'||action==='credentials-update'){
+  const creating=action==='credentials-create';
+  if(!options.skill||!options.dependency||!options.input)throw Error('Use --skill NAME --dependency ID --input PLAN_JSON_OR_DASH');
+  const requestId=uuid(options.request);
+  if(creating&&(options.entry||options.revision))throw Error('Use credentials-update to change an existing entry');
+  if(!creating&&(!options.entry||!options.revision))throw Error('Use --entry ID --revision REVISION from credentials-status');
+  if(options.input==='-'&&process.stdin.isTTY)throw Error('Supply credential input via stdin');
+  let plan;
+  try{plan=JSON.parse(readFileSync(options.input==='-'?0:options.input,'utf8'));}catch{throw Error('无法读取凭据写入计划 / Invalid credential input');}
+  const allowed=creating?['values','fromPrompt','label','visibility','memberIds','useForMe']:['values','fromPrompt','label'];
+  if(!plan||typeof plan!=='object'||Array.isArray(plan)||Object.keys(plan).some(k=>!allowed.includes(k)))throw Error('Invalid credential write fields');
+  result=await request({...plan,action,skill:options.skill,dependency:options.dependency,requestId,...(creating?{}:{entryId:options.entry,revision:options.revision})});
+ }else if(action==='credentials-run'){if(!options.skill||!options.dependency||!options.input)throw Error('Use --skill NAME --dependency ID --input PLAN_JSON');result=await runWithCredentials(request,{skill:options.skill,dependency:options.dependency,entryId:options.entry,contextFile:options.context},JSON.parse(readFileSync(options.input,'utf8')));}
  else if(action==='work-roster')result=await request({action});
  else if(action.startsWith('work-')){
   if(!(await request({action:'context'})).capabilities?.workDispatch)throw Error('此范围不支持派工或备注；原生会话请先导入万物，旧服务端请更新 / Import this native session before dispatching work');

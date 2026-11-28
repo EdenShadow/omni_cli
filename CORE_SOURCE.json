@@ -39,6 +39,7 @@
     "desktop/runtimes.mjs",
     "desktop/skills/chat-share.mjs",
     "desktop/skills/conversation-files.mjs",
+    "desktop/skills/credential-input.mjs",
     "desktop/skills/exchange.mjs",
     "desktop/skills/github.mjs",
     "desktop/skills/interactions.mjs",
@@ -124,5 +125,18 @@
     "yauzl",
     "yazl",
     "zod"
+  ],
+  "overrides": [
+    {
+      "commit": "a43e71c6cbc7d8d56e9d1cbbefb746ca165ea990",
+      "paths": [
+        "desktop/skills/credential-input.mjs",
+        "desktop/skills/exchange.mjs",
+        "desktop/workbench.mjs",
+        "bundled-skills/wanwu-skills-sync/SKILL.md",
+        "bundled-skills/wanwu-skills-sync/references/credentials.md",
+        "bundled-skills/wanwu-skills-sync/scripts/sync.mjs"
+      ]
+    }
   ]
 }
