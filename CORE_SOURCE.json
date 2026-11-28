@@ -1,6 +1,6 @@
 {
   "repository": "EdenShadow/wanwu_ai",
-  "commit": "a38f131f2b9d5a1141c5107eb2977b17db2f6f30",
+  "commit": "db94ff2a0640cf43975d3cef11221dbc79169ec8",
   "modules": [
     "desktop/announcements.mjs",
     "desktop/approval-relay.mjs",

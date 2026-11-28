@@ -2,11 +2,13 @@
 
 下列命令省略 `node /absolute/wanwu-skills-sync/scripts/sync.mjs` 前缀，沿用 SKILL.md 中已确定的范围参数。
 
+根据原话选择聊天对象。指定公屏用 `--to team`，发给我用 `--to self`，私聊成员用 `--to 成员名或ID`，省略时沿用发起人当前项目选中的聊天。若指名成员但无法唯一匹配，询问其用户名。本轮私发后，宿主不会自动把最终回答重复发送到公屏。
+
 用户要求发送即已授权对应内容；不要在普通回答后自动发送，也不要上传整份会话。消息由「万物同步助手」发送，并标注发起成员和来源会话。
 
 如果运行时返回 `request.groupChat.autoReply` 为 true，宿主会自动把最终回答送回该群聊，无需手动重发文字。用户请求生成的文件可通过本技能直接发送；成功分享文件后不要重复分享同一结果。公屏长任务可按 [长任务进度](progress.md) 克制地发送中间进展；其他会话仍须有用户发送请求。
 
-用户同时要求本地文件归档并通知团队时，使用 `chat --destination auto`；明确只存 NAS 时用 `nas-put`，见 [NAS 文件同步](nas.md)。
+用户同时要求本地文件归档并通知团队时，使用 `chat --to team --destination auto`；明确只存 NAS 时用 `nas-put`，见 [NAS 文件同步](nas.md)。
 
 1. 整理指定的文字与已有本地文件。文字最多 4000 字符，长文可保存为 `.md` 附件；最多 30 个文件，每个 1 GB，使用执行设备上的绝对路径。文件夹先压缩，原文件保留。排除凭据、应用私有数据和未指定材料。
 2. 每次新发送生成一个 UUID：`node -e 'console.log(require("node:crypto").randomUUID())'`。多行文字写入 UTF-8 文件，用 `--text-file` 避免 shell 插值。
@@ -28,7 +30,7 @@ chat --request UUID --text-file /absolute/message.txt --file /absolute/report.pd
 用户要求 Bot 在公屏 @某人时，先用 `scene-members --query '名称'` 读取当前项目成员，核对 ID；重名时用用户名确认，不猜目标。发送时重复 `--mention MEMBER_ID` 可选多人：
 
 ```sh
-chat --request UUID --text-file /absolute/message.txt --mention MEMBER_ID
+chat --to team --request UUID --text-file /absolute/message.txt --mention MEMBER_ID
 ```
 
 客户端会在正文保留或添加可见的 @，并将成员 ID 写入加密消息的提及信息；只写普通姓名不等于通知。`context.capabilities.chatMemberMentions` 为 true 才支持此参数；旧客户端会明确提示升级，不降级为没有提醒的普通消息。发送成功只代表消息入群，不代表接收人的系统已展示通知。
@@ -40,10 +42,10 @@ chat --request UUID --text-file /absolute/message.txt --mention MEMBER_ID
 
 ## Bot @所有人
 
-用户要求通知所有人时，用 `chat --request UUID --text-file /absolute/message.txt --mention-all`；客户端会在正文保留或添加一个可见的 @所有人，并按当前项目成员列表生成加密提及信息。无需逐个拼接 ID，重试仍使用相同 UUID。普通任务不要自行添加全员提醒。
+用户要求通知所有人时，用 `chat --to team --request UUID --text-file /absolute/message.txt --mention-all`；客户端会在正文保留或添加一个可见的 @所有人，并按当前项目成员列表生成加密提及信息。无需逐个拼接 ID，重试仍使用相同 UUID。普通任务不要自行添加全员提醒。
 
 需要发送端 `context.capabilities.chatEveryoneMentions` 为 true（客户端 1.2.417 起）；旧客户端只更新 skill 不够，脚本会在发送前提示升级。服务端和接收端沿用既有成员提及格式；成员已离开项目时不再列入。宿主自动回传正文里的 @所有人 也支持全员提醒，无需再用 chat 重复发送。
 
 ## 只交付到当前 AI 会话
 
-“发给我”“给我一个附件”“就在这里给我”默认使用 `conversation-files --request UUID --file /absolute/file.zip`，重复 `--file` 可交付多个附件。它不发公屏，不指定别的会话或收件人；失败时不能擅自改发公屏。明确要求公屏／群聊／团队通知时继续使用上面的 `chat` 流程。原生客户端外的会话需要先导入万物。新功能要求万物客户端与服务端 1.2.488。
+只有明确要求把附件交付到当前 AI 会话中时才使用 `conversation-files --request UUID --file /absolute/file.zip`，重复 `--file` 可交付多个附件。它不发公屏，不指定别的会话或收件人；失败时不能擅自改发公屏。明确要求公屏／群聊／团队通知时继续使用上面的 `chat` 流程。原生客户端外的会话需要先导入万物。新功能要求万物客户端与服务端 1.2.488。

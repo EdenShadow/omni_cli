@@ -50,7 +50,7 @@ export async function portableChat(request,body,contextFile){
  const handles=await openFiles(body.files,contextFile,1024*1024*1024),ids=[];
  try{
   for(const h of handles){if(body.action==='audio')h.mime=({mp3:'audio/mpeg',wav:'audio/wav',m4a:'audio/mp4',mp4:'audio/mp4',m4v:'audio/mp4',aac:'audio/aac',ogg:'audio/ogg',opus:'audio/ogg',flac:'audio/flac',webm:'audio/webm'})[path.extname(h.name).slice(1).toLowerCase()];await upload(request,'chat-upload',h,id=>ids.push(id));}
-  const result=await request({id:body.id,text:body.text,autoplay:body.autoplay,...(body.action==='voice'?{action:'voice-send',voiceUploadId:ids[0]}:{action:'chat-send',attachments:ids.map(uploadId=>({uploadId}))})});
+  const result=await request({id:body.id,text:body.text,autoplay:body.autoplay,...(body.to?{to:body.to}:{}),...(body.action==='voice'?{action:'voice-send',voiceUploadId:ids[0]}:{action:'chat-send',attachments:ids.map(uploadId=>({uploadId}))})});
   return {...result,projectName:context.project.name};
  }finally{await closeFiles(handles);await Promise.allSettled(ids.map(uploadId=>request({action:'chat-upload',method:'DELETE',uploadId})));}
 }

@@ -3,7 +3,7 @@ name: wanwu-skills-sync
 description: 按当前万物任务的发起人权限操作项目。支持会话附件、公屏消息、媒体下载、NAS、技能钥匙串与同步、定时任务、设备服务接入画布、公告待办、角色场景、设备外观、跨设备派工及自定义交互。执行前检查隐私和恶意命令，普通问答无需接口调用。
 metadata:
   display_name: 万物同步助手
-  version: "1.23.0"
+  version: "1.24.0"
 ---
 
 # 万物同步助手
@@ -39,7 +39,7 @@ reason 仅可为 `credential-extraction`、`private-file-read`、`privacy-exfilt
 
 ## 在当前 AI 会话交付附件
 
-用户只说“发给我”“给我附件”“这里直接给我”，使用 `conversation-files --request UUID --file /absolute/file.zip`，可重复 `--file`，可用 `--text` 或 `--text-file` 说明。只在用户明确要求公屏、团队通知或群聊时使用 `chat`；保留公屏能力，不把会话交付自动广播。此功能需要当前已导入的 AI 会话，不能指定其他会话或收件人。成功回执后才说明文件已交付；失败时不要自动改发公屏。附件在本机加密，经云端保存后直接显示在当前会话，可下载；不输出密钥或应用私有文件。重试保持同一 UUID。
+用户要求“发公屏／群聊／通知全团队”用 `chat --to team`；“发给我／私聊我”用 `chat --to self`，收件人是本轮任务发起账号；“发给 Link”用 `chat --to Link`（可用唯一用户名或项目成员 ID）。要求发送但未指明对象时用 `chat`，投递至发起人在当前项目上次选择的聊天。公屏 @成员用 `--to team --mention MEMBER_ID`。名字有歧义时询问，不转发到群。明确说“在本 AI 会话里交付附件”时使用 `conversation-files --request UUID --file /absolute/file.zip`。会话附件仅限当前已导入的 AI 会话。成功回执后才说明文件已交付；失败时不要自动改发公屏。附件在本机加密，经云端保存后直接显示在当前会话，可下载；不输出密钥或应用私有文件。重试保持同一 UUID。
 
 ## 下载用户指定的媒体
 

@@ -58,6 +58,7 @@ async function run(){
  else if(action==='cover'){const current=await request({action:'canvas-get',canvasId});result=await setImage(canvasId,uuid(options.request),options.file,current.contentRevision);}
  else if(action==='publish'){
   const requestId=uuid(options.request),manifest=input(),cover=manifest.cover||{mode:'screenshot'};
+  if(manifest.audience&&!context.capabilities?.canvasInitialAudience)throw Error('请更新服务端以设置初始可见权限 / Update the server before creating a restricted canvas');
   if(manifest.sharing&&!context.capabilities?.canvasSharingDefaults)throw Error('请更新万物服务端以设置画布初始分享 / Update the server for canvas sharing defaults');
   if(manifest.id!==undefined)manifest.id=canvasUuid(manifest.id);
   if(canvasId&&manifest.id&&canvasId!==manifest.id)throw Error('--canvas and manifest.id must identify the same canvas');

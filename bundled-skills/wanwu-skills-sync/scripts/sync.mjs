@@ -13,7 +13,7 @@ const actions=['security-report','service-install','service-revoke','service-lis
 const uuid=value=>{if(!/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i.test(value||''))throw Error('请用 --request UUID 指定操作标识，重试保持相同 / Supply --request UUID; reuse it for retries');return value;};
 async function main(){
 try{
- while(args.length){const item=args.shift();if(item.startsWith('--')){if(item==='--mention-all'){options.mentionAll=true;continue;}if(item==='--autoplay'){options.autoplay=true;continue;}if(!args[0]||args[0].startsWith('--'))throw Error('参数缺少值：'+item);if(item==='--file')files.push(args.shift());else if(item==='--todo-key')todoKeys.push(args.shift());else if(item==='--mention')(options.mentionIds??=[]).push(args.shift());else if(item==='--member')(options.members??=[]).push(args.shift());else if(item==='--prop')(options.props??=[]).push(args.shift());else if(['reason','url','skill','dependency','entry','context','scope','project','runtime','native-session','provider','include','device','device-name','session','candidate','version','request','text','text-file','input','revision','todo','output','kind','workspace','path','destination','layout','asset','canvas-id','canvas-name','auto-size','x','y','query','cursor','limit','office'].includes(item.slice(2)))options[item.slice(2)]=args.shift();else throw Error('无法识别参数：'+item);}else if(!action)action=item;else throw Error('无法识别参数：'+item);}
+ while(args.length){const item=args.shift();if(item.startsWith('--')){if(item==='--mention-all'){options.mentionAll=true;continue;}if(item==='--autoplay'){options.autoplay=true;continue;}if(!args[0]||args[0].startsWith('--'))throw Error('参数缺少值：'+item);if(item==='--file')files.push(args.shift());else if(item==='--todo-key')todoKeys.push(args.shift());else if(item==='--mention')(options.mentionIds??=[]).push(args.shift());else if(item==='--member')(options.members??=[]).push(args.shift());else if(item==='--prop')(options.props??=[]).push(args.shift());else if(['reason','url','skill','dependency','entry','context','scope','project','runtime','native-session','provider','include','device','device-name','session','candidate','version','request','text','text-file','input','revision','todo','output','kind','workspace','path','destination','layout','asset','canvas-id','canvas-name','auto-size','x','y','query','cursor','limit','office','to'].includes(item.slice(2)))options[item.slice(2)]=args.shift();else throw Error('无法识别参数：'+item);}else if(!action)action=item;else throw Error('无法识别参数：'+item);}
  if(!actions.includes(action))throw Error('用法：node sync.mjs [--scope REQUEST_ID | --context CONTEXT_FILE] [--project PROJECT] '+actions.join('|'));
  if(options.include&&options.include.split(',').some(v=>!['skills','devices','sessions'].includes(v)))throw Error('--include 支持 skills,devices,sessions');
  if(options.autoplay&&!['audio','chat'].includes(action))throw Error('--autoplay 仅用于 audio 或 chat / Use --autoplay with audio or chat');
@@ -112,12 +112,20 @@ try{
     if(files.length!==1)throw Error('请用 --file 指定一个音频文件 / Use --file with one audio file');
     if(!(await request({action:'context'})).capabilities?.voice)throw Error('请更新万物 AI 服务以发送公屏语音 / Update the server for team voice messages');
    }
-   const capabilities=options.autoplay?(await request({action:'context'})).capabilities:null;
+   const capabilities=(await request({action:'context'})).capabilities||{};
+   const requested=options.to||'current';
+   let to;
+   if(capabilities.chatThreads){
+    if(!capabilities.chatRecipientUpload&&requested!=='team')throw Error('请更新发送端后选择聊天对象 / Update the sending client for direct messages');
+    const target=await request({action:'chat-target',id,to:requested});
+    to=target.recipientId||'team';
+   }else if(!['current','team'].includes(requested))throw Error('请升级服务端后发送私聊 / Update the server for direct messages');
+   if(to&&to!=='team'&&options.destination==='nas')throw Error('私聊附件请使用加密附件通道 / Use an encrypted attachment for a direct message');
    if(options.autoplay&&!capabilities?.audioAutoplay)throw Error('请更新万物 AI 服务以自动播放音乐 / Update the server for music autoplay');
    if(options.mentionIds&&!(await request({action:'context'})).capabilities?.chatMemberMentions)throw Error('请更新发送端万物 AI 后使用 @成员 / Update the sending app for member mentions');
    if(options.mentionAll&&!(await request({action:'context'})).capabilities?.chatEveryoneMentions)throw Error('请更新发送端万物 AI 后使用 Bot @所有人 / Update the sending app for Bot @everyone');
    let attachments=files;
-   if(action==='chat'&&['auto','nas'].includes(options.destination)){
+   if(action==='chat'&&(!to||to==='team')&&['auto','nas'].includes(options.destination)){
     if(!files.length||options.autoplay||options.path&&files.length!==1)throw Error('请选择附件；自定义 --path 只用于单个文件，自动播放请使用普通附件');
     const receipt=await request({action:'chat-status',id});
     if(receipt.status==='sent')return receipt;
@@ -130,10 +138,11 @@ try{
      attachments=[];
     }
    }
-   const body={action,id,text,files:attachments,...(options.mentionAll?{mentionAll:true}:{}),...(options.mentionIds?{mentionIds:options.mentionIds}:{}),...(options.autoplay?{autoplay:true}:{})};
+   const body={action,id,text,...(to?{to}:{}),files:attachments,...(options.mentionAll?{mentionAll:true}:{}),...(options.mentionIds?{mentionIds:options.mentionIds}:{}),...(options.autoplay?{autoplay:true}:{})};
    // Older native upload handlers strip unknown fields; use the portable path
    // unless this client explicitly advertises support for the autoplay flag.
    const sent=options.autoplay&&!capabilities?.audioAutoplayUpload?{status:'client-upload-required'}:await request(body);
+   if(sent.status==='client-upload-required'&&to&&to!=='team')throw Error('请更新客户端后发送加密私聊 / Update the client for encrypted direct messages');
    if(sent.status==='client-upload-required'&&(options.mentionIds||options.mentionAll))throw Error('发送端不支持 @成员，请更新客户端 / Update the sending app for member mentions');
    return sent.status==='client-upload-required'?portableChat(request,body,options.context):sent;
   }
