@@ -1,9 +1,9 @@
 ---
 name: wanwu-skills-sync
-description: 按当前万物任务的发起人权限操作项目。支持会话附件、公屏消息、媒体下载、NAS、技能钥匙串与同步、定时任务、设备服务接入画布、公告待办、角色场景、设备外观、跨设备派工及自定义交互。执行前检查隐私和恶意命令，普通问答无需接口调用。
+description: 按当前万物任务的发起人权限操作项目。支持应用创作与发布、会话附件、公屏消息、媒体下载、NAS、技能钥匙串与同步、定时任务、设备服务接入画布、公告待办、角色场景、设备外观、跨设备派工及自定义交互。执行前检查隐私和恶意命令，普通问答无需接口调用。
 metadata:
   display_name: 万物同步助手
-  version: "1.24.0"
+  version: "1.27.0"
 ---
 
 # 万物同步助手
@@ -31,11 +31,15 @@ reason 仅可为 `credential-extraction`、`private-file-read`、`privacy-exfilt
 软路由、NAS 和内网设备面板按[设备服务接入](references/device-services.md)连接真实设备并验收画布，只询问缺失信息。
 
 
+用户需要查看其他设备的一轮回复、对照多个会话或等待派工结果再做决策时，使用 `work-read`。由当前会话读取，设备上弹出的密码框交给发起人输入，详见[会话回读](references/work-dispatch.md#读取指定会话)。
+
 需要按设备、分身、@名字、Runtime 或会话备注排工时，运行 `node scripts/sync.mjs work-roster`，按[会话派工说明](references/work-dispatch.md)并行或按依赖执行。
 
 仅在用户要求操作万物时调用 `scripts/sync.mjs`，用用户当前语言回复。
 
 用户说“帮我定时…”、“新建一个定时任务”、改时间、修改任务内容或取消定时时，按[当前会话定时任务](references/session-schedule.md)实际操作。
+
+用户要制作、提交、更新或安装市场应用，或把新画布加入应用窗口时，按[应用发布指南](references/app-market.md)在本轮项目中操作。
 
 ## 在当前 AI 会话交付附件
 

@@ -16,7 +16,7 @@ const uuid=v=>{if(!/^[a-f\d]{8}(?:-[a-f\d]{4}){3}-[a-f\d]{12}$/i.test(v||''))thr
 const canvasUuid=v=>{if(!/^[a-f\d]{8}(?:-[a-f\d]{4}){3}-[a-f\d]{12}$/i.test(v||''))throw Error('Use --canvas with the complete canvas ID copied from Canvas tools');return v.toLowerCase();};
 async function run(){
  while(args.length){const a=args.shift();if(a.startsWith('--')){if(!['scope','context','project','runtime','native-session','provider','include','canvas','request','input','revision','key','mode','file','file-id','output','path','url','cdn','entry','document','cursor'].includes(a.slice(2))||!args.length)throw Error('Invalid option '+a);options[a.slice(2)]=args.shift();}else if(!action)action=a;else throw Error('Unexpected argument');}
- if(!['interact','work-roster','work-dispatch','work-status','context','list','get','live','publish','capture','cover','patch','asset','attach','archive','download','state','update','signal','state-list','page-script','share','verify-downloads','delete','usage-summary','usage-requests','collab-snapshot','collab-commit'].includes(action))throw Error('Usage: canvas.mjs context|list|get|live|publish|capture|cover|patch|asset|attach|archive|download|state|update|signal|state-list|page-script|share|verify-downloads|delete|usage-summary|usage-requests|collab-snapshot|collab-commit [options]');
+ if(!['interact','work-roster','work-dispatch','work-status','context','list','get','live','publish','capture','cover','patch','asset','attach','archive','download','state','update','signal','state-list','page-script','share','edit-access','verify-downloads','delete','usage-summary','usage-requests','collab-snapshot','collab-commit'].includes(action))throw Error('Usage: canvas.mjs context|list|get|live|publish|capture|cover|patch|asset|attach|archive|download|state|update|signal|state-list|page-script|share|edit-access|verify-downloads|delete|usage-summary|usage-requests|collab-snapshot|collab-commit [options]');
  if(options.path!==undefined&&action!=='archive')throw Error('--path is a relative NAS path for archive');
  if(options.url!==undefined&&action!=='asset')throw Error('--url is a source for asset');
  if(action==='asset'){
@@ -26,7 +26,7 @@ async function run(){
   console.log(JSON.stringify(cdnReference(options.url)));
   return;
  }
- const needsCanvas=['get','live','capture','cover','patch','asset','attach','archive','download','state','update','signal','state-list','page-script','share','verify-downloads','delete','collab-snapshot','collab-commit'].includes(action);
+ const needsCanvas=['get','live','capture','cover','patch','asset','attach','archive','download','state','update','signal','state-list','page-script','share','edit-access','verify-downloads','delete','collab-snapshot','collab-commit'].includes(action);
  const canvasId=options.canvas!==undefined||needsCanvas?canvasUuid(options.canvas):undefined;
  const resolved=await resolveContext(options);if(resolved.selection){process.stdout.write(JSON.stringify(resolved.selection,null,2)+'\n');return;}
  const u=new URL(resolved.context.url);if(u.protocol!=='http:'||u.hostname!=='127.0.0.1'||u.pathname!=='/skills'||u.username||u.password||u.search)throw Error('Invalid runtime endpoint');
@@ -54,10 +54,20 @@ async function run(){
  else if(['usage-summary','usage-requests'].includes(action)){if(!context.capabilities?.aiUsage)throw Error('请更新服务端以读取 AI 用量');result=await request({action,filters:options.input?input():{}});}
  else if(action==='list')result=await request({action:'canvas-list'});
  else if(['get','live'].includes(action))result=await request({action:'canvas-'+action,canvasId});
+ else if(action==='edit-access'){
+  if(!context.capabilities?.canvasEditAccess)throw Error('请更新万物服务端以管理画布编辑权限 / Update the server for canvas editing access');
+  if(options.input===undefined&&options.revision===undefined)result=await request({action:'canvas-edit-access',canvasId});
+  else{
+   if(!options.input||!/^\d+$/.test(options.revision||''))throw Error('Use --input POLICY.json and --revision from edit-access');
+   result=await request({action:'canvas-edit-access',canvasId,policy:input(),revision:Number(options.revision)});
+  }
+ }
  else if(action==='capture')result=await capture(canvasId,uuid(options.request),options.entry);
  else if(action==='cover'){const current=await request({action:'canvas-get',canvasId});result=await setImage(canvasId,uuid(options.request),options.file,current.contentRevision);}
  else if(action==='publish'){
   const requestId=uuid(options.request),manifest=input(),cover=manifest.cover||{mode:'screenshot'};
+  if(manifest.editAccess!==undefined&&!context.capabilities?.canvasEditAccess)throw Error('请更新万物服务端后再创建有编辑限制的画布 / Update the server before creating a canvas with editing restrictions');
+  if(manifest.appId&&!context.capabilities?.appMarket)throw Error('请更新服务端以创建应用扩展画布 / Update the server to create an app tab');
   if(manifest.audience&&!context.capabilities?.canvasInitialAudience)throw Error('请更新服务端以设置初始可见权限 / Update the server before creating a restricted canvas');
   if(manifest.sharing&&!context.capabilities?.canvasSharingDefaults)throw Error('请更新万物服务端以设置画布初始分享 / Update the server for canvas sharing defaults');
   if(manifest.id!==undefined)manifest.id=canvasUuid(manifest.id);

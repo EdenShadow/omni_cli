@@ -53,6 +53,7 @@
     "desktop/skills/transfer.mjs",
     "desktop/skills/update-barrier.mjs",
     "desktop/skills/work-dispatch.mjs",
+    "desktop/skills/work-session-read.mjs",
     "desktop/text-question-relay.mjs",
     "desktop/token-usage.mjs",
     "desktop/video-poster.mjs",
@@ -115,7 +116,9 @@
     "shared/text-question.mjs",
     "shared/transcript-media.mjs",
     "shared/typography.mjs",
-    "shared/work-dispatch.mjs"
+    "shared/work-dispatch.mjs",
+    "shared/work-timing.mjs",
+    "shared/work-transcript.mjs"
   ],
   "dependencies": [
     "@anthropic-ai/claude-agent-sdk",
@@ -136,6 +139,17 @@
         "bundled-skills/wanwu-skills-sync/SKILL.md",
         "bundled-skills/wanwu-skills-sync/references/credentials.md",
         "bundled-skills/wanwu-skills-sync/scripts/sync.mjs"
+      ]
+    },
+    {
+      "commit": "e41553140c59931fab09bbf385a04eac8f3713ed",
+      "paths": [
+        "desktop/skills/exchange.mjs",
+        "desktop/skills/work-session-read.mjs",
+        "shared/work-timing.mjs",
+        "shared/work-transcript.mjs",
+        "bundled-skills/wanwu-skills-sync",
+        "bundled-skills/wanwu-canvas"
       ]
     }
   ]

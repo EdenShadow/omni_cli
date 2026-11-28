@@ -36,3 +36,9 @@
 发布 manifest 可传 `sharing:{"mode":"off"}`、`public` 或 `account`，分别为关闭、公开只读和登录后使用。创建省略默认关闭；更新省略保留当前分享策略。此字段仅创建者和项目管理员可写，不会改变查看/AI 编辑权限；敏感结果不要默认公开。发布时提供标题和封面，回复 `[画布名称](返回的 canvas.openUri)`，会话显示原生封面卡片。
 
 首次发布时，`audience.members` 指定除创建者外可见的项目成员。传空数组即可仅自己可见。例：`{"audience":{"members":["Link"]}}`。不能同时开外部分享。更新既有画布省略 audience。
+
+## AI 编辑权限
+
+按本轮发起人身份执行。新建画布时在发布 manifest 中传 `"editAccess":{"mode":"owner"}`（仅创建者）、`"editAccess":{"mode":"members","members":["Link"]}`（创建者及指定成员），或 `"editAccess":{"mode":"all"}`（全部可查看成员，默认）。编辑范围不会授予查看权限。若用户还要求“只有我和 Link 可见”，同时设置 `"audience":{"members":["Link"]}`。服务端校验成功后一次性创建。
+
+已有画布先运行 `node scripts/canvas.mjs edit-access --canvas ID`。创建者按请求准备含 mode 的 JSON 文件，成员模式另含完整 members 数组，支持项目昵称、账号或用户 ID。追加或移除某人时从刚读到的 memberIds 保留其他成员。重名或找不到人时请用户明确身份。然后运行 `node scripts/canvas.mjs edit-access --canvas ID --input /absolute/policy.json --revision N`，N 取自 edit-access 的返回值。成功后核对返回的 mode、memberIds 和新 revision。并发变更返回 409 时重新读取，写入超时也先回读当前权限。

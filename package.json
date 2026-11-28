@@ -1,6 +1,6 @@
 {
   "name": "@edenshadow/omni-cli",
-  "version": "0.3.24",
+  "version": "0.3.25",
   "description": "Headless Wanwu device bridge for Codex, Claude Code and DeepSeek Harness",
   "type": "module",
   "license": "MIT",

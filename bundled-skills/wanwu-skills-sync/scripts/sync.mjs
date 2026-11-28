@@ -1,19 +1,21 @@
 #!/usr/bin/env node
 import path from 'node:path';
+import {readWork} from './work-read.mjs';
 import {runWithCredentials} from './credentials.mjs';
 import {resolveContext} from './runtime.mjs';
-import {readFileSync,writeFileSync,constants} from 'node:fs';
+import {readFileSync,writeFileSync,statSync,constants} from 'node:fs';
 import {openFiles,closeFiles,upload,portableChat} from './transport.mjs';
 import {resolveNas,nasTransfer} from './nas.mjs';
 import {readNasHttp} from './nas-http-read.mjs';
 import {sceneCommand} from './scene.mjs';
 import {referenceCommand} from './references.mjs';
 const args=process.argv.slice(2),options={},files=[],todoKeys=[];let action;
-const actions=['security-report','service-install','service-revoke','service-list','service-invoke','service-status','schedule-get','schedule-create','schedule-update','schedule-delete','nas-http-check','nas-http-get','nas-put','nas-get','nas-list','interact','question','credentials-status','credentials-create','credentials-update','credentials-run','work-roster','work-context','work-note','work-inspect','work-dispatch','work-status','conversation-files','context','catalog','preview','publish','result','chat','voice','audio','chat-status','board','announcement-publish','todo-create','todo-update','todo-delete','operation-status','scene-members','scene-references','scene-context','scene-prepare','scene-preview','scene-apply','scene-save','scene-inventory','scene-status'];
+const marketActions=['market-list','market-sources','market-detail','market-publish','market-read-draft','market-install','market-status','market-repair','market-update','market-attach','market-uninstall'];
+const actions=[...marketActions,'security-report','service-install','service-revoke','service-list','service-invoke','service-status','schedule-get','schedule-create','schedule-update','schedule-delete','nas-http-check','nas-http-get','nas-put','nas-get','nas-list','interact','question','credentials-status','credentials-create','credentials-update','credentials-run','work-read','work-roster','work-context','work-note','work-inspect','work-dispatch','work-status','conversation-files','context','catalog','preview','publish','result','chat','voice','audio','chat-status','board','announcement-publish','todo-create','todo-update','todo-delete','operation-status','scene-members','scene-references','scene-context','scene-prepare','scene-preview','scene-apply','scene-save','scene-inventory','scene-status'];
 const uuid=value=>{if(!/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i.test(value||''))throw Error('请用 --request UUID 指定操作标识，重试保持相同 / Supply --request UUID; reuse it for retries');return value;};
 async function main(){
 try{
- while(args.length){const item=args.shift();if(item.startsWith('--')){if(item==='--mention-all'){options.mentionAll=true;continue;}if(item==='--autoplay'){options.autoplay=true;continue;}if(!args[0]||args[0].startsWith('--'))throw Error('参数缺少值：'+item);if(item==='--file')files.push(args.shift());else if(item==='--todo-key')todoKeys.push(args.shift());else if(item==='--mention')(options.mentionIds??=[]).push(args.shift());else if(item==='--member')(options.members??=[]).push(args.shift());else if(item==='--prop')(options.props??=[]).push(args.shift());else if(['reason','url','skill','dependency','entry','context','scope','project','runtime','native-session','provider','include','device','device-name','session','candidate','version','request','text','text-file','input','revision','todo','output','kind','workspace','path','destination','layout','asset','canvas-id','canvas-name','auto-size','x','y','query','cursor','limit','office','to'].includes(item.slice(2)))options[item.slice(2)]=args.shift();else throw Error('无法识别参数：'+item);}else if(!action)action=item;else throw Error('无法识别参数：'+item);}
+ while(args.length){const item=args.shift();if(item.startsWith('--')){if(item==='--latest'){options.latest=true;continue;}if(item==='--mention-all'){options.mentionAll=true;continue;}if(item==='--autoplay'){options.autoplay=true;continue;}if(!args[0]||args[0].startsWith('--'))throw Error('参数缺少值：'+item);if(item==='--file')files.push(args.shift());else if(item==='--todo-key')todoKeys.push(args.shift());else if(item==='--mention')(options.mentionIds??=[]).push(args.shift());else if(item==='--member')(options.members??=[]).push(args.shift());else if(item==='--prop')(options.props??=[]).push(args.shift());else if(['reason','url','skill','dependency','entry','context','scope','project','runtime','native-session','provider','include','device','device-name','session','candidate','version','request','text','text-file','input','revision','todo','output','kind','workspace','path','destination','layout','asset','canvas-id','canvas-name','auto-size','x','y','query','cursor','limit','wait','office','to'].includes(item.slice(2)))options[item.slice(2)]=args.shift();else throw Error('无法识别参数：'+item);}else if(!action)action=item;else throw Error('无法识别参数：'+item);}
  if(!actions.includes(action))throw Error('用法：node sync.mjs [--scope REQUEST_ID | --context CONTEXT_FILE] [--project PROJECT] '+actions.join('|'));
  if(options.include&&options.include.split(',').some(v=>!['skills','devices','sessions'].includes(v)))throw Error('--include 支持 skills,devices,sessions');
  if(options.autoplay&&!['audio','chat'].includes(action))throw Error('--autoplay 仅用于 audio 或 chat / Use --autoplay with audio or chat');
@@ -89,6 +91,29 @@ try{
   if(!plan||typeof plan!=='object'||Array.isArray(plan)||Object.keys(plan).some(k=>!allowed.includes(k)))throw Error('Invalid credential write fields');
   result=await request({...plan,action,skill:options.skill,dependency:options.dependency,requestId,...(creating?{}:{entryId:options.entry,revision:options.revision})});
  }else if(action==='credentials-run'){if(!options.skill||!options.dependency||!options.input)throw Error('Use --skill NAME --dependency ID --input PLAN_JSON');result=await runWithCredentials(request,{skill:options.skill,dependency:options.dependency,entryId:options.entry,contextFile:options.context},JSON.parse(readFileSync(options.input,'utf8')));}
+ else if(marketActions.includes(action)){
+  const input=options.input?JSON.parse(readFileSync(options.input,'utf8')):{};
+  if(input.iconFile){
+   if(input.iconSvg!==undefined||input.iconImage!==undefined)throw Error('请选择一个图标 / Supply one icon');
+   const file=input.iconFile;
+   const stats=statSync(file);
+   if(!stats.isFile()||stats.size>8*1024*1024)throw Error('图标最大 8 MiB / Icon size limit is 8 MiB');
+   const raw=readFileSync(file);
+   if(raw.subarray(0,8).equals(Buffer.from('89504e470d0a1a0a','hex')))input.iconImage='data:image/png;base64,'+raw.toString('base64');
+   else if(raw[0]===0xff&&raw[1]===0xd8)input.iconImage='data:image/jpeg;base64,'+raw.toString('base64');
+   else if(raw.toString('ascii',0,4)==='RIFF'&&raw.toString('ascii',8,12)==='WEBP')input.iconImage='data:image/webp;base64,'+raw.toString('base64');
+   else if(raw.length<=160000&&raw.toString('utf8').trimStart().startsWith('<svg'))input.iconSvg=raw.toString('utf8');
+   else throw Error('图标支持静态 SVG、PNG、JPEG 或 WebP / Unsupported icon file');
+   delete input.iconFile;
+  }
+  if(input.imageFiles){input.images=input.imageFiles.map(file=>{
+   const data=readFileSync(file);if(data.length>1048576)throw Error('展示图请压缩到 1 MB 以内');
+   const mime=data[0]===255?'jpeg':data[0]===137?'png':'webp';
+   return 'data:image/'+mime+';base64,'+data.toString('base64');
+  });delete input.imageFiles;}
+  result=await request({...input,action});
+ }
+ else if(action==='work-read')result=await readWork(request,options);
  else if(action==='work-roster')result=await request({action});
  else if(action.startsWith('work-')){
   if(!(await request({action:'context'})).capabilities?.workDispatch)throw Error('此范围不支持派工或备注；原生会话请先导入万物，旧服务端请更新 / Import this native session before dispatching work');
